@@ -108,7 +108,7 @@ export function App() {
   const hoveredColors = hoveredMovie ? movieColors[hoveredMovie] : null;
 
   return (
-    <main className="min-h-screen px-8 py-12 bg-black relative">
+    <main className="min-h-screen lg:px-8 lg:py-12 px-2 py-8 bg-black relative">
       {/* Animated gradient backdrop */}
       <AnimatePresence>
         {hoveredColors && hoveredColors.length > 0 && (
@@ -136,7 +136,7 @@ export function App() {
           />
         )}
       </AnimatePresence>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2 lg:gap-4">
         {/* Grid of movie cards */}
         <ExpandableRow
           title="Movies"

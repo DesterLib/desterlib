@@ -24,7 +24,7 @@ const ExpandableRow = ({
   useEffect(() => {
     const calculateLayout = () => {
       const width = window.innerWidth;
-      let columns = 1;
+      let columns = 2;
 
       if (width >= 1280) {
         columns = 5; // xl
@@ -47,8 +47,13 @@ const ExpandableRow = ({
   useEffect(() => {
     const updateHeight = () => {
       if (gridRef.current) {
+        const width = window.innerWidth;
         const gridHeight = gridRef.current.offsetHeight;
-        setSectionHeight(gridHeight + 118);
+        if (width < 768) {
+          setSectionHeight(gridHeight + 70);
+        } else {
+          setSectionHeight(gridHeight + 78);
+        }
       }
     };
 
@@ -61,13 +66,26 @@ const ExpandableRow = ({
 
   return (
     <motion.section
-      className={`relative group/section overflow-hidden w-fit mx-auto transition-all duration-500 ease-out p-4 rounded-3xl ${isExpanded ? "bg-white/10" : ""}`}
+      className={`relative group/section overflow-hidden w-fit mx-auto transition-all duration-300 ease-out px-4 lg:p-4 rounded-3xl ${isExpanded ? "bg-white/10" : ""}`}
       style={{ height: sectionHeight > 0 ? `${sectionHeight}px` : "auto" }}
     >
-      <h2 className="text-xl font-medium text-white/40 m-0 h-12">{title}</h2>
+      <div className="h-14 lg:h-12 flex items-center justify-between w-full">
+        <h2 className="text-xl font-medium text-white/40">{title}</h2>
+        <motion.button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-fit flex h-12 items-center justify-center gap-2 uppercase text-sm font-medium text-white/40 hover:text-white/60 group-hover/section:opacity-100 transition-[opacity,colors] duration-200"
+        >
+          <motion.div
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <ChevronDownIcon />
+          </motion.div>
+        </motion.button>
+      </div>
       <div
         ref={gridRef}
-        className="relative z-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 max-w-7xl mx-auto items-start"
+        className="relative z-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 lg:gap-8 gap-4 max-w-7xl mx-auto items-start"
       >
         {visibleItems.map((item) => (
           <Card
@@ -84,35 +102,6 @@ const ExpandableRow = ({
           />
         ))}
       </div>
-      <motion.button
-        layout
-        onClick={() => setIsExpanded(!isExpanded)}
-        className={
-          "w-full hidden xl:flex h-12 absolute bottom-0 left-0 right-0 items-center justify-center gap-2 mx-auto uppercase text-sm font-medium text-white/40 hover:text-white/60 group-hover/section:opacity-100 transition-[opacity,colors] duration-300 " +
-          (isExpanded ? "opacity-100" : "opacity-0")
-        }
-      >
-        <div className="inline-flex items-center justify-end w-[70px]">
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={isExpanded ? "collapse" : "expand"}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {isExpanded ? "Collapse" : "Expand"}
-            </motion.span>
-          </AnimatePresence>
-        </div>
-        <motion.div
-          layout
-          animate={{ rotate: isExpanded ? 180 : 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          <ChevronDownIcon />
-        </motion.div>
-      </motion.button>
     </motion.section>
   );
 };

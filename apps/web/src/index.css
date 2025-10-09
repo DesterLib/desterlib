@@ -13,9 +13,27 @@
     box-sizing: border-box;
   }
 
+  html,
   body {
     margin: 0;
     background: #000000;
     color: #f5f5f7;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for all elements */
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
