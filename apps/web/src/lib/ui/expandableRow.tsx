@@ -1,0 +1,120 @@
+import { useState, useRef, useEffect } from "preact/hooks";
+import Card from "./card";
+import { ChevronDownIcon } from "lucide-preact";
+import { motion, AnimatePresence } from "motion/react";
+
+const ExpandableRow = ({
+  title,
+  items,
+  setCurrentMovie,
+  setHoveredMovie,
+  handleExtractColors,
+}: {
+  title: string;
+  items: any[];
+  setCurrentMovie: (id: number) => void;
+  setHoveredMovie: (id: number | null) => void;
+  handleExtractColors: (image: string, id: number) => void;
+}) => {
+  const [visibleCount, setVisibleCount] = useState<number>(1);
+  const [sectionHeight, setSectionHeight] = useState<number>(0);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const calculateLayout = () => {
+      const width = window.innerWidth;
+      let columns = 1;
+
+      if (width >= 1280) {
+        columns = 5; // xl
+      } else if (width >= 1024) {
+        columns = 4; // lg
+      } else if (width >= 768) {
+        columns = 3; // md
+      } else if (width >= 640) {
+        columns = 2; // sm
+      }
+
+      setVisibleCount(columns);
+    };
+
+    calculateLayout();
+    window.addEventListener("resize", calculateLayout);
+    return () => window.removeEventListener("resize", calculateLayout);
+  }, []);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (gridRef.current) {
+        const gridHeight = gridRef.current.offsetHeight;
+        setSectionHeight(gridHeight + 118);
+      }
+    };
+
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+    return () => window.removeEventListener("resize", updateHeight);
+  }, [visibleCount, isExpanded]);
+
+  const visibleItems = isExpanded ? items : items.slice(0, visibleCount);
+
+  return (
+    <motion.section
+      className={`relative group/section overflow-hidden w-fit mx-auto transition-all duration-500 ease-out p-4 rounded-3xl ${isExpanded ? "bg-white/10" : ""}`}
+      style={{ height: sectionHeight > 0 ? `${sectionHeight}px` : "auto" }}
+    >
+      <h2 className="text-xl font-medium text-white/40 m-0 h-12">{title}</h2>
+      <div
+        ref={gridRef}
+        className="relative z-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 max-w-7xl mx-auto items-start"
+      >
+        {visibleItems.map((item) => (
+          <Card
+            key={item.id}
+            title={item.title}
+            year={item.year}
+            image={item.image}
+            onClick={() => setCurrentMovie(item.id)}
+            onMouseEnter={() => {
+              setHoveredMovie(item.id);
+              handleExtractColors(item.image, item.id);
+            }}
+            onMouseLeave={() => setHoveredMovie(null as number | null)}
+          />
+        ))}
+      </div>
+      <motion.button
+        layout
+        onClick={() => setIsExpanded(!isExpanded)}
+        className={
+          "w-full hidden xl:flex h-12 absolute bottom-0 left-0 right-0 items-center justify-center gap-2 mx-auto uppercase text-sm font-medium text-white/40 hover:text-white/60 group-hover/section:opacity-100 transition-[opacity,colors] duration-300 " +
+          (isExpanded ? "opacity-100" : "opacity-0")
+        }
+      >
+        <div className="inline-flex items-center justify-end w-[70px]">
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={isExpanded ? "collapse" : "expand"}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {isExpanded ? "Collapse" : "Expand"}
+            </motion.span>
+          </AnimatePresence>
+        </div>
+        <motion.div
+          layout
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          <ChevronDownIcon />
+        </motion.div>
+      </motion.button>
+    </motion.section>
+  );
+};
+
+export default ExpandableRow;
