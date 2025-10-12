@@ -7,6 +7,7 @@ export interface Episode {
   duration?: number;
   airDate?: string;
   filePath?: string;
+  streamUrl?: string;
 }
 
 export interface Movie {
@@ -15,6 +16,7 @@ export interface Movie {
   director?: string;
   trailerUrl?: string;
   filePath?: string;
+  streamUrl?: string;
 }
 
 export interface Season {

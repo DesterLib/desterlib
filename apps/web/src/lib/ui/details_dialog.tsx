@@ -15,18 +15,36 @@ import { ModalOverlay, ModalCard } from "./modal";
 import type { Media } from "../api/client";
 
 // Helper function to send video playback signal to Swift app
-const playVideo = (filePath: string) => {
+const playVideo = (streamUrl: string) => {
+  console.log("🎬 [playVideo] Attempting to play video with URL:", streamUrl);
+
   try {
     if (
       typeof window !== "undefined" &&
       window.webkit?.messageHandlers?.playVideo
     ) {
-      window.webkit.messageHandlers.playVideo.postMessage({ url: filePath });
+      console.log(
+        "✅ [playVideo] Swift message handler available, sending message..."
+      );
+      window.webkit.messageHandlers.playVideo.postMessage({ url: streamUrl });
+      console.log("✅ [playVideo] Message sent successfully " + streamUrl);
     } else {
-      console.warn("Swift message handler not available");
+      console.warn(
+        "❌ [playVideo] Swift message handler not available " + streamUrl
+      );
+      alert(
+        "Video playback is not available. Please open this app in the native Swift application."
+      );
     }
   } catch (error) {
-    console.error("Error sending video signal to Swift app:", error);
+    console.error(
+      "❌ [playVideo] Error sending video signal to Swift app:",
+      error
+    );
+    alert(
+      "Failed to start video playback. Error: " +
+        (error instanceof Error ? error.message : "Unknown error")
+    );
   }
 };
 
@@ -61,19 +79,43 @@ const DetailsDialog = ({
   };
 
   const handlePlayClick = () => {
-    if (item.type === "MOVIE" && item.movie?.filePath) {
-      playVideo(item.movie.filePath);
+    console.log(
+      "🎯 [handlePlayClick] Play button clicked for:",
+      item.type,
+      item.title
+    );
+    console.log("🎯 [handlePlayClick] Item data:", item);
+
+    if (item.type === "MOVIE" && item.movie?.streamUrl) {
+      console.log(
+        "🎥 [handlePlayClick] Playing movie with streamUrl:",
+        item.movie.streamUrl
+      );
+      playVideo(item.movie.streamUrl);
     } else if (item.type === "TV_SHOW" && item.tvShow?.seasons.length) {
       // Find season 1
       const season1 = item.tvShow.seasons.find((s) => s.number === 1);
+      console.log("📺 [handlePlayClick] Found season 1:", season1);
+
       if (season1 && season1.episodes.length > 0) {
         // Play first episode of season 1
         const episode1 = season1.episodes.find((e) => e.number === 1);
         const firstEpisode = episode1 || season1.episodes[0];
-        if (firstEpisode?.filePath) {
-          playVideo(firstEpisode.filePath);
+        console.log(
+          "📺 [handlePlayClick] Playing first episode:",
+          firstEpisode
+        );
+
+        if (firstEpisode?.streamUrl) {
+          playVideo(firstEpisode.streamUrl);
+        } else {
+          console.warn("⚠️ [handlePlayClick] First episode has no streamUrl");
         }
+      } else {
+        console.warn("⚠️ [handlePlayClick] No episodes found in season 1");
       }
+    } else {
+      console.warn("⚠️ [handlePlayClick] No valid media or streamUrl found");
     }
   };
 
@@ -220,11 +262,25 @@ const DetailsDialog = ({
                                 {season.episodes.map((episode) => (
                                   <button
                                     key={episode.id}
-                                    onClick={() =>
-                                      episode.filePath &&
-                                      playVideo(episode.filePath)
-                                    }
-                                    disabled={!episode.filePath}
+                                    onClick={() => {
+                                      console.log(
+                                        "📺 [Episode Click] Episode clicked:",
+                                        episode.number,
+                                        episode.title
+                                      );
+                                      console.log(
+                                        "📺 [Episode Click] Episode streamUrl:",
+                                        episode.streamUrl
+                                      );
+                                      if (episode.streamUrl) {
+                                        playVideo(episode.streamUrl);
+                                      } else {
+                                        console.warn(
+                                          "⚠️ [Episode Click] Episode has no streamUrl"
+                                        );
+                                      }
+                                    }}
+                                    disabled={!episode.streamUrl}
                                     className="w-full flex items-start gap-3 py-2 px-3 rounded hover:bg-white/5 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 text-left"
                                   >
                                     <span className="text-[#86868b] text-sm font-medium min-w-[2rem]">
@@ -240,7 +296,7 @@ const DetailsDialog = ({
                                         </p>
                                       )}
                                     </div>
-                                    {episode.filePath && (
+                                    {episode.streamUrl && (
                                       <PlayIcon className="w-4 h-4 text-[#86868b] opacity-0 group-hover:opacity-100 transition-opacity" />
                                     )}
                                   </button>

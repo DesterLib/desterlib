@@ -211,4 +211,103 @@ router.get("/:id", (req, res, next) => {
   mediaController.getMediaById(req, res, next);
 });
 
+/**
+ * @openapi
+ * /api/media/stream/movie/{id}:
+ *   get:
+ *     summary: Stream a movie
+ *     description: Stream a movie file with byte-range support for seeking
+ *     tags:
+ *       - Media Streaming
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Movie ID
+ *       - in: header
+ *         name: Range
+ *         schema:
+ *           type: string
+ *         description: Byte range (e.g., bytes=0-1048575)
+ *     responses:
+ *       200:
+ *         description: Full movie file
+ *         content:
+ *           video/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       206:
+ *         description: Partial content (byte range)
+ *         content:
+ *           video/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Movie or file not found
+ */
+router.get("/stream/movie/:id", (req, res, next) => {
+  mediaController.streamMovie(req, res, next);
+});
+
+/**
+ * @openapi
+ * /api/media/stream/episode/{id}/{seasonNumber}/{episodeNumber}:
+ *   get:
+ *     summary: Stream a TV episode
+ *     description: Stream a TV episode file with byte-range support for seeking
+ *     tags:
+ *       - Media Streaming
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: TV show ID
+ *       - in: path
+ *         name: seasonNumber
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Season number
+ *       - in: path
+ *         name: episodeNumber
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Episode number
+ *       - in: header
+ *         name: Range
+ *         schema:
+ *           type: string
+ *         description: Byte range (e.g., bytes=0-1048575)
+ *     responses:
+ *       200:
+ *         description: Full episode file
+ *         content:
+ *           video/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       206:
+ *         description: Partial content (byte range)
+ *         content:
+ *           video/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Episode or file not found
+ */
+router.get(
+  "/stream/episode/:id/:seasonNumber/:episodeNumber",
+  (req, res, next) => {
+    mediaController.streamEpisode(req, res, next);
+  }
+);
+
 export default router;

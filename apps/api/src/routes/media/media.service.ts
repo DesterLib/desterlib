@@ -2,6 +2,7 @@ import { PrismaClient, type MediaType } from "../../generated/prisma/index.js";
 import { NotFoundError, BadRequestError } from "../../lib/errors.js";
 
 const prisma = new PrismaClient();
+const API_BASE_URL = process.env.API_URL || "http://localhost:3000";
 
 export interface MediaFilters {
   type?: MediaType;
@@ -173,7 +174,7 @@ export class MediaService {
     ]);
 
     return {
-      media,
+      media: this.addStreamingUrlsToArray(media),
       pagination: {
         total,
         limit,
@@ -226,7 +227,7 @@ export class MediaService {
       throw new NotFoundError(`Media with ID ${id} not found`);
     }
 
-    return media;
+    return this.addStreamingUrls(media);
   }
 
   /**
@@ -276,7 +277,7 @@ export class MediaService {
     const tvShow = await this.getTVShowById(tvShowId);
 
     const season = tvShow.tvShow?.seasons.find(
-      (s) => s.number === seasonNumber
+      (s: any) => s.number === seasonNumber
     );
 
     if (!season) {
@@ -298,7 +299,7 @@ export class MediaService {
   ) {
     const season = await this.getSeasonById(tvShowId, seasonNumber);
 
-    const episode = season.episodes.find((e) => e.number === episodeNumber);
+    const episode = season.episodes.find((e: any) => e.number === episodeNumber);
 
     if (!episode) {
       throw new NotFoundError(
@@ -371,6 +372,40 @@ export class MediaService {
         comics: comicCount,
       },
     };
+  }
+
+  /**
+   * Add streaming URLs to media object
+   */
+  private addStreamingUrls(media: any): any {
+    if (!media) return media;
+
+    // Add streaming URL for movies
+    if (media.movie && media.movie.filePath) {
+      media.movie.streamUrl = `${API_BASE_URL}/api/media/stream/movie/${media.id}`;
+    }
+
+    // Add streaming URLs for TV show episodes
+    if (media.tvShow?.seasons) {
+      for (const season of media.tvShow.seasons) {
+        if (season.episodes) {
+          for (const episode of season.episodes) {
+            if (episode.filePath) {
+              episode.streamUrl = `${API_BASE_URL}/api/media/stream/episode/${media.id}/${season.number}/${episode.number}`;
+            }
+          }
+        }
+      }
+    }
+
+    return media;
+  }
+
+  /**
+   * Add streaming URLs to an array of media objects
+   */
+  private addStreamingUrlsToArray(mediaArray: any[]): any[] {
+    return mediaArray.map((media) => this.addStreamingUrls(media));
   }
 }
 
