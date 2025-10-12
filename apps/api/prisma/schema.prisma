@@ -11,7 +11,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 enum MediaType {
@@ -54,14 +54,19 @@ model Media {
 // MOVIES
 // ────────────────────────────
 model Movie {
-  id         String   @id @default(cuid())
-  duration   Int?     // in minutes
-  director   String?
-  trailerUrl String?
+  id              String   @id @default(cuid())
+  duration        Int?     // in minutes
+  director        String?
+  trailerUrl      String?
+  filePath        String?  @unique // File path on disk
+  fileSize        BigInt?  // File size in bytes
+  fileModifiedAt  DateTime? // Last modified time of file
   
   // Required relationship to Media
-  mediaId    String   @unique
-  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId         String   @unique
+  media           Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  
+  @@index([filePath])
 }
 
 // ────────────────────────────
@@ -90,54 +95,63 @@ model Season {
 }
 
 model Episode {
-  id        String   @id @default(cuid())
-  title     String
-  number    Int
-  duration  Int?
-  airDate   DateTime?
-  videoUrl  String?
-  seasonId  String
-  season    Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  title           String
+  number          Int
+  duration        Int?
+  airDate         DateTime?
+  filePath        String?  @unique // File path on disk
+  fileSize        BigInt?  // File size in bytes
+  fileModifiedAt  DateTime? // Last modified time of file
+  seasonId        String
+  season          Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
   
   @@unique([seasonId, number])
   @@index([seasonId])
+  @@index([filePath])
 }
 
 // ────────────────────────────
 // MUSIC
 // ────────────────────────────
 model Music {
-  id        String   @id @default(cuid())
-  artist    String
-  album     String?
-  genre     String?
-  duration  Int?
-  trackUrl  String?
+  id              String   @id @default(cuid())
+  artist          String
+  album           String?
+  genre           String?
+  duration        Int?
+  filePath        String?  @unique // File path on disk
+  fileSize        BigInt?  // File size in bytes
+  fileModifiedAt  DateTime? // Last modified time of file
   
   // Required relationship to Media
-  mediaId   String   @unique
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId         String   @unique
+  media           Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   
   @@index([artist])
   @@index([genre])
+  @@index([filePath])
 }
 
 // ────────────────────────────
 // COMICS
 // ────────────────────────────
 model Comic {
-  id        String   @id @default(cuid())
-  issue     Int?
-  volume    String?
-  publisher String?
-  pages     Int?
-  fileUrl   String?
+  id              String   @id @default(cuid())
+  issue           Int?
+  volume          String?
+  publisher       String?
+  pages           Int?
+  filePath        String?  @unique // File path on disk
+  fileSize        BigInt?  // File size in bytes
+  fileModifiedAt  DateTime? // Last modified time of file
   
   // Required relationship to Media
-  mediaId   String   @unique
-  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId         String   @unique
+  media           Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   
   @@index([publisher])
+  @@index([filePath])
 }
 
 // ────────────────────────────

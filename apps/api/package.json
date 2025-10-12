@@ -11,6 +11,7 @@
     "lint": "echo 'no linter configured'"
   },
   "dependencies": {
+    "@prisma/client": "6.17.1",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "prisma": "^6.17.1",

@@ -6,6 +6,11 @@ import { responseEnhancerMiddleware } from "./lib/response.js";
 import { notFoundHandler, errorHandler } from "./lib/errorHandler.js";
 import { swaggerSpec } from "./config/swagger.js";
 import scanRouter from "./routes/scan/scan.module.js";
+import mediaRouter from "./routes/media/media.module.js";
+import moviesRouter from "./routes/movies/movies.module.js";
+import tvShowsRouter from "./routes/tv-shows/tv-shows.module.js";
+import musicRouter from "./routes/music/music.module.js";
+import comicsRouter from "./routes/comics/comics.module.js";
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -106,6 +111,11 @@ app.get("/health", (_req, res) => {
 
 // API Routes
 app.use("/api/scan", scanRouter);
+app.use("/api/media", mediaRouter);
+app.use("/api/movies", moviesRouter);
+app.use("/api/tv-shows", tvShowsRouter);
+app.use("/api/music", musicRouter);
+app.use("/api/comics", comicsRouter);
 
 app.use(notFoundHandler);
 
