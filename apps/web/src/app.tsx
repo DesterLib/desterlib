@@ -45,7 +45,7 @@ export function App() {
     const fetchMediaDetails = async () => {
       try {
         const response = await api.media.getById(currentMediaId);
-        
+
         if (response.success && response.data) {
           setSelectedMedia(response.data.media);
         } else if (!response.success) {

@@ -228,21 +228,8 @@ const DetailsDialog = ({
                                   <button
                                     key={episode.id}
                                     onClick={() => {
-                                      console.log(
-                                        "📺 [Episode Click] Episode clicked:",
-                                        episode.number,
-                                        episode.title
-                                      );
-                                      console.log(
-                                        "📺 [Episode Click] Episode streamUrl:",
-                                        episode.streamUrl
-                                      );
                                       if (episode.streamUrl) {
                                         playVideo(episode.streamUrl);
-                                      } else {
-                                        console.warn(
-                                          "⚠️ [Episode Click] Episode has no streamUrl"
-                                        );
                                       }
                                     }}
                                     disabled={!episode.streamUrl}
