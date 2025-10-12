@@ -31,6 +31,11 @@ const router: RouterType = Router();
  *                 type: string
  *                 description: Optional collection name (defaults to folder name)
  *                 example: My Anime Collection
+ *               updateExisting:
+ *                 type: boolean
+ *                 description: If true, updates existing entries with new external IDs and metadata
+ *                 default: false
+ *                 example: false
  *     responses:
  *       200:
  *         description: Successfully scanned directory
@@ -46,7 +51,7 @@ const router: RouterType = Router();
  *                       properties:
  *                         message:
  *                           type: string
- *                           example: Successfully scanned 15 MOVIE files
+ *                           example: Scanned 15 MOVIE files (10 added, 5 skipped)
  *                         scan:
  *                           $ref: '#/components/schemas/ScanResult'
  *       400:

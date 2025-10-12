@@ -1,44 +1,40 @@
-import {
-  XIcon,
-  PlayIcon,
-  PlusIcon,
-  InfoIcon,
-  VideoIcon,
-  AudioLines,
-  Captions,
-  Film,
-} from "lucide-preact";
-import { useState, useRef } from "preact/hooks";
+import { XIcon, PlayIcon, PlusIcon, Film } from "lucide-preact";
+import { useRef } from "preact/hooks";
 import Button from "./button";
 import { useBodyScrollLock } from "../hooks/use_body_scroll_lock";
 import { useMeasuredHeight } from "../hooks/use_measured_height";
 import { AnimatedHeight } from "../animation";
 import { ModalOverlay, ModalCard } from "./modal";
-import { TabButton } from "./tabs";
-import type { Movie } from "../api/client";
+import type { Media } from "../api/client";
 
 const DetailsDialog = ({
   item,
-  setCurrentMovie,
+  onClose,
   isOpen = true,
 }: {
-  item: Movie;
-  setCurrentMovie: (movie: any) => void;
+  item: Media;
+  onClose: () => void;
   isOpen: boolean;
 }) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "technical">(
-    "overview"
-  );
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const contentHeight = useMeasuredHeight(contentRef, [activeTab]);
+  const contentHeight = useMeasuredHeight(contentRef, []);
 
   // Lock body scroll when dialog is open
   useBodyScrollLock(isOpen);
 
+  // Get display values
+  const year = item.releaseDate
+    ? new Date(item.releaseDate).getFullYear()
+    : undefined;
+  const displayImage =
+    item.backdropUrl ||
+    item.posterUrl ||
+    "https://via.placeholder.com/1280x720/1a1a1a/666666?text=No+Image";
+
   return (
     <ModalOverlay
       className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-start lg:items-center justify-center z-50 overflow-hidden p-0 lg:p-4"
-      onClose={() => setCurrentMovie(null)}
+      onClose={onClose}
       isOpen={isOpen}
     >
       <ModalCard
@@ -47,7 +43,7 @@ const DetailsDialog = ({
       >
         {/* Close button */}
         <Button
-          onClick={() => setCurrentMovie(null)}
+          onClick={onClose}
           variant="subtle"
           size="icon"
           className="absolute top-4 right-4 z-10 rounded-full"
@@ -59,7 +55,7 @@ const DetailsDialog = ({
         {/* Hero Image */}
         <div className="relative">
           <img
-            src={item.image}
+            src={displayImage}
             alt={item.title}
             className="w-full aspect-video object-cover block"
             style={{
@@ -78,23 +74,21 @@ const DetailsDialog = ({
               {item.title}
             </h2>
             <div className="flex items-center gap-3 text-[#86868b] text-sm">
-              <span>{item.year}</span>
-              <span>•</span>
-              <span>{item.rating}</span>
-              <span>•</span>
-              <span>{item.duration}</span>
-              <span>•</span>
-              <span className="text-yellow-500">★ {item.imdbRating}</span>
-            </div>
-            <div className="flex gap-2 mt-3">
-              {item.genre.map((g) => (
-                <span
-                  key={g}
-                  className="px-3 py-1 bg-[#2d2d2f] text-[#86868b] text-xs rounded-full"
-                >
-                  {g}
-                </span>
-              ))}
+              {year && (
+                <>
+                  <span>{year}</span>
+                  <span>•</span>
+                </>
+              )}
+              <span className="uppercase">{item.type.replace("_", " ")}</span>
+              {item.rating && (
+                <>
+                  <span>•</span>
+                  <span className="text-yellow-500">
+                    ★ {item.rating.toFixed(1)}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
@@ -110,178 +104,18 @@ const DetailsDialog = ({
             </Button>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-[#424245]">
-            <TabButton
-              active={activeTab === "overview"}
-              onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-2 px-4 py-3 border-none cursor-pointer font-medium text-sm transition-all duration-200 relative ${
-                activeTab === "overview"
-                  ? "text-[#0071e3]"
-                  : "text-[#86868b] hover:text-[#f5f5f7]"
-              }`}
-            >
-              <Film className="w-4 h-4" />
-              Overview
-            </TabButton>
-            <TabButton
-              active={activeTab === "technical"}
-              onClick={() => setActiveTab("technical")}
-              className={`flex items-center gap-2 px-4 py-3 border-none cursor-pointer font-medium text-sm transition-all duration-200 relative ${
-                activeTab === "technical"
-                  ? "text-[#0071e3]"
-                  : "text-[#86868b] hover:text-[#f5f5f7]"
-              }`}
-            >
-              <InfoIcon className="w-4 h-4" />
-              Technical Details
-            </TabButton>
-          </div>
-
-          {/* Tab Content */}
+          {/* Description */}
           <AnimatedHeight height={contentHeight}>
             <div ref={contentRef}>
-              {activeTab === "overview" ? (
-                <div key="overview" className="transition-opacity duration-200">
-                  {/* Description */}
-                  <div className="mb-6">
-                    <p className="text-[#d2d2d7] text-base leading-relaxed m-0">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  {/* Director & Cast */}
-                  <div className="mb-6 space-y-3">
-                    <div>
-                      <span className="text-[#86868b] text-sm">Director: </span>
-                      <span className="text-[#f5f5f7] text-sm">
-                        {item.director}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#86868b] text-sm">Cast: </span>
-                      <span className="text-[#f5f5f7] text-sm">
-                        {item.cast.join(", ")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  key="technical"
-                  className="transition-opacity duration-200"
-                >
-                  {/* Technical Info Section */}
-                  <div>
-                    {/* Video Info */}
-                    <div className="mb-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <VideoIcon className="w-4 h-4 text-[#0071e3]" />
-                        <h4 className="text-sm font-semibold text-[#f5f5f7] m-0">
-                          Video
-                        </h4>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 pl-6">
-                        <div>
-                          <div className="text-xs text-[#86868b]">
-                            Resolution
-                          </div>
-                          <div className="text-sm text-[#f5f5f7]">
-                            {item.resolution}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-[#86868b]">Codec</div>
-                          <div className="text-sm text-[#f5f5f7]">
-                            {item.videoCodec}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-[#86868b]">Bitrate</div>
-                          <div className="text-sm text-[#f5f5f7]">
-                            {item.videoBitrate}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-[#86868b]">
-                            Frame Rate
-                          </div>
-                          <div className="text-sm text-[#f5f5f7]">
-                            {item.frameRate}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Audio Info */}
-                    <div className="mb-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <AudioLines className="w-4 h-4 text-[#0071e3]" />
-                        <h4 className="text-sm font-semibold text-[#f5f5f7] m-0">
-                          Audio Tracks
-                        </h4>
-                      </div>
-                      <div className="space-y-2 pl-6">
-                        {item.audioTracks.map((track, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between bg-white/10 px-3 py-2 rounded-lg"
-                          >
-                            <span className="text-sm text-[#f5f5f7]">
-                              {track.language}
-                            </span>
-                            <span className="text-xs text-[#86868b]">
-                              {track.codec} • {track.channels}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Subtitles */}
-                    <div className="mb-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Captions className="w-4 h-4 text-[#0071e3]" />
-                        <h4 className="text-sm font-semibold text-[#f5f5f7] m-0">
-                          Subtitles
-                        </h4>
-                      </div>
-                      <div className="flex flex-wrap gap-2 pl-6">
-                        {item.subtitles.map((sub) => (
-                          <span
-                            key={sub}
-                            className="px-3 py-1 bg-white/10 text-[#86868b] text-xs rounded-md"
-                          >
-                            {sub}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* File Info */}
-                    <div>
-                      <div className="grid grid-cols-2 gap-3 pl-6">
-                        <div>
-                          <div className="text-xs text-[#86868b]">
-                            File Size
-                          </div>
-                          <div className="text-sm text-[#f5f5f7]">
-                            {item.fileSize}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-[#86868b]">
-                            Audio Codec
-                          </div>
-                          <div className="text-sm text-[#f5f5f7]">
-                            {item.audioCodec}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="mb-6">
+                <h3 className="text-[#f5f5f7] text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Film className="w-5 h-5 text-[#0071e3]" />
+                  Overview
+                </h3>
+                <p className="text-[#d2d2d7] text-base leading-relaxed m-0">
+                  {item.description || "No description available."}
+                </p>
+              </div>
             </div>
           </AnimatedHeight>
         </div>

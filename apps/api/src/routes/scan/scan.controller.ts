@@ -5,12 +5,13 @@ import { BadRequestError, AppError } from "../../lib/errors.js";
 export class ScanController {
   /**
    * POST /api/scan
-   * Scans a directory for media files (only adds new files)
+   * Scans a directory for media files
    *
    * Body:
    * - path: string (required) - Directory path to scan
    * - mediaType: 'MOVIE' | 'TV_SHOW' | 'MUSIC' | 'COMIC' (required)
    * - collectionName?: string (optional) - Name for the collection, defaults to folder name
+   * - updateExisting?: boolean (optional) - If true, updates existing entries with new external IDs and metadata
    */
   async scanDirectory(
     req: Request,
@@ -18,7 +19,7 @@ export class ScanController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { path, mediaType, collectionName } = req.body;
+      const { path, mediaType, collectionName, updateExisting } = req.body;
 
       // Validate required fields
       if (!path) {
@@ -34,18 +35,38 @@ export class ScanController {
         path,
         mediaType: mediaType as MediaType,
         collectionName,
+        updateExisting: updateExisting === true,
       });
 
       // Generate appropriate message based on results
       let message: string;
       if (result.totalFiles === 0) {
         message = `No ${mediaType} files found in the specified directory`;
-      } else if (result.stats.added === 0) {
+      } else if (result.stats.added === 0 && result.stats.updated === 0) {
         message = `All ${result.totalFiles} ${mediaType} files already exist in the collection`;
       } else if (result.stats.skipped === 0) {
-        message = `Successfully added ${result.stats.added} new ${mediaType} files`;
+        // Only new additions or updates
+        const parts: string[] = [];
+        if (result.stats.added > 0) {
+          parts.push(`${result.stats.added} added`);
+        }
+        if (result.stats.updated > 0) {
+          parts.push(`${result.stats.updated} updated`);
+        }
+        message = `Successfully processed ${result.totalFiles} ${mediaType} files (${parts.join(", ")})`;
       } else {
-        message = `Scanned ${result.totalFiles} ${mediaType} files (${result.stats.added} added, ${result.stats.skipped} already exist)`;
+        // Mixed: added, updated, and skipped
+        const parts: string[] = [];
+        if (result.stats.added > 0) {
+          parts.push(`${result.stats.added} added`);
+        }
+        if (result.stats.updated > 0) {
+          parts.push(`${result.stats.updated} updated`);
+        }
+        if (result.stats.skipped > 0) {
+          parts.push(`${result.stats.skipped} skipped`);
+        }
+        message = `Scanned ${result.totalFiles} ${mediaType} files (${parts.join(", ")})`;
       }
 
       res.jsonOk({

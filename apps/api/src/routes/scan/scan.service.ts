@@ -1,18 +1,12 @@
 import { promises as fs } from "fs";
 import { join, basename, extname } from "path";
 import { BadRequestError, NotFoundError } from "../../lib/errors.js";
+import { PrismaClient, MediaType } from "../../generated/prisma/index.js";
 import {
-  PrismaClient,
-  MediaType,
-  type Media,
-  type Movie,
-  type TVShow,
-  type Season,
-  type Episode,
-  type Music,
-  type Comic,
-  type Collection,
-} from "../../generated/prisma/index.js";
+  parseExternalIds,
+  removeExternalIds,
+  metadataService,
+} from "../../lib/metadata/index.js";
 
 const prisma = new PrismaClient();
 
@@ -22,6 +16,7 @@ export interface ScanOptions {
   path: string;
   mediaType: MediaType;
   collectionName?: string;
+  updateExisting?: boolean; // If true, updates existing entries with new external IDs and metadata
 }
 
 export interface ScannedFile {
@@ -42,6 +37,7 @@ export interface ScanResult {
   stats: {
     added: number;
     skipped: number;
+    updated: number;
   };
 }
 
@@ -178,12 +174,16 @@ export class ScanService {
   /**
    * Parses TV show information from file path
    * Example: /path/to/Show Name/Season 01/Show Name - S01E01.mkv
+   * Also handles external IDs: Show Name {tmdb-12345}/Season 01/...
    */
   private parseTVShowInfo(relativePath: string): {
     showName?: string;
     season?: number;
     episode?: number;
   } {
+    // Remove external IDs from path
+    const cleanPath = removeExternalIds(relativePath);
+
     // Extract season/episode from filename (e.g., S01E01, s01e01, 1x01)
     const patterns = [
       /[Ss](\d{1,2})[Ee](\d{1,3})/, // S01E01
@@ -195,7 +195,7 @@ export class ScanService {
     let episode: number | undefined;
 
     for (const pattern of patterns) {
-      const match = relativePath.match(pattern);
+      const match = cleanPath.match(pattern);
       if (match) {
         season = parseInt(match[1]!, 10);
         episode = parseInt(match[2]!, 10);
@@ -204,8 +204,8 @@ export class ScanService {
     }
 
     // Try to extract show name from directory structure
-    const parts = relativePath.split(/[\/\\]/);
-    const showName = parts.length > 1 ? parts[0] : undefined;
+    const parts = cleanPath.split(/[\/\\]/);
+    const showName = parts.length > 1 ? parts[0]!.trim() : undefined;
 
     return { showName, season, episode };
   }
@@ -221,18 +221,70 @@ export class ScanService {
   }
 
   /**
-   * Saves TV show episodes to the database (simple version - only adds new files)
+   * Extract external IDs from file path and optionally fetch metadata
+   */
+  private async extractMetadata(
+    filePath: string,
+    fileName: string,
+    mediaType: MediaType,
+    options?: {
+      fetchMetadata?: boolean; // Whether to fetch full metadata from providers
+    }
+  ): Promise<{
+    externalIds: Array<{ source: any; externalId: string }>;
+    metadata?: any;
+  }> {
+    // Parse external IDs from the full path (directory + filename)
+    const fullPath = `${filePath}/${fileName}`;
+    const parsedIds = parseExternalIds(fullPath);
+
+    const result: {
+      externalIds: Array<{ source: any; externalId: string }>;
+      metadata?: any;
+    } = {
+      externalIds: parsedIds.map((id) => ({
+        source: id.source,
+        externalId: id.id,
+      })),
+    };
+
+    // If we found IDs and metadata fetching is enabled, get metadata from the first ID
+    if (options?.fetchMetadata && parsedIds.length > 0 && parsedIds[0]) {
+      try {
+        const firstId = parsedIds[0];
+        const metadata = await metadataService.getMetadata(
+          firstId.id,
+          firstId.source,
+          mediaType
+        );
+
+        if (metadata) {
+          result.metadata = metadata;
+        }
+      } catch (error) {
+        console.warn("Failed to fetch metadata:", error);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Saves TV show episodes to the database
+   * Can add new files or update existing ones based on options
    */
   private async saveTVShowsToDatabase(
     files: ScannedFile[],
-    collectionName: string
-  ): Promise<{ added: number; skipped: number }> {
+    collectionName: string,
+    options?: { updateExisting?: boolean }
+  ): Promise<{ added: number; skipped: number; updated: number }> {
     let added = 0;
     let skipped = 0;
+    let updated = 0;
 
     // Early return if no files
     if (files.length === 0) {
-      return { added: 0, skipped: 0 };
+      return { added: 0, skipped: 0, updated: 0 };
     }
 
     // Group files by show name
@@ -287,18 +339,49 @@ export class ScanService {
               seasons: true,
             },
           },
+          externalIds: true,
         },
       });
 
       if (!media) {
+        // Extract external IDs from the show directory name
+        // Use the first episode's path to get the show directory
+        const firstEpisode = Array.from(seasonsMap.values())[0]?.[0];
+        const { externalIds, metadata } = firstEpisode
+          ? await this.extractMetadata(
+              firstEpisode.file.relativePath,
+              "",
+              MediaType.TV_SHOW,
+              { fetchMetadata: true } // Fetch metadata from providers
+            )
+          : { externalIds: [], metadata: undefined };
+
         // Create new TV show
         media = await prisma.media.create({
           data: {
-            title: showName,
+            title: metadata?.title || showName,
             type: MediaType.TV_SHOW,
+            description: metadata?.description,
+            posterUrl: metadata?.posterUrl,
+            backdropUrl: metadata?.backdropUrl,
+            rating: metadata?.rating,
+            releaseDate: metadata?.releaseDate,
             tvShow: {
-              create: {},
+              create: {
+                creator: metadata?.tvShow?.creator,
+                network: metadata?.tvShow?.network,
+              },
             },
+            // Create external IDs if any were found
+            externalIds:
+              externalIds.length > 0
+                ? {
+                    create: externalIds.map((id) => ({
+                      source: id.source,
+                      externalId: id.externalId,
+                    })),
+                  }
+                : undefined,
           },
           include: {
             tvShow: {
@@ -306,8 +389,72 @@ export class ScanService {
                 seasons: true,
               },
             },
+            externalIds: true,
           },
         });
+      } else if (options?.updateExisting) {
+        // Update existing TV show with external IDs if enabled
+        const firstEpisode = Array.from(seasonsMap.values())[0]?.[0];
+        const { externalIds, metadata } = firstEpisode
+          ? await this.extractMetadata(
+              firstEpisode.file.relativePath,
+              "",
+              MediaType.TV_SHOW,
+              { fetchMetadata: true }
+            )
+          : { externalIds: [], metadata: undefined };
+
+        // Check if we need to add new external IDs
+        const existingExternalIdSources = new Set(
+          media.externalIds.map((id) => id.source)
+        );
+        const newExternalIds = externalIds.filter(
+          (id) => !existingExternalIdSources.has(id.source)
+        );
+
+        // Update TV show metadata
+        await prisma.media.update({
+          where: { id: media.id },
+          data: {
+            title: metadata?.title || media.title,
+            description: metadata?.description || media.description,
+            posterUrl: metadata?.posterUrl || media.posterUrl,
+            backdropUrl: metadata?.backdropUrl || media.backdropUrl,
+            rating: metadata?.rating || media.rating,
+            releaseDate: metadata?.releaseDate || media.releaseDate,
+          },
+        });
+
+        // Update TV show specific fields
+        if (media.tvShow) {
+          await prisma.tVShow.update({
+            where: { id: media.tvShow.id },
+            data: {
+              creator: metadata?.tvShow?.creator || media.tvShow.creator,
+              network: metadata?.tvShow?.network || media.tvShow.network,
+            },
+          });
+        }
+
+        // Add new external IDs if any
+        if (newExternalIds.length > 0 && media) {
+          for (const id of newExternalIds) {
+            try {
+              await prisma.externalId.create({
+                data: {
+                  source: id.source,
+                  externalId: id.externalId,
+                  mediaId: media.id,
+                },
+              });
+            } catch (error) {
+              // Skip duplicates silently
+              console.warn(
+                `Duplicate external ID skipped: ${id.source}-${id.externalId}`
+              );
+            }
+          }
+        }
       }
 
       // Link to collection
@@ -350,8 +497,23 @@ export class ScanService {
           });
 
           if (existingEpisode) {
-            // File already exists - skip
-            skipped++;
+            // File already exists
+            if (options?.updateExisting) {
+              // Update episode metadata if needed
+              const fileStats = await fs.stat(file.path);
+              await prisma.episode.update({
+                where: { id: existingEpisode.id },
+                data: {
+                  title: file.name.replace(extname(file.name), ""),
+                  number: episodeNumber,
+                  fileSize: BigInt(file.size),
+                  fileModifiedAt: fileStats.mtime,
+                },
+              });
+              updated++;
+            } else {
+              skipped++;
+            }
           } else {
             // Add new episode
             const fileStats = await fs.stat(file.path);
@@ -372,7 +534,7 @@ export class ScanService {
       }
     }
 
-    return { added, skipped };
+    return { added, skipped, updated };
   }
 
   /**
@@ -402,18 +564,21 @@ export class ScanService {
   }
 
   /**
-   * Saves movies to the database (simple version - only adds new files)
+   * Saves movies to the database
+   * Can add new files or update existing ones based on options
    */
   private async saveMoviesToDatabase(
     files: ScannedFile[],
-    collectionName: string
-  ): Promise<{ added: number; skipped: number }> {
+    collectionName: string,
+    options?: { updateExisting?: boolean }
+  ): Promise<{ added: number; skipped: number; updated: number }> {
     let added = 0;
     let skipped = 0;
+    let updated = 0;
 
     // Early return if no files
     if (files.length === 0) {
-      return { added: 0, skipped: 0 };
+      return { added: 0, skipped: 0, updated: 0 };
     }
 
     // Create or find collection (only if we have files)
@@ -431,12 +596,16 @@ export class ScanService {
       // Check if movie already exists by filePath
       const existingMovie = await prisma.movie.findUnique({
         where: { filePath: file.path },
+        include: {
+          media: {
+            include: {
+              externalIds: true,
+            },
+          },
+        },
       });
 
       if (existingMovie) {
-        // File already exists - skip
-        skipped++;
-
         // Ensure it's linked to the collection
         await prisma.mediaCollection.upsert({
           where: {
@@ -451,6 +620,84 @@ export class ScanService {
           },
           update: {},
         });
+
+        // If updateExisting is enabled, update external IDs and metadata
+        if (options?.updateExisting) {
+          const { title, year } = this.parseMovieInfo(
+            file.relativePath,
+            file.name
+          );
+
+          // Extract external IDs from file path
+          const { externalIds, metadata } = await this.extractMetadata(
+            file.relativePath,
+            file.name,
+            MediaType.MOVIE,
+            { fetchMetadata: true }
+          );
+
+          // Check if we need to add new external IDs
+          const existingExternalIdSources = new Set(
+            existingMovie.media.externalIds.map((id) => id.source)
+          );
+          const newExternalIds = externalIds.filter(
+            (id) => !existingExternalIdSources.has(id.source)
+          );
+
+          // Update media entry
+          await prisma.media.update({
+            where: { id: existingMovie.mediaId },
+            data: {
+              title: metadata?.title || existingMovie.media.title,
+              description:
+                metadata?.description || existingMovie.media.description,
+              posterUrl: metadata?.posterUrl || existingMovie.media.posterUrl,
+              backdropUrl:
+                metadata?.backdropUrl || existingMovie.media.backdropUrl,
+              rating: metadata?.rating || existingMovie.media.rating,
+              releaseDate:
+                metadata?.releaseDate ||
+                existingMovie.media.releaseDate ||
+                (year ? new Date(year, 0, 1) : undefined),
+            },
+          });
+
+          // Update movie-specific fields
+          await prisma.movie.update({
+            where: { id: existingMovie.id },
+            data: {
+              duration: metadata?.movie?.duration || existingMovie.duration,
+              director: metadata?.movie?.director || existingMovie.director,
+              trailerUrl:
+                metadata?.movie?.trailerUrl || existingMovie.trailerUrl,
+            },
+          });
+
+          // Add new external IDs if any
+          if (newExternalIds.length > 0) {
+            for (const id of newExternalIds) {
+              try {
+                await prisma.externalId.create({
+                  data: {
+                    source: id.source,
+                    externalId: id.externalId,
+                    mediaId: existingMovie.mediaId,
+                  },
+                });
+              } catch (error) {
+                // Skip duplicates silently
+                console.warn(
+                  `Duplicate external ID skipped: ${id.source}-${id.externalId}`
+                );
+              }
+            }
+          }
+
+          updated++;
+        } else {
+          // Just skip if not updating
+          skipped++;
+        }
       } else {
         // Add new movie
         const { title, year } = this.parseMovieInfo(
@@ -459,21 +706,51 @@ export class ScanService {
         );
         const fileStats = await fs.stat(file.path);
 
-        const media = await prisma.media.create({
-          data: {
-            title,
-            type: MediaType.MOVIE,
-            releaseDate: year ? new Date(year, 0, 1) : undefined,
-            movie: {
-              create: {
-                filePath: file.path,
-                fileSize: BigInt(file.size),
-                fileModifiedAt: fileStats.mtime,
-              },
+        // Extract external IDs from file path
+        const { externalIds, metadata } = await this.extractMetadata(
+          file.relativePath,
+          file.name,
+          MediaType.MOVIE,
+          { fetchMetadata: true } // Fetch metadata from providers
+        );
+
+        // Use metadata if available, otherwise use parsed info
+        const mediaData = {
+          title: metadata?.title || title,
+          type: MediaType.MOVIE,
+          description: metadata?.description,
+          posterUrl: metadata?.posterUrl,
+          backdropUrl: metadata?.backdropUrl,
+          rating: metadata?.rating,
+          releaseDate:
+            metadata?.releaseDate || (year ? new Date(year, 0, 1) : undefined),
+          movie: {
+            create: {
+              filePath: file.path,
+              fileSize: BigInt(file.size),
+              fileModifiedAt: fileStats.mtime,
+              duration: metadata?.movie?.duration,
+              director: metadata?.movie?.director,
+              trailerUrl: metadata?.movie?.trailerUrl,
             },
           },
+          // Create external IDs if any were found
+          externalIds:
+            externalIds.length > 0
+              ? {
+                  create: externalIds.map((id) => ({
+                    source: id.source,
+                    externalId: id.externalId,
+                  })),
+                }
+              : undefined,
+        };
+
+        const media = await prisma.media.create({
+          data: mediaData,
           include: {
             movie: true,
+            externalIds: true,
           },
         });
 
@@ -489,12 +766,13 @@ export class ScanService {
       }
     }
 
-    return { added, skipped };
+    return { added, skipped, updated };
   }
 
   /**
    * Parses music information from file path
    * Example: Artist Name/Album Name/Track 01 - Song Title.mp3
+   * Also handles external IDs: Artist {spotify-123}/Album/Song.mp3
    */
   private parseMusicInfo(
     relativePath: string,
@@ -504,15 +782,19 @@ export class ScanService {
     album?: string;
     title: string;
   } {
-    const parts = relativePath.split(/[\/\\]/);
+    // Remove external IDs
+    const cleanPath = removeExternalIds(relativePath);
+    const cleanFileName = removeExternalIds(fileName);
+
+    const parts = cleanPath.split(/[\/\\]/);
 
     // Try to extract artist and album from directory structure
-    const artist = parts.length > 1 ? parts[0] : undefined;
-    const album = parts.length > 2 ? parts[1] : undefined;
+    const artist = parts.length > 1 ? parts[0]!.trim() : undefined;
+    const album = parts.length > 2 ? parts[1]!.trim() : undefined;
 
     // Remove track number and extension to get title
-    const title = fileName
-      .replace(extname(fileName), "")
+    const title = cleanFileName
+      .replace(extname(cleanFileName), "")
       .replace(/^\d+[-.\s]+/, "") // Remove track number prefix
       .trim();
 
@@ -525,13 +807,13 @@ export class ScanService {
   private async saveMusicToDatabase(
     files: ScannedFile[],
     collectionName: string
-  ): Promise<{ added: number; skipped: number }> {
+  ): Promise<{ added: number; skipped: number; updated: number }> {
     let added = 0;
     let skipped = 0;
 
     // Early return if no files
     if (files.length === 0) {
-      return { added: 0, skipped: 0 };
+      return { added: 0, skipped: 0, updated: 0 };
     }
 
     // Create or find collection (only if we have files)
@@ -608,12 +890,13 @@ export class ScanService {
       }
     }
 
-    return { added, skipped };
+    return { added, skipped, updated: 0 };
   }
 
   /**
    * Parses comic information from file path
    * Example: Series Name/Series Name #001.cbz or Series Name Vol 1/Issue 01.cbr
+   * Also handles external IDs: Series {comicvine-12345}/Issue 01.cbr
    */
   private parseComicInfo(
     relativePath: string,
@@ -623,24 +906,28 @@ export class ScanService {
     issue?: number;
     volume?: string;
   } {
-    const parts = relativePath.split(/[\/\\]/);
-    const seriesName = parts.length > 1 ? parts[0] : undefined;
+    // Remove external IDs
+    const cleanPath = removeExternalIds(relativePath);
+    const cleanFileName = removeExternalIds(fileName);
+
+    const parts = cleanPath.split(/[\/\\]/);
+    const seriesName = parts.length > 1 ? parts[0]!.trim() : undefined;
 
     // Try to extract issue number (e.g., #001, Issue 01, 001)
-    const issueMatch = fileName.match(/#?(\d+)/);
+    const issueMatch = cleanFileName.match(/#?(\d+)/);
     const issue = issueMatch ? parseInt(issueMatch[1]!, 10) : undefined;
 
     // Try to extract volume (e.g., Vol 1, Volume 1)
     const volumeMatch =
-      relativePath.match(/Vol(?:ume)?\s*(\d+)/i) ||
-      fileName.match(/Vol(?:ume)?\s*(\d+)/i);
+      cleanPath.match(/Vol(?:ume)?\s*(\d+)/i) ||
+      cleanFileName.match(/Vol(?:ume)?\s*(\d+)/i);
     const volume = volumeMatch ? volumeMatch[1] : undefined;
 
     // Use series name or clean filename as title
     const title =
       seriesName ||
-      fileName
-        .replace(extname(fileName), "")
+      cleanFileName
+        .replace(extname(cleanFileName), "")
         .replace(/#?\d+/, "")
         .replace(/Vol(?:ume)?\s*\d+/i, "")
         .trim();
@@ -654,13 +941,13 @@ export class ScanService {
   private async saveComicsToDatabase(
     files: ScannedFile[],
     collectionName: string
-  ): Promise<{ added: number; skipped: number }> {
+  ): Promise<{ added: number; skipped: number; updated: number }> {
     let added = 0;
     let skipped = 0;
 
     // Early return if no files
     if (files.length === 0) {
-      return { added: 0, skipped: 0 };
+      return { added: 0, skipped: 0, updated: 0 };
     }
 
     // Create or find collection (only if we have files)
@@ -737,14 +1024,15 @@ export class ScanService {
       }
     }
 
-    return { added, skipped };
+    return { added, skipped, updated: 0 };
   }
 
   /**
-   * Main scan method - only adds new files (simple and fast)
+   * Main scan method
+   * Can add new files or update existing ones based on options
    */
   async scan(options: ScanOptions): Promise<ScanResult> {
-    const { path, mediaType, collectionName } = options;
+    const { path, mediaType, collectionName, updateExisting } = options;
 
     // Validate inputs
     if (!path || path.trim() === "") {
@@ -781,6 +1069,7 @@ export class ScanService {
         stats: {
           added: 0,
           skipped: 0,
+          updated: 0,
         },
       };
     }
@@ -789,6 +1078,7 @@ export class ScanService {
     let stats = {
       added: 0,
       skipped: 0,
+      updated: 0,
     };
 
     // Save to database based on media type
@@ -798,13 +1088,15 @@ export class ScanService {
         case MediaType.TV_SHOW:
           saveStats = await this.saveTVShowsToDatabase(
             files,
-            finalCollectionName
+            finalCollectionName,
+            { updateExisting }
           );
           break;
         case MediaType.MOVIE:
           saveStats = await this.saveMoviesToDatabase(
             files,
-            finalCollectionName
+            finalCollectionName,
+            { updateExisting }
           );
           break;
         case MediaType.MUSIC:

@@ -6,11 +6,11 @@ import { AnimatedHeight } from "../animation";
 const ExpandableRow = ({
   title,
   items,
-  setCurrentMovie,
+  onItemClick,
 }: {
   title: string;
   items: any[];
-  setCurrentMovie: (id: number) => void;
+  onItemClick: (id: string) => void;
 }) => {
   const [visibleCount, setVisibleCount] = useState<number>(1);
   const [sectionHeight, setSectionHeight] = useState<number>(0);
@@ -93,7 +93,7 @@ const ExpandableRow = ({
               title={item.title}
               year={item.year}
               image={item.image}
-              onClick={() => setCurrentMovie(item.id)}
+              onClick={() => onItemClick(item.id)}
             />
           ))}
         </div>

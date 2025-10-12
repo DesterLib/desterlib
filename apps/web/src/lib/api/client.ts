@@ -1,30 +1,27 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-export interface Movie {
-  id: number;
+export interface Media {
+  id: string;
   title: string;
-  year: number;
-  image: string;
-  duration: string;
-  resolution: string;
-  videoCodec: string;
-  videoBitrate: string;
-  audioCodec: string;
-  audioBitrate: string;
-  fileSize: string;
-  frameRate: string;
-  description: string;
-  director: string;
-  cast: string[];
-  genre: string[];
-  rating: string;
-  imdbRating: string;
-  audioTracks: Array<{
-    language: string;
-    codec: string;
-    channels: string;
-  }>;
-  subtitles: string[];
+  type: "MOVIE" | "TV_SHOW" | "MUSIC" | "COMIC";
+  description?: string;
+  posterUrl?: string;
+  backdropUrl?: string;
+  rating?: number;
+  releaseDate?: string;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  posterUrl?: string;
+  backdropUrl?: string;
+  mediaCount: number;
+  recentMedia: Media[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface SuccessEnvelope<T> {
@@ -74,8 +71,21 @@ async function fetcher<T>(
 }
 
 export const api = {
-  movies: {
-    getAll: () => fetcher<{ movies: Movie[]; total: number }>("/api/movies"),
-    getById: (id: number) => fetcher<{ movie: Movie }>(`/api/movies/${id}`),
+  collections: {
+    getAll: () => fetcher<{ collections: Collection[] }>("/api/collections"),
+    getById: (slugOrId: string) =>
+      fetcher<{ collection: Collection }>(`/api/collections/${slugOrId}`),
+  },
+  media: {
+    getAll: (params?: { type?: string; collectionId?: string }) => {
+      const query = new URLSearchParams();
+      if (params?.type) query.append("type", params.type);
+      if (params?.collectionId)
+        query.append("collectionId", params.collectionId);
+      return fetcher<{ media: Media[] }>(
+        `/api/media${query.toString() ? `?${query.toString()}` : ""}`
+      );
+    },
+    getById: (id: string) => fetcher<{ media: Media }>(`/api/media/${id}`),
   },
 };

@@ -120,6 +120,26 @@ const options: swaggerJsdoc.Options = {
               format: "date-time",
               example: "2025-10-12T10:30:00.000Z",
             },
+            stats: {
+              type: "object",
+              properties: {
+                added: {
+                  type: "integer",
+                  description: "Number of new files added",
+                  example: 10,
+                },
+                skipped: {
+                  type: "integer",
+                  description: "Number of files already existing",
+                  example: 5,
+                },
+                updated: {
+                  type: "integer",
+                  description: "Number of existing files updated",
+                  example: 2,
+                },
+              },
+            },
           },
         },
         Pagination: {
@@ -514,7 +534,15 @@ const options: swaggerJsdoc.Options = {
             },
             role: {
               type: "string",
-              enum: ["ACTOR", "DIRECTOR", "WRITER", "PRODUCER", "ARTIST", "COMPOSER", "AUTHOR"],
+              enum: [
+                "ACTOR",
+                "DIRECTOR",
+                "WRITER",
+                "PRODUCER",
+                "ARTIST",
+                "COMPOSER",
+                "AUTHOR",
+              ],
               example: "ACTOR",
             },
             character: {
@@ -601,7 +629,17 @@ const options: swaggerJsdoc.Options = {
             },
             source: {
               type: "string",
-              enum: ["TMDB", "IMDB", "TVDB", "ANIDB", "MYANIMELIST", "MUSICBRAINZ", "SPOTIFY", "COMICVINE", "OTHER"],
+              enum: [
+                "TMDB",
+                "IMDB",
+                "TVDB",
+                "ANIDB",
+                "MYANIMELIST",
+                "MUSICBRAINZ",
+                "SPOTIFY",
+                "COMICVINE",
+                "OTHER",
+              ],
               example: "TMDB",
             },
             externalId: {

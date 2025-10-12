@@ -11,6 +11,7 @@ import moviesRouter from "./routes/movies/movies.module.js";
 import tvShowsRouter from "./routes/tv-shows/tv-shows.module.js";
 import musicRouter from "./routes/music/music.module.js";
 import comicsRouter from "./routes/comics/comics.module.js";
+import collectionsRouter from "./routes/collections/collections.module.js";
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -112,6 +113,7 @@ app.get("/health", (_req, res) => {
 // API Routes
 app.use("/api/scan", scanRouter);
 app.use("/api/media", mediaRouter);
+app.use("/api/collections", collectionsRouter);
 app.use("/api/movies", moviesRouter);
 app.use("/api/tv-shows", tvShowsRouter);
 app.use("/api/music", musicRouter);

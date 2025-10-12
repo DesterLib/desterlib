@@ -2,49 +2,57 @@ import { useState, useRef, useEffect } from "preact/hooks";
 import { AnimatedPresence, Animated } from "./lib/animation";
 import ExpandableRow from "./lib/ui/expandable_row";
 import DetailsDialog from "./lib/ui/details_dialog";
-import { api, type Movie } from "./lib/api/client";
+import { api, type Collection } from "./lib/api/client";
 
 export function App() {
-  const [movies, setMovies] = useState<Movie[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentMovie, setCurrentMovie] = useState<number | null>(null);
+  const [currentMediaId, setCurrentMediaId] = useState<string | null>(null);
 
-  // Fetch movies on mount
+  // Fetch collections on mount
   useEffect(() => {
-    const fetchMovies = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
 
-      const response = await api.movies.getAll();
+      try {
+        const collectionsResponse = await api.collections.getAll();
 
-      if (response.success && response.data) {
-        setMovies(response.data.movies);
-      } else if (!response.success) {
-        setError(response.error.message);
+        if (collectionsResponse.success && collectionsResponse.data) {
+          setCollections(collectionsResponse.data.collections);
+        } else if (!collectionsResponse.success) {
+          setError(collectionsResponse.error.message);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load data");
       }
 
       setLoading(false);
     };
 
-    fetchMovies();
+    fetchData();
   }, []);
 
-  // Keep a reference to the last selected movie for exit animation
-  const lastSelectedMovieRef = useRef<(typeof movies)[0] | null>(null);
+  // Flatten all media from collections
+  const allMedia = collections.flatMap((col) => col.recentMedia);
 
-  const selectedMovie = movies.find((m) => m.id === currentMovie);
-  const isDialogOpen = currentMovie !== null;
+  // Find selected media
+  const selectedMedia = allMedia.find((m) => m.id === currentMediaId);
+  const isDialogOpen = currentMediaId !== null;
 
-  // Update the ref when a movie is selected
+  // Keep a reference to the last selected media for exit animation
+  const lastSelectedMediaRef = useRef<typeof selectedMedia | null>(null);
+
+  // Update the ref when media is selected
   useEffect(() => {
-    if (selectedMovie) {
-      lastSelectedMovieRef.current = selectedMovie;
+    if (selectedMedia) {
+      lastSelectedMediaRef.current = selectedMedia;
     }
-  }, [selectedMovie]);
+  }, [selectedMedia]);
 
-  // Use lastSelectedMovie for rendering during exit animation
-  const movieToRender = selectedMovie || lastSelectedMovieRef.current;
+  // Use lastSelectedMedia for rendering during exit animation
+  const mediaToRender = selectedMedia || lastSelectedMediaRef.current;
 
   // Loading state
   if (loading) {
@@ -53,7 +61,7 @@ export function App() {
         <Animated show={true} preset="fade" duration={300}>
           <div className="text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-white/20 border-r-white/80 mb-4"></div>
-            <p className="text-white/60 text-lg">Loading movies...</p>
+            <p className="text-white/60 text-lg">Loading collections...</p>
           </div>
         </Animated>
       </main>
@@ -84,24 +92,48 @@ export function App() {
   return (
     <main className="min-h-screen lg:px-8 lg:py-12 px-2 py-8 bg-black">
       <Animated show={true} preset="fade" duration={500}>
-        <div className="flex flex-col gap-2 lg:gap-4">
-          <ExpandableRow
-            title="Movies"
-            items={movies}
-            setCurrentMovie={setCurrentMovie}
-          />
-          <ExpandableRow
-            title="TV Shows"
-            items={movies}
-            setCurrentMovie={setCurrentMovie}
-          />
-        </div>
+        {collections.length === 0 ? (
+          <div className="text-center py-16 px-4">
+            <div className="text-white/40 text-6xl mb-4">📚</div>
+            <h2 className="text-white text-2xl font-semibold mb-2">
+              No collections yet
+            </h2>
+            <p className="text-white/60">
+              Start scanning your media to create collections
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 lg:gap-4">
+            {collections.map((collection) => {
+              const items = collection.recentMedia.map((media) => ({
+                id: media.id,
+                title: media.title,
+                year: media.releaseDate
+                  ? new Date(media.releaseDate).getFullYear()
+                  : undefined,
+                image:
+                  media.backdropUrl ||
+                  media.posterUrl ||
+                  "https://via.placeholder.com/1280x720/1a1a1a/666666?text=No+Image",
+              }));
+
+              return (
+                <ExpandableRow
+                  key={collection.id}
+                  title={`${collection.name} (${collection.mediaCount})`}
+                  items={items}
+                  onItemClick={(id) => setCurrentMediaId(id)}
+                />
+              );
+            })}
+          </div>
+        )}
       </Animated>
       <AnimatedPresence show={isDialogOpen} exitDuration={300}>
-        {movieToRender && (
+        {mediaToRender && (
           <DetailsDialog
-            item={movieToRender}
-            setCurrentMovie={setCurrentMovie}
+            item={mediaToRender}
+            onClose={() => setCurrentMediaId(null)}
             isOpen={isDialogOpen}
           />
         )}
