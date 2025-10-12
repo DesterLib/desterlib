@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
 import { requestContextMiddleware } from "./lib/requestContext.js";
 import { responseEnhancerMiddleware } from "./lib/response.js";
 import { notFoundHandler, errorHandler } from "./lib/errorHandler.js";
+import { swaggerSpec } from "./config/swagger.js";
 import scanRouter from "./routes/scan/scan.module.js";
 
 const app = express();
@@ -20,6 +22,84 @@ app.use(express.json());
 app.use(requestContextMiddleware);
 app.use(responseEnhancerMiddleware);
 
+// Swagger documentation with dark mode
+const swaggerDarkCss = `
+  html { background: #1a1a1a; }
+  body { background: #1a1a1a; margin: 0; }
+  .swagger-ui .topbar { display: none }
+  .swagger-ui { background: #1a1a1a; }
+  .swagger-ui .info { background: transparent; }
+  .swagger-ui .info .title { color: #fff; }
+  .swagger-ui .info .description, .swagger-ui .info .base-url { color: #b3b3b3; }
+  .swagger-ui .scheme-container { background: #2a2a2a; }
+  .swagger-ui .opblock-tag { color: #fff; border-bottom: 1px solid #3a3a3a; }
+  .swagger-ui .opblock { background: #2a2a2a; border: 1px solid #3a3a3a; }
+  .swagger-ui .opblock .opblock-summary { background: #2a2a2a; border: none; }
+  .swagger-ui .opblock .opblock-summary-description { color: #b3b3b3; }
+  .swagger-ui .opblock .opblock-section-header { background: #2a2a2a; }
+  .swagger-ui .opblock-description-wrapper, .swagger-ui .opblock-external-docs-wrapper { color: #b3b3b3; }
+  .swagger-ui .opblock-body pre.microlight { background: #1a1a1a; border: 1px solid #3a3a3a; color: #b3b3b3; }
+  .swagger-ui .parameter__name, .swagger-ui .parameter__type { color: #fff; }
+  .swagger-ui .response-col_status { color: #fff; }
+  .swagger-ui .response-col_description { color: #b3b3b3; }
+  .swagger-ui .tab li { color: #b3b3b3; }
+  .swagger-ui .tab li.active { color: #fff; }
+  .swagger-ui table thead tr td, .swagger-ui table thead tr th { color: #fff; border-bottom: 1px solid #3a3a3a; }
+  .swagger-ui .model-box { background: #2a2a2a; }
+  .swagger-ui .model { color: #b3b3b3; }
+  .swagger-ui .model-title { color: #fff; }
+  .swagger-ui .prop-type { color: #88c0d0; }
+  .swagger-ui .prop-format { color: #a3be8c; }
+  .swagger-ui section.models { border: 1px solid #3a3a3a; }
+  .swagger-ui section.models h4 { color: #fff; border-bottom: 1px solid #3a3a3a; }
+  .swagger-ui .btn { background: #4a4a4a; color: #fff; border: 1px solid #5a5a5a; }
+  .swagger-ui .btn:hover { background: #5a5a5a; }
+  .swagger-ui .responses-inner h5, .swagger-ui .responses-inner h4 { color: #fff; }
+  .swagger-ui input[type=text], .swagger-ui input[type=password], .swagger-ui input[type=email],
+  .swagger-ui textarea, .swagger-ui select { background: #2a2a2a; color: #fff; border: 1px solid #3a3a3a; }
+  .swagger-ui textarea:focus, .swagger-ui input[type=text]:focus { border: 1px solid #5a5a5a; }
+`;
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCss: swaggerDarkCss,
+    customSiteTitle: "Dester API Documentation",
+  })
+);
+
+// Swagger JSON endpoint
+app.get("/api-docs.json", (_req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     summary: Health check
+ *     description: Returns the API health status
+ *     tags:
+ *       - System
+ *     responses:
+ *       200:
+ *         description: API is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         status:
+ *                           type: string
+ *                           example: ok
+ */
 app.get("/health", (_req, res) => {
   res.jsonOk({ status: "ok" });
 });
@@ -33,4 +113,7 @@ app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);
+  console.log(
+    `📚 API Documentation available at http://localhost:${port}/api-docs`
+  );
 });

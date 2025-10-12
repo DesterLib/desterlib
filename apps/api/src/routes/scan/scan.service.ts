@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import { join, basename, extname, dirname } from "path";
+import { join, basename, extname } from "path";
 import { BadRequestError, NotFoundError } from "../../lib/errors.js";
 
 export type MediaType = "MOVIE" | "TV_SHOW" | "MUSIC" | "COMIC";
@@ -93,9 +93,14 @@ export class ScanService {
             basePath
           );
           files.push(...subFiles);
-        } else if (entry.isFile() && this.isSupportedFile(entry.name, mediaType)) {
+        } else if (
+          entry.isFile() &&
+          this.isSupportedFile(entry.name, mediaType)
+        ) {
           const stats = await fs.stat(fullPath);
-          const relativePath = fullPath.replace(basePath, "").replace(/^[\/\\]/, "");
+          const relativePath = fullPath
+            .replace(basePath, "")
+            .replace(/^[\/\\]/, "");
 
           files.push({
             path: fullPath,
@@ -125,8 +130,8 @@ export class ScanService {
   } {
     // Extract season/episode from filename (e.g., S01E01, s01e01, 1x01)
     const patterns = [
-      /[Ss](\d{1,2})[Ee](\d{1,3})/,  // S01E01
-      /(\d{1,2})x(\d{1,3})/,          // 1x01
+      /[Ss](\d{1,2})[Ee](\d{1,3})/, // S01E01
+      /(\d{1,2})x(\d{1,3})/, // 1x01
       /[Ss]eason\s*(\d{1,2}).*[Ee]pisode\s*(\d{1,3})/i, // Season 1 Episode 1
     ];
 
@@ -136,8 +141,8 @@ export class ScanService {
     for (const pattern of patterns) {
       const match = relativePath.match(pattern);
       if (match) {
-        season = parseInt(match[1], 10);
-        episode = parseInt(match[2], 10);
+        season = parseInt(match[1]!, 10);
+        episode = parseInt(match[2]!, 10);
         break;
       }
     }
@@ -205,4 +210,3 @@ export class ScanService {
 
 // Export singleton instance
 export const scanService = new ScanService();
-

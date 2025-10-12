@@ -12,7 +12,11 @@ export class ScanController {
    * - mediaType: 'MOVIE' | 'TV_SHOW' | 'MUSIC' | 'COMIC' (required)
    * - collectionName?: string (optional) - Name for the collection, defaults to folder name
    */
-  async scanDirectory(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async scanDirectory(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { path, mediaType, collectionName } = req.body;
 
@@ -44,57 +48,7 @@ export class ScanController {
       }
     }
   }
-
-  /**
-   * GET /api/scan/supported-extensions
-   * Returns supported file extensions for each media type
-   */
-  async getSupportedExtensions(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { mediaType } = req.query;
-
-      if (mediaType) {
-        const extensions = scanService.getSupportedExtensions(
-          mediaType as MediaType
-        );
-        res.jsonOk({
-          mediaType,
-          extensions,
-        });
-      } else {
-        const allExtensions: Record<string, string[]> = {};
-        for (const type of scanService.getSupportedMediaTypes()) {
-          allExtensions[type] = scanService.getSupportedExtensions(type);
-        }
-        res.jsonOk({
-          supportedExtensions: allExtensions,
-        });
-      }
-    } catch (error) {
-      next(new AppError("Failed to fetch supported extensions", { cause: error }));
-    }
-  }
-
-  /**
-   * GET /api/scan/media-types
-   * Returns all supported media types
-   */
-  async getMediaTypes(_req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const mediaTypes = scanService.getSupportedMediaTypes();
-      res.jsonOk({
-        mediaTypes,
-      });
-    } catch (error) {
-      next(new AppError("Failed to fetch media types", { cause: error }));
-    }
-  }
 }
 
 // Export singleton instance
 export const scanController = new ScanController();
-
