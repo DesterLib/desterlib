@@ -212,7 +212,17 @@ export class MediaService {
           include: {
             seasons: {
               include: {
-                episodes: true,
+                episodes: {
+                  select: {
+                    id: true,
+                    title: true,
+                    number: true,
+                    duration: true,
+                    airDate: true,
+                    filePath: true,
+                    seasonId: true,
+                  },
+                },
               },
               orderBy: { number: "asc" },
             },
@@ -299,7 +309,9 @@ export class MediaService {
   ) {
     const season = await this.getSeasonById(tvShowId, seasonNumber);
 
-    const episode = season.episodes.find((e: any) => e.number === episodeNumber);
+    const episode = season.episodes.find(
+      (e: any) => e.number === episodeNumber
+    );
 
     if (!episode) {
       throw new NotFoundError(

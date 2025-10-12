@@ -16,31 +16,18 @@ import type { Media } from "../api/client";
 
 // Helper function to send video playback signal to Swift app
 const playVideo = (streamUrl: string) => {
-  console.log("🎬 [playVideo] Attempting to play video with URL:", streamUrl);
-
   try {
     if (
       typeof window !== "undefined" &&
       window.webkit?.messageHandlers?.playVideo
     ) {
-      console.log(
-        "✅ [playVideo] Swift message handler available, sending message..."
-      );
       window.webkit.messageHandlers.playVideo.postMessage({ url: streamUrl });
-      console.log("✅ [playVideo] Message sent successfully " + streamUrl);
     } else {
-      console.warn(
-        "❌ [playVideo] Swift message handler not available " + streamUrl
-      );
       alert(
         "Video playback is not available. Please open this app in the native Swift application."
       );
     }
   } catch (error) {
-    console.error(
-      "❌ [playVideo] Error sending video signal to Swift app:",
-      error
-    );
     alert(
       "Failed to start video playback. Error: " +
         (error instanceof Error ? error.message : "Unknown error")
@@ -79,43 +66,21 @@ const DetailsDialog = ({
   };
 
   const handlePlayClick = () => {
-    console.log(
-      "🎯 [handlePlayClick] Play button clicked for:",
-      item.type,
-      item.title
-    );
-    console.log("🎯 [handlePlayClick] Item data:", item);
-
     if (item.type === "MOVIE" && item.movie?.streamUrl) {
-      console.log(
-        "🎥 [handlePlayClick] Playing movie with streamUrl:",
-        item.movie.streamUrl
-      );
       playVideo(item.movie.streamUrl);
     } else if (item.type === "TV_SHOW" && item.tvShow?.seasons.length) {
       // Find season 1
       const season1 = item.tvShow.seasons.find((s) => s.number === 1);
-      console.log("📺 [handlePlayClick] Found season 1:", season1);
 
       if (season1 && season1.episodes.length > 0) {
         // Play first episode of season 1
         const episode1 = season1.episodes.find((e) => e.number === 1);
         const firstEpisode = episode1 || season1.episodes[0];
-        console.log(
-          "📺 [handlePlayClick] Playing first episode:",
-          firstEpisode
-        );
 
         if (firstEpisode?.streamUrl) {
           playVideo(firstEpisode.streamUrl);
-        } else {
-          console.warn("⚠️ [handlePlayClick] First episode has no streamUrl");
         }
-      } else {
-        console.warn("⚠️ [handlePlayClick] No episodes found in season 1");
       }
-    } else {
-      console.warn("⚠️ [handlePlayClick] No valid media or streamUrl found");
     }
   };
 

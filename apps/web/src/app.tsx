@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from "preact/hooks";
 import { AnimatedPresence, Animated } from "./lib/animation";
 import ExpandableRow from "./lib/ui/expandable_row";
 import DetailsDialog from "./lib/ui/details_dialog";
-import { api, type Collection } from "./lib/api/client";
+import { api, type Collection, type Media } from "./lib/api/client";
 
 export function App() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentMediaId, setCurrentMediaId] = useState<string | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
 
   // Fetch collections on mount
   useEffect(() => {
@@ -34,11 +35,30 @@ export function App() {
     fetchData();
   }, []);
 
-  // Flatten all media from collections
-  const allMedia = collections.flatMap((col) => col.recentMedia);
+  // Fetch full media details when a media is selected
+  useEffect(() => {
+    if (!currentMediaId) {
+      setSelectedMedia(null);
+      return;
+    }
 
-  // Find selected media
-  const selectedMedia = allMedia.find((m) => m.id === currentMediaId);
+    const fetchMediaDetails = async () => {
+      try {
+        const response = await api.media.getById(currentMediaId);
+        
+        if (response.success && response.data) {
+          setSelectedMedia(response.data.media);
+        } else if (!response.success) {
+          setError(response.error.message);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load media");
+      }
+    };
+
+    fetchMediaDetails();
+  }, [currentMediaId]);
+
   const isDialogOpen = currentMediaId !== null;
 
   // Keep a reference to the last selected media for exit animation
@@ -130,9 +150,9 @@ export function App() {
         )}
       </Animated>
       <AnimatedPresence show={isDialogOpen} exitDuration={300}>
-        {mediaToRender && (
+        {(selectedMedia || mediaToRender) && (
           <DetailsDialog
-            item={mediaToRender}
+            item={(selectedMedia || mediaToRender)!}
             onClose={() => setCurrentMediaId(null)}
             isOpen={isDialogOpen}
           />
