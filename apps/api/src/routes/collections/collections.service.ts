@@ -13,14 +13,27 @@ export class CollectionsService {
         media: {
           include: {
             media: {
-              select: {
-                id: true,
-                title: true,
-                type: true,
-                posterUrl: true,
-                backdropUrl: true,
-                rating: true,
-                releaseDate: true,
+              include: {
+                tvShow: {
+                  include: {
+                    seasons: {
+                      include: {
+                        episodes: {
+                          select: {
+                            id: true,
+                            title: true,
+                            number: true,
+                            duration: true,
+                            airDate: true,
+                            filePath: true,
+                            seasonId: true,
+                          },
+                        },
+                      },
+                      orderBy: { number: "asc" },
+                    },
+                  },
+                },
               },
             },
           },
@@ -69,18 +82,58 @@ export class CollectionsService {
                   },
                 },
                 externalIds: true,
-                movie: true,
+                movie: {
+                  select: {
+                    id: true,
+                    duration: true,
+                    director: true,
+                    trailerUrl: true,
+                    filePath: true,
+                    mediaId: true,
+                  },
+                },
                 tvShow: {
                   include: {
                     seasons: {
                       include: {
-                        episodes: true,
+                        episodes: {
+                          select: {
+                            id: true,
+                            title: true,
+                            number: true,
+                            duration: true,
+                            airDate: true,
+                            filePath: true,
+                            seasonId: true,
+                          },
+                        },
                       },
+                      orderBy: { number: "asc" },
                     },
                   },
                 },
-                music: true,
-                comic: true,
+                music: {
+                  select: {
+                    id: true,
+                    artist: true,
+                    album: true,
+                    genre: true,
+                    duration: true,
+                    filePath: true,
+                    mediaId: true,
+                  },
+                },
+                comic: {
+                  select: {
+                    id: true,
+                    issue: true,
+                    volume: true,
+                    publisher: true,
+                    pages: true,
+                    filePath: true,
+                    mediaId: true,
+                  },
+                },
               },
             },
           },

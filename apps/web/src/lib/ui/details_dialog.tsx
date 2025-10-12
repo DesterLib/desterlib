@@ -1,11 +1,34 @@
-import { XIcon, PlayIcon, PlusIcon, Film } from "lucide-preact";
-import { useRef } from "preact/hooks";
+import {
+  XIcon,
+  PlayIcon,
+  PlusIcon,
+  Film,
+  ChevronDownIcon,
+  TvIcon,
+} from "lucide-preact";
+import { useRef, useState } from "preact/hooks";
 import Button from "./button";
 import { useBodyScrollLock } from "../hooks/use_body_scroll_lock";
 import { useMeasuredHeight } from "../hooks/use_measured_height";
 import { AnimatedHeight } from "../animation";
 import { ModalOverlay, ModalCard } from "./modal";
 import type { Media } from "../api/client";
+
+// Helper function to send video playback signal to Swift app
+const playVideo = (filePath: string) => {
+  try {
+    if (
+      typeof window !== "undefined" &&
+      window.webkit?.messageHandlers?.playVideo
+    ) {
+      window.webkit.messageHandlers.playVideo.postMessage({ url: filePath });
+    } else {
+      console.warn("Swift message handler not available");
+    }
+  } catch (error) {
+    console.error("Error sending video signal to Swift app:", error);
+  }
+};
 
 const DetailsDialog = ({
   item,
@@ -17,10 +40,42 @@ const DetailsDialog = ({
   isOpen: boolean;
 }) => {
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const contentHeight = useMeasuredHeight(contentRef, []);
+  const [expandedSeasons, setExpandedSeasons] = useState<Set<string>>(
+    new Set()
+  );
+  const contentHeight = useMeasuredHeight(contentRef, [expandedSeasons, item]);
 
   // Lock body scroll when dialog is open
   useBodyScrollLock(isOpen);
+
+  const toggleSeason = (seasonId: string) => {
+    setExpandedSeasons((prev) => {
+      const next = new Set(prev);
+      if (next.has(seasonId)) {
+        next.delete(seasonId);
+      } else {
+        next.add(seasonId);
+      }
+      return next;
+    });
+  };
+
+  const handlePlayClick = () => {
+    if (item.type === "MOVIE" && item.movie?.filePath) {
+      playVideo(item.movie.filePath);
+    } else if (item.type === "TV_SHOW" && item.tvShow?.seasons.length) {
+      // Find season 1
+      const season1 = item.tvShow.seasons.find((s) => s.number === 1);
+      if (season1 && season1.episodes.length > 0) {
+        // Play first episode of season 1
+        const episode1 = season1.episodes.find((e) => e.number === 1);
+        const firstEpisode = episode1 || season1.episodes[0];
+        if (firstEpisode?.filePath) {
+          playVideo(firstEpisode.filePath);
+        }
+      }
+    }
+  };
 
   // Get display values
   const year = item.releaseDate
@@ -94,7 +149,12 @@ const DetailsDialog = ({
 
           {/* Action Buttons */}
           <div className="flex flex-col lg:flex-row gap-3 mb-6">
-            <Button variant="primary" size="md" className="gap-2">
+            <Button
+              variant="primary"
+              size="md"
+              className="gap-2"
+              onClick={handlePlayClick}
+            >
               <PlayIcon className="w-5 h-5" fill="white" />
               Play
             </Button>
@@ -116,6 +176,83 @@ const DetailsDialog = ({
                   {item.description || "No description available."}
                 </p>
               </div>
+
+              {/* TV Show Seasons & Episodes */}
+              {item.type === "TV_SHOW" &&
+                item.tvShow &&
+                item.tvShow.seasons.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-[#f5f5f7] text-lg font-semibold mb-3 flex items-center gap-2">
+                      <TvIcon className="w-5 h-5 text-[#0071e3]" />
+                      Seasons & Episodes
+                    </h3>
+                    <div className="space-y-2">
+                      {item.tvShow.seasons.map((season) => {
+                        const isExpanded = expandedSeasons.has(season.id);
+                        return (
+                          <div
+                            key={season.id}
+                            className="bg-white/5 rounded-lg overflow-hidden ring-1 ring-white/10"
+                          >
+                            <button
+                              onClick={() => toggleSeason(season.id)}
+                              className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="text-[#f5f5f7] font-medium">
+                                  Season {season.number}
+                                </span>
+                                <span className="text-[#86868b] text-sm">
+                                  {season.episodes.length}{" "}
+                                  {season.episodes.length === 1
+                                    ? "episode"
+                                    : "episodes"}
+                                </span>
+                              </div>
+                              <ChevronDownIcon
+                                className={`w-5 h-5 text-[#86868b] transition-transform duration-200 ${
+                                  isExpanded ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {isExpanded && (
+                              <div className="px-4 pb-3 space-y-2">
+                                {season.episodes.map((episode) => (
+                                  <button
+                                    key={episode.id}
+                                    onClick={() =>
+                                      episode.filePath &&
+                                      playVideo(episode.filePath)
+                                    }
+                                    disabled={!episode.filePath}
+                                    className="w-full flex items-start gap-3 py-2 px-3 rounded hover:bg-white/5 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 text-left"
+                                  >
+                                    <span className="text-[#86868b] text-sm font-medium min-w-[2rem]">
+                                      {episode.number}
+                                    </span>
+                                    <div className="flex-1">
+                                      <p className="text-[#d2d2d7] text-sm m-0">
+                                        {episode.title}
+                                      </p>
+                                      {episode.duration && (
+                                        <p className="text-[#86868b] text-xs m-0 mt-1">
+                                          {episode.duration} min
+                                        </p>
+                                      )}
+                                    </div>
+                                    {episode.filePath && (
+                                      <PlayIcon className="w-4 h-4 text-[#86868b] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
             </div>
           </AnimatedHeight>
         </div>

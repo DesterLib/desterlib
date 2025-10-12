@@ -1,5 +1,35 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+export interface Episode {
+  id: string;
+  title: string;
+  number: number;
+  duration?: number;
+  airDate?: string;
+  filePath?: string;
+}
+
+export interface Movie {
+  id: string;
+  duration?: number;
+  director?: string;
+  trailerUrl?: string;
+  filePath?: string;
+}
+
+export interface Season {
+  id: string;
+  number: number;
+  episodes: Episode[];
+}
+
+export interface TVShow {
+  id: string;
+  creator?: string;
+  network?: string;
+  seasons: Season[];
+}
+
 export interface Media {
   id: string;
   title: string;
@@ -9,6 +39,8 @@ export interface Media {
   backdropUrl?: string;
   rating?: number;
   releaseDate?: string;
+  movie?: Movie;
+  tvShow?: TVShow;
 }
 
 export interface Collection {
