@@ -1,0 +1,292 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum MediaType {
+  MOVIE
+  TV_SHOW
+  MUSIC
+  COMIC
+}
+
+model Media {
+  id          String     @id @default(cuid())
+  title       String
+  type        MediaType
+  description String?
+  posterUrl   String?
+  backdropUrl String?
+  releaseDate DateTime?
+  rating      Float?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations - subtypes point to Media, not the other way around
+  movie       Movie?
+  tvShow      TVShow?
+  music       Music?
+  comic       Comic?
+
+  people      MediaPerson[]
+  genres      MediaGenre[]
+  externalIds ExternalId[]
+  collections MediaCollection[]
+
+  @@index([type])
+  @@index([releaseDate])
+  @@index([rating])
+  @@index([title])
+}
+
+// ────────────────────────────
+// MOVIES
+// ────────────────────────────
+model Movie {
+  id         String   @id @default(cuid())
+  duration   Int?     // in minutes
+  director   String?
+  trailerUrl String?
+  
+  // Required relationship to Media
+  mediaId    String   @unique
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+// ────────────────────────────
+// TV SHOWS
+// ────────────────────────────
+model TVShow {
+  id        String     @id @default(cuid())
+  seasons   Season[]
+  creator   String?
+  network   String?
+  
+  // Required relationship to Media
+  mediaId   String     @unique
+  media     Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model Season {
+  id        String     @id @default(cuid())
+  number    Int
+  episodes  Episode[]
+  tvShowId  String
+  tvShow    TVShow     @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  
+  @@unique([tvShowId, number])
+  @@index([tvShowId])
+}
+
+model Episode {
+  id        String   @id @default(cuid())
+  title     String
+  number    Int
+  duration  Int?
+  airDate   DateTime?
+  videoUrl  String?
+  seasonId  String
+  season    Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  
+  @@unique([seasonId, number])
+  @@index([seasonId])
+}
+
+// ────────────────────────────
+// MUSIC
+// ────────────────────────────
+model Music {
+  id        String   @id @default(cuid())
+  artist    String
+  album     String?
+  genre     String?
+  duration  Int?
+  trackUrl  String?
+  
+  // Required relationship to Media
+  mediaId   String   @unique
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  
+  @@index([artist])
+  @@index([genre])
+}
+
+// ────────────────────────────
+// COMICS
+// ────────────────────────────
+model Comic {
+  id        String   @id @default(cuid())
+  issue     Int?
+  volume    String?
+  publisher String?
+  pages     Int?
+  fileUrl   String?
+  
+  // Required relationship to Media
+  mediaId   String   @unique
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  
+  @@index([publisher])
+}
+
+// ────────────────────────────
+// PERSON
+// ────────────────────────────
+enum RoleType {
+  ACTOR
+  DIRECTOR
+  WRITER
+  PRODUCER
+  ARTIST
+  COMPOSER
+  AUTHOR
+}
+
+model Person {
+  id         String         @id @default(cuid())
+  name       String
+  bio        String?
+  birthDate  DateTime?
+  profileUrl String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  // Media relationships
+  media      MediaPerson[]
+  
+  @@index([name])
+}
+
+// ────────────────────────────
+// JOIN TABLE (MEDIA ↔ PERSON)
+// ────────────────────────────
+model MediaPerson {
+  id        String    @id @default(cuid())
+  role      RoleType
+  mediaId   String
+  personId  String
+  character String?   // e.g., "Bruce Wayne"
+
+  media     Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  person    Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  
+  @@unique([mediaId, personId, role])
+  @@index([mediaId])
+  @@index([personId])
+}
+
+// ────────────────────────────
+// GENRES
+// ────────────────────────────
+model Genre {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  slug        String       @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  media       MediaGenre[]
+
+  @@index([slug])
+}
+
+// ────────────────────────────
+// JOIN TABLE (MEDIA ↔ GENRE)
+// ────────────────────────────
+model MediaGenre {
+  id       String  @id @default(cuid())
+  mediaId  String
+  genreId  String
+
+  media    Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre    Genre   @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, genreId])
+  @@index([mediaId])
+  @@index([genreId])
+}
+
+// ────────────────────────────
+// COLLECTIONS
+// ────────────────────────────
+model Collection {
+  id          String             @id @default(cuid())
+  name        String
+  slug        String             @unique
+  description String?
+  posterUrl   String?
+  backdropUrl String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // Self-referential for nested collections (e.g., MCU > Phase 1)
+  parentId    String?
+  parent      Collection?        @relation("CollectionHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Collection[]       @relation("CollectionHierarchy")
+
+  media       MediaCollection[]
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+// ────────────────────────────
+// JOIN TABLE (MEDIA ↔ COLLECTION)
+// ────────────────────────────
+model MediaCollection {
+  id           String     @id @default(cuid())
+  mediaId      String
+  collectionId String
+  order        Int?       // For ordering media within a collection
+
+  media        Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, collectionId])
+  @@index([mediaId])
+  @@index([collectionId])
+  @@index([order])
+}
+
+// ────────────────────────────
+// EXTERNAL IDS (TMDB, IMDB, etc.)
+// ────────────────────────────
+enum ExternalIdSource {
+  TMDB
+  IMDB
+  TVDB
+  ANIDB
+  MYANIMELIST
+  MUSICBRAINZ
+  SPOTIFY
+  COMICVINE
+  OTHER
+}
+
+model ExternalId {
+  id        String           @id @default(cuid())
+  source    ExternalIdSource
+  externalId String
+  mediaId   String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  media     Media            @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([source, externalId])
+  @@unique([source, mediaId])
+  @@index([mediaId])
+  @@index([externalId])
+}

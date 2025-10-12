@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
+    "class-variance-authority": "^0.7.1",
     "colorthief": "^2.6.0",
     "lucide-preact": "^0.545.0",
     "motion": "^12.23.22",

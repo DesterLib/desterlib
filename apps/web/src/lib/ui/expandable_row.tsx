@@ -1,20 +1,16 @@
 import { useState, useRef, useEffect } from "preact/hooks";
 import Card from "./card";
 import { ChevronDownIcon } from "lucide-preact";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatedHeight } from "../animation";
 
 const ExpandableRow = ({
   title,
   items,
   setCurrentMovie,
-  setHoveredMovie,
-  handleExtractColors,
 }: {
   title: string;
   items: any[];
   setCurrentMovie: (id: number) => void;
-  setHoveredMovie: (id: number | null) => void;
-  handleExtractColors: (image: string, id: number) => void;
 }) => {
   const [visibleCount, setVisibleCount] = useState<number>(1);
   const [sectionHeight, setSectionHeight] = useState<number>(0);
@@ -65,44 +61,44 @@ const ExpandableRow = ({
   const visibleItems = isExpanded ? items : items.slice(0, visibleCount);
 
   return (
-    <motion.section
-      className={`relative group/section overflow-hidden w-fit mx-auto transition-all duration-300 ease-out px-4 lg:p-4 rounded-3xl ${isExpanded ? "bg-white/10" : ""}`}
-      style={{ height: sectionHeight > 0 ? `${sectionHeight}px` : "auto" }}
+    <section
+      className={`relative group/section overflow-hidden w-fit mx-auto transition-all duration-300 ease-out px-4 rounded-3xl ${
+        isExpanded ? "bg-white/10" : ""
+      }`}
     >
       <div className="h-14 lg:h-12 flex items-center justify-between w-full">
         <h2 className="text-xl font-medium text-white/40">{title}</h2>
-        <motion.button
+        <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-fit flex h-12 items-center justify-center gap-2 uppercase text-sm font-medium text-white/40 hover:text-white/60 group-hover/section:opacity-100 transition-[opacity,colors] duration-200"
+          className="w-fit flex h-12 items-center justify-center gap-2 uppercase text-sm font-medium text-white/40 hover:text-white/60 group-hover/section:opacity-100 transition-[opacity,color] duration-200"
         >
-          <motion.div
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+          <div
+            className="transition-transform duration-300 ease-out"
+            style={{
+              transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+            }}
           >
             <ChevronDownIcon />
-          </motion.div>
-        </motion.button>
+          </div>
+        </button>
       </div>
-      <div
-        ref={gridRef}
-        className="relative z-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 lg:gap-8 gap-4 max-w-7xl mx-auto items-start"
-      >
-        {visibleItems.map((item) => (
-          <Card
-            key={item.id}
-            title={item.title}
-            year={item.year}
-            image={item.image}
-            onClick={() => setCurrentMovie(item.id)}
-            onMouseEnter={() => {
-              setHoveredMovie(item.id);
-              handleExtractColors(item.image, item.id);
-            }}
-            onMouseLeave={() => setHoveredMovie(null as number | null)}
-          />
-        ))}
-      </div>
-    </motion.section>
+      <AnimatedHeight height={sectionHeight}>
+        <div
+          ref={gridRef}
+          className="relative z-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 lg:gap-8 gap-4 max-w-7xl mx-auto items-start"
+        >
+          {visibleItems.map((item) => (
+            <Card
+              key={item.id}
+              title={item.title}
+              year={item.year}
+              image={item.image}
+              onClick={() => setCurrentMovie(item.id)}
+            />
+          ))}
+        </div>
+      </AnimatedHeight>
+    </section>
   );
 };
 

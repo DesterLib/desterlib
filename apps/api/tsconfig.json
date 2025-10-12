@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../../packages/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["es2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+    "noEmit": false
+  },
+  "include": ["src"]
+}

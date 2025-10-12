@@ -1,0 +1,25 @@
+{
+  "name": "api",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -b",
+    "start": "node dist/index.js",
+    "check-types": "tsc --noEmit",
+    "lint": "echo 'no linter configured'"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "prisma": "^6.17.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.23",
+    "@types/node": "^20.19.20",
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.3"
+  }
+}

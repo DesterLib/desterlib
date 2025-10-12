@@ -1,0 +1,179 @@
+[
+  {
+    "id": 1,
+    "title": "Marco",
+    "year": 2024,
+    "image": "https://media.themoviedb.org/t/p/w1000_and_h563_face/fyT1X8DGW3MlwXjdAoZFCc183fZ.jpg",
+    "duration": "2h 28m",
+    "resolution": "1920x1080",
+    "videoCodec": "HEVC (H.265)",
+    "videoBitrate": "8.5 Mbps",
+    "audioCodec": "AAC 5.1",
+    "audioBitrate": "640 kbps",
+    "fileSize": "4.2 GB",
+    "frameRate": "23.976 fps",
+    "description": "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O., but his tragic past may doom the project and his team to disaster.",
+    "director": "Christopher Nolan",
+    "cast": [
+      "Leonardo DiCaprio",
+      "Joseph Gordon-Levitt",
+      "Elliot Page",
+      "Tom Hardy"
+    ],
+    "genre": ["Action", "Sci-Fi", "Thriller"],
+    "rating": "PG-13",
+    "imdbRating": "8.8/10",
+    "audioTracks": [
+      { "language": "English", "codec": "AAC 5.1", "channels": "5.1" },
+      { "language": "Spanish", "codec": "AAC 2.0", "channels": "Stereo" }
+    ],
+    "subtitles": ["English", "Spanish", "French", "German"]
+  },
+  {
+    "id": 2,
+    "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+    "year": 2025,
+    "image": "https://media.themoviedb.org/t/p/w1000_and_h563_face/aI3Wz1F6ie9DY94jp5F42Yg5ZYK.jpg",
+    "duration": "2h 15m",
+    "resolution": "3840x2160",
+    "videoCodec": "HEVC (H.265)",
+    "videoBitrate": "25 Mbps",
+    "audioCodec": "TrueHD 7.1",
+    "audioBitrate": "3.5 Mbps",
+    "fileSize": "12.8 GB",
+    "frameRate": "23.976 fps",
+    "description": "Tanjiro, Nezuko, and the Demon Slayer Corps face their greatest challenge yet in the Infinity Castle, where they must confront the most powerful demons.",
+    "director": "Haruo Sotozaki",
+    "cast": [
+      "Natsuki Hanae",
+      "Akari Kitō",
+      "Yoshitsugu Matsuoka",
+      "Hiro Shimono"
+    ],
+    "genre": ["Animation", "Action", "Fantasy"],
+    "rating": "PG-13",
+    "imdbRating": "9.1/10",
+    "audioTracks": [
+      { "language": "Japanese", "codec": "TrueHD 7.1", "channels": "7.1" },
+      { "language": "English", "codec": "DTS-HD 5.1", "channels": "5.1" }
+    ],
+    "subtitles": ["English", "Spanish", "Japanese", "Korean"]
+  },
+  {
+    "id": 3,
+    "title": "Chainsaw Man - The Movie: Reze Arc",
+    "year": 2025,
+    "image": "https://media.themoviedb.org/t/p/w1000_and_h563_face/lprOhntOfoDRb5Hk5Y3JwwYq4TD.jpg",
+    "duration": "1h 58m",
+    "resolution": "1920x1080",
+    "videoCodec": "AVC (H.264)",
+    "videoBitrate": "10 Mbps",
+    "audioCodec": "AAC 5.1",
+    "audioBitrate": "640 kbps",
+    "fileSize": "5.5 GB",
+    "frameRate": "23.976 fps",
+    "description": "Denji meets a mysterious girl named Reze at a café, but their budding romance takes a dark turn as secrets are revealed.",
+    "director": "Ryū Nakayama",
+    "cast": [
+      "Kikunosuke Toya",
+      "Reina Ueda",
+      "Tomori Kusunoki",
+      "Shōgo Sakata"
+    ],
+    "genre": ["Animation", "Action", "Horror"],
+    "rating": "R",
+    "imdbRating": "8.9/10",
+    "audioTracks": [
+      { "language": "Japanese", "codec": "AAC 5.1", "channels": "5.1" },
+      { "language": "English", "codec": "AAC 2.0", "channels": "Stereo" }
+    ],
+    "subtitles": ["English", "Spanish", "French"]
+  },
+  {
+    "id": 4,
+    "title": "TRON: Ares",
+    "year": 2025,
+    "image": "https://media.themoviedb.org/t/p/w1000_and_h563_face/qY3MTxuYvAiuMZlVzQDvl1iI2Vr.jpg",
+    "duration": "2h 10m",
+    "resolution": "3840x2160",
+    "videoCodec": "HEVC (H.265)",
+    "videoBitrate": "30 Mbps",
+    "audioCodec": "Dolby Atmos",
+    "audioBitrate": "5 Mbps",
+    "fileSize": "15.2 GB",
+    "frameRate": "24 fps",
+    "description": "A highly sophisticated Program called Ares is sent from the digital world into the real world on a dangerous mission.",
+    "director": "Joachim Rønning",
+    "cast": ["Jared Leto", "Greta Lee", "Evan Peters", "Jodie Turner-Smith"],
+    "genre": ["Sci-Fi", "Action", "Adventure"],
+    "rating": "PG-13",
+    "imdbRating": "7.5/10",
+    "audioTracks": [
+      { "language": "English", "codec": "Dolby Atmos", "channels": "7.1.4" },
+      { "language": "French", "codec": "DTS-HD 5.1", "channels": "5.1" }
+    ],
+    "subtitles": ["English", "Spanish", "French", "German", "Japanese"]
+  },
+  {
+    "id": 5,
+    "title": "Dune: Part Three",
+    "year": 2026,
+    "image": "https://media.themoviedb.org/t/p/w1000_and_h563_face/qY3MTxuYvAiuMZlVzQDvl1iI2Vr.jpg",
+    "duration": "2h 45m",
+    "resolution": "3840x2160",
+    "videoCodec": "HEVC (H.265)",
+    "videoBitrate": "35 Mbps",
+    "audioCodec": "DTS:X",
+    "audioBitrate": "6 Mbps",
+    "fileSize": "18.5 GB",
+    "frameRate": "24 fps",
+    "description": "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.",
+    "director": "Denis Villeneuve",
+    "cast": ["Timothée Chalamet", "Zendaya", "Rebecca Ferguson", "Josh Brolin"],
+    "genre": ["Sci-Fi", "Adventure", "Drama"],
+    "rating": "PG-13",
+    "imdbRating": "8.7/10",
+    "audioTracks": [
+      { "language": "English", "codec": "DTS:X", "channels": "7.1.4" },
+      { "language": "Spanish", "codec": "AAC 5.1", "channels": "5.1" }
+    ],
+    "subtitles": ["English", "Spanish", "French", "German", "Arabic"]
+  },
+  {
+    "id": 6,
+    "title": "Avatar 3",
+    "year": 2025,
+    "image": "https://media.themoviedb.org/t/p/w1000_and_h563_face/qY3MTxuYvAiuMZlVzQDvl1iI2Vr.jpg",
+    "duration": "3h 10m",
+    "resolution": "3840x2160",
+    "videoCodec": "HEVC (H.265)",
+    "videoBitrate": "40 Mbps",
+    "audioCodec": "Dolby Atmos",
+    "audioBitrate": "7 Mbps",
+    "fileSize": "22.3 GB",
+    "frameRate": "48 fps",
+    "description": "Jake Sully and Neytiri's family faces new threats as they explore uncharted regions of Pandora.",
+    "director": "James Cameron",
+    "cast": [
+      "Sam Worthington",
+      "Zoe Saldaña",
+      "Sigourney Weaver",
+      "Stephen Lang"
+    ],
+    "genre": ["Sci-Fi", "Action", "Adventure"],
+    "rating": "PG-13",
+    "imdbRating": "8.2/10",
+    "audioTracks": [
+      { "language": "English", "codec": "Dolby Atmos", "channels": "7.1.4" },
+      { "language": "French", "codec": "DTS-HD 7.1", "channels": "7.1" }
+    ],
+    "subtitles": [
+      "English",
+      "Spanish",
+      "French",
+      "German",
+      "Mandarin",
+      "Japanese"
+    ]
+  }
+]
