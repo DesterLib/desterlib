@@ -15,13 +15,24 @@ import { ModalOverlay, ModalCard } from "./modal";
 import type { Media } from "../api/client";
 
 // Helper function to send video playback signal to Swift app
-const playVideo = (streamUrl: string) => {
+const playVideo = (
+  streamUrl: string,
+  metadata?: {
+    title?: string;
+    season?: number;
+    episode?: number;
+    episodeTitle?: string;
+  }
+) => {
   try {
     if (
       typeof window !== "undefined" &&
       window.webkit?.messageHandlers?.playVideo
     ) {
-      window.webkit.messageHandlers.playVideo.postMessage({ url: streamUrl });
+      window.webkit.messageHandlers.playVideo.postMessage({
+        url: streamUrl,
+        ...metadata,
+      });
     } else {
       alert(
         "Video playback is not available. Please open this app in the native Swift application."
@@ -67,7 +78,9 @@ const DetailsDialog = ({
 
   const handlePlayClick = () => {
     if (item.type === "MOVIE" && item.movie?.streamUrl) {
-      playVideo(item.movie.streamUrl);
+      playVideo(item.movie.streamUrl, {
+        title: item.title,
+      });
     } else if (item.type === "TV_SHOW" && item.tvShow?.seasons.length) {
       // Find season 1
       const season1 = item.tvShow.seasons.find((s) => s.number === 1);
@@ -78,7 +91,12 @@ const DetailsDialog = ({
         const firstEpisode = episode1 || season1.episodes[0];
 
         if (firstEpisode?.streamUrl) {
-          playVideo(firstEpisode.streamUrl);
+          playVideo(firstEpisode.streamUrl, {
+            title: item.title,
+            season: season1.number,
+            episode: firstEpisode.number,
+            episodeTitle: firstEpisode.title,
+          });
         }
       }
     }
@@ -95,12 +113,12 @@ const DetailsDialog = ({
 
   return (
     <ModalOverlay
-      className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-start lg:items-center justify-center z-50 overflow-hidden p-0 lg:p-4"
+      className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-start lg:items-center justify-center z-50 overflow-y-auto lg:overflow-hidden p-0 lg:p-4"
       onClose={onClose}
       isOpen={isOpen}
     >
       <ModalCard
-        className="relative lg:rounded-2xl min-h-full lg:min-h-0 lg:max-h-[calc(100vh-2rem)] lg:max-w-[900px] w-full shadow-[0_20px_60px_rgba(0,0,0,0.7)] overflow-y-auto lg:my-4 bg-[#1d1d1f]"
+        className="relative lg:rounded-2xl min-h-screen lg:min-h-0 lg:max-h-[calc(100vh-2rem)] lg:max-w-[900px] w-full shadow-[0_20px_60px_rgba(0,0,0,0.7)] lg:overflow-y-auto lg:my-4 bg-[#1d1d1f]"
         isOpen={isOpen}
       >
         {/* Close button */}
@@ -229,7 +247,12 @@ const DetailsDialog = ({
                                     key={episode.id}
                                     onClick={() => {
                                       if (episode.streamUrl) {
-                                        playVideo(episode.streamUrl);
+                                        playVideo(episode.streamUrl, {
+                                          title: item.title,
+                                          season: season.number,
+                                          episode: episode.number,
+                                          episodeTitle: episode.title,
+                                        });
                                       }
                                     }}
                                     disabled={!episode.streamUrl}

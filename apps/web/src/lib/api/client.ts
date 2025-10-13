@@ -122,4 +122,16 @@ export const api = {
     },
     getById: (id: string) => fetcher<{ media: Media }>(`/api/media/${id}`),
   },
+  search: {
+    query: (q: string, type?: "media" | "collections") => {
+      const params = new URLSearchParams({ q });
+      if (type) params.append("type", type);
+      return fetcher<{
+        query: string;
+        media?: Media[];
+        collections?: Collection[];
+        total: number;
+      }>(`/api/search?${params.toString()}`);
+    },
+  },
 };
