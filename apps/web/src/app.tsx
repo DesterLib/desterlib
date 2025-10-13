@@ -5,6 +5,9 @@ import { api, type Media } from "./lib/api/client";
 import Header from "./lib/ui/header";
 import Home from "./lib/ui/pages/home";
 import Library from "./lib/ui/pages/library";
+import Settings from "./lib/ui/pages/settings";
+import { useNotifications } from "./lib/hooks/useNotifications";
+import NotificationCenter from "./lib/ui/notifications/notification_center";
 
 export function App() {
   const [currentPage, setCurrentPage] = useState<
@@ -12,6 +15,16 @@ export function App() {
   >("home");
   const [currentMediaId, setCurrentMediaId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+
+  // Notifications
+  const {
+    notifications,
+    addNotification,
+    clearNotification,
+    clearAll,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications();
 
   // Handle page navigation
   useEffect(() => {
@@ -93,6 +106,17 @@ export function App() {
         onNavigate={handleNavigate}
         currentPage={currentPage}
         showSearch={currentPage === "home"}
+        notificationCenter={
+          currentPage === "settings" ? (
+            <NotificationCenter
+              notifications={notifications}
+              onClear={clearNotification}
+              onClearAll={clearAll}
+              onMarkAsRead={markAsRead}
+              onMarkAllAsRead={markAllAsRead}
+            />
+          ) : undefined
+        }
       />
 
       {currentPage === "home" && (
@@ -104,13 +128,7 @@ export function App() {
       )}
 
       {currentPage === "settings" && (
-        <div className="flex items-center justify-center h-[calc(100vh-6rem)]">
-          <div className="text-center px-4">
-            <div className="text-white/40 text-6xl mb-4">⚙️</div>
-            <h2 className="text-white text-2xl font-semibold mb-2">Settings</h2>
-            <p className="text-white/60">Settings page coming soon</p>
-          </div>
-        </div>
+        <Settings addNotification={addNotification} />
       )}
 
       <AnimatedPresence show={isDialogOpen} exitDuration={300}>

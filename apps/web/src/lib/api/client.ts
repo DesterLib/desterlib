@@ -32,6 +32,24 @@ export interface TVShow {
   seasons: Season[];
 }
 
+export interface Music {
+  id: string;
+  artist?: string;
+  album?: string;
+  genre?: string;
+  duration?: number;
+  filePath?: string;
+}
+
+export interface Comic {
+  id: string;
+  issue?: string;
+  volume?: string;
+  publisher?: string;
+  pages?: number;
+  filePath?: string;
+}
+
 export interface Media {
   id: string;
   title: string;
@@ -43,6 +61,8 @@ export interface Media {
   releaseDate?: string;
   movie?: Movie;
   tvShow?: TVShow;
+  music?: Music;
+  comic?: Comic;
 }
 
 export interface Collection {
@@ -54,6 +74,7 @@ export interface Collection {
   backdropUrl?: string;
   mediaCount: number;
   recentMedia: Media[];
+  media?: Media[]; // Full media list when fetching single collection
   createdAt: string;
   updatedAt: string;
 }

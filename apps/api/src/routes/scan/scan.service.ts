@@ -174,6 +174,7 @@ export class ScanService {
   /**
    * Parses TV show information from file path
    * Example: /path/to/Show Name/Season 01/Show Name - S01E01.mkv
+   * Also handles: Show Name - S01E01 - Episode Title.mkv
    * Also handles external IDs: Show Name {tmdb-12345}/Season 01/...
    */
   private parseTVShowInfo(relativePath: string): {
@@ -203,9 +204,21 @@ export class ScanService {
       }
     }
 
-    // Try to extract show name from directory structure
+    // Try to extract show name from filename first (common pattern: "Show Name - S01E01 - Episode Title.ext")
+    let showName: string | undefined;
+
+    // Get the filename part (last segment after /)
     const parts = cleanPath.split(/[\/\\]/);
-    const showName = parts.length > 1 ? parts[0]!.trim() : undefined;
+    const filename = parts[parts.length - 1] || cleanPath;
+
+    // Try to extract show name before the season/episode pattern in the filename
+    const showNameMatch = filename.match(/^(.+?)\s*-\s*[Ss]\d{1,2}[Ee]\d{1,3}/);
+    if (showNameMatch) {
+      showName = showNameMatch[1]!.trim();
+    } else {
+      // Fallback: extract show name from directory structure
+      showName = parts.length > 1 ? parts[0]!.trim() : undefined;
+    }
 
     return { showName, season, episode };
   }
