@@ -22,12 +22,12 @@ export default function Home({ onMediaSelect }: HomeProps) {
       try {
         const [moviesResponse, tvShowsResponse] = await Promise.all([
           api.movies.getAll({
-            limit: 50,
+            limit: 10,
             sortBy: "createdAt",
             sortOrder: "desc",
           }),
           api.tvShows.getAll({
-            limit: 50,
+            limit: 10,
             sortBy: "createdAt",
             sortOrder: "desc",
           }),

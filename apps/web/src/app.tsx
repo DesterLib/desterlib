@@ -104,8 +104,8 @@ export function App() {
       )}
 
       {currentPage === "settings" && (
-        <div className="lg:px-8 lg:py-12 px-2 py-8">
-          <div className="text-center py-16 px-4">
+        <div className="flex items-center justify-center h-[calc(100vh-6rem)]">
+          <div className="text-center px-4">
             <div className="text-white/40 text-6xl mb-4">⚙️</div>
             <h2 className="text-white text-2xl font-semibold mb-2">Settings</h2>
             <p className="text-white/60">Settings page coming soon</p>

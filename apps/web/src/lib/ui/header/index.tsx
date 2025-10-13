@@ -132,54 +132,62 @@ const Header = ({
             </AnimatePresence>
 
             {/* Search Toggle / Input */}
-            {showSearch && (
-              <div className="flex items-center gap-2 flex-1">
-                <button
-                  onClick={openSearch}
-                  className={
-                    "transition-all duration-200 w-10 h-10 flex items-center justify-center hover:text-white text-white/80 rounded-full flex-shrink-0 " +
-                    (isSearchOpen ? "bg-white/10" : "hover:bg-white/10")
-                  }
+            <AnimatePresence mode="wait">
+              {showSearch && (
+                <motion.div
+                  className="flex items-center gap-2 flex-1 overflow-hidden"
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
                 >
-                  <SearchIcon className="w-4 h-4 stroke-3" />
-                </button>
+                  <button
+                    onClick={openSearch}
+                    className={
+                      "transition-all duration-200 w-10 h-10 flex items-center justify-center hover:text-white text-white/80 rounded-full flex-shrink-0 " +
+                      (isSearchOpen ? "bg-white/10" : "hover:bg-white/10")
+                    }
+                  >
+                    <SearchIcon className="w-4 h-4 stroke-3" />
+                  </button>
 
-                <AnimatePresence mode="wait">
-                  {isSearchOpen && (
-                    <motion.div
-                      className="flex items-center gap-2 flex-1 overflow-hidden"
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: "auto" }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                    >
-                      <input
-                        ref={searchInputRef}
-                        className="flex-1 px-4 py-2 rounded-full bg-white/10 text-white placeholder-white/50 outline-none transition-all duration-200"
-                        type="text"
-                        placeholder="Search movies, shows, collections..."
-                        value={searchQuery}
-                        onInput={(e) =>
-                          setSearchQuery((e.target as HTMLInputElement).value)
-                        }
-                      />
-                      {isLoading && (
-                        <Loader2Icon className="w-4 h-4 animate-spin text-white/50 mr-2" />
-                      )}
-                      <motion.button
-                        onClick={closeSearch}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all duration-200"
+                  <AnimatePresence mode="wait">
+                    {isSearchOpen && (
+                      <motion.div
+                        className="flex items-center gap-2 flex-1 overflow-hidden"
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
                       >
-                        <XIcon className="w-4 h-4 stroke-3 text-white/80" />
-                      </motion.button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
+                        <input
+                          ref={searchInputRef}
+                          className="flex-1 px-4 py-2 rounded-full bg-white/10 text-white placeholder-white/50 outline-none transition-all duration-200"
+                          type="text"
+                          placeholder="Search movies, shows, collections..."
+                          value={searchQuery}
+                          onInput={(e) =>
+                            setSearchQuery((e.target as HTMLInputElement).value)
+                          }
+                        />
+                        {isLoading && (
+                          <Loader2Icon className="w-4 h-4 animate-spin text-white/50 mr-2" />
+                        )}
+                        <motion.button
+                          onClick={closeSearch}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all duration-200"
+                        >
+                          <XIcon className="w-4 h-4 stroke-3 text-white/80" />
+                        </motion.button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Search Results Dropdown */}
@@ -334,17 +342,24 @@ const Header = ({
                 </button>
               );
             })}
-            {showSearch && (
-              <button
-                onClick={openSearch}
-                className="flex flex-col items-center gap-1 py-2 px-4 transition-all duration-200"
-              >
-                <SearchIcon className="w-6 h-6 text-white/50" />
-                <span className="text-xs font-medium text-white/50">
-                  Search
-                </span>
-              </button>
-            )}
+            <AnimatePresence mode="wait">
+              {showSearch && (
+                <button onClick={openSearch} className="py-2 px-4">
+                  <motion.div
+                    className="flex flex-col items-center gap-1"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                  >
+                    <SearchIcon className="w-6 h-6 text-white/50" />
+                    <span className="text-xs font-medium text-white/50">
+                      Search
+                    </span>
+                  </motion.div>
+                </button>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
