@@ -57,7 +57,7 @@ export default function Home({ onMediaSelect }: HomeProps) {
   // Loading state
   if (loading) {
     return (
-      <div className="lg:px-8 lg:py-12 px-2 py-8 flex items-center justify-center min-h-[50vh]">
+      <div className="flex items-center justify-center h-[calc(100vh-6rem)]">
         <Animated show={true} preset="fade" duration={300}>
           <div className="text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-white/20 border-r-white/80 mb-4"></div>
@@ -71,9 +71,9 @@ export default function Home({ onMediaSelect }: HomeProps) {
   // Error state
   if (error) {
     return (
-      <div className="lg:px-8 lg:py-12 px-2 py-8 flex items-center justify-center min-h-[50vh]">
+      <div className="flex items-center justify-center h-[calc(100vh-6rem)]">
         <Animated show={true} preset="fadeScale" duration={300}>
-          <div className="text-center max-w-md">
+          <div className="text-center max-w-md px-4">
             <div className="text-red-500 text-5xl mb-4">⚠️</div>
             <h2 className="text-white text-2xl font-bold mb-2">Oops!</h2>
             <p className="text-white/60 mb-6">{error}</p>

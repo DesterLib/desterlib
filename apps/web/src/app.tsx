@@ -92,7 +92,7 @@ export function App() {
         onMediaSelect={(id) => setCurrentMediaId(id)}
         onNavigate={handleNavigate}
         currentPage={currentPage}
-        showSearch={currentPage !== "library"}
+        showSearch={currentPage === "home"}
       />
 
       {currentPage === "home" && (

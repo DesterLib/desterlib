@@ -334,13 +334,17 @@ const Header = ({
                 </button>
               );
             })}
-            <button
-              onClick={openSearch}
-              className="flex flex-col items-center gap-1 py-2 px-4 transition-all duration-200"
-            >
-              <SearchIcon className="w-6 h-6 text-white/50" />
-              <span className="text-xs font-medium text-white/50">Search</span>
-            </button>
+            {showSearch && (
+              <button
+                onClick={openSearch}
+                className="flex flex-col items-center gap-1 py-2 px-4 transition-all duration-200"
+              >
+                <SearchIcon className="w-6 h-6 text-white/50" />
+                <span className="text-xs font-medium text-white/50">
+                  Search
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>
