@@ -122,6 +122,38 @@ export const api = {
     },
     getById: (id: string) => fetcher<{ media: Media }>(`/api/media/${id}`),
   },
+  movies: {
+    getAll: (params?: {
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    }) => {
+      const query = new URLSearchParams();
+      if (params?.limit) query.append("limit", params.limit.toString());
+      if (params?.sortBy) query.append("sortBy", params.sortBy);
+      if (params?.sortOrder) query.append("sortOrder", params.sortOrder);
+      return fetcher<{ media: Media[] }>(
+        `/api/movies${query.toString() ? `?${query.toString()}` : ""}`
+      );
+    },
+    getById: (id: string) => fetcher<{ media: Media }>(`/api/movies/${id}`),
+  },
+  tvShows: {
+    getAll: (params?: {
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    }) => {
+      const query = new URLSearchParams();
+      if (params?.limit) query.append("limit", params.limit.toString());
+      if (params?.sortBy) query.append("sortBy", params.sortBy);
+      if (params?.sortOrder) query.append("sortOrder", params.sortOrder);
+      return fetcher<{ media: Media[] }>(
+        `/api/tv-shows${query.toString() ? `?${query.toString()}` : ""}`
+      );
+    },
+    getById: (id: string) => fetcher<{ media: Media }>(`/api/tv-shows/${id}`),
+  },
   search: {
     query: (q: string, type?: "media" | "collections") => {
       const params = new URLSearchParams({ q });

@@ -217,11 +217,11 @@ const DetailsDialog = ({
                         return (
                           <div
                             key={season.id}
-                            className="bg-white/5 rounded-lg overflow-hidden ring-1 ring-white/10"
+                            className="bg-neutral-900/80 rounded-lg overflow-hidden ring-1 ring-white/10"
                           >
                             <button
                               onClick={() => toggleSeason(season.id)}
-                              className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+                              className="w-full px-4 py-3 flex items-center justify-between hover:bg-neutral-900/80 transition-colors"
                             >
                               <div className="flex items-center gap-3">
                                 <span className="text-[#f5f5f7] font-medium">
@@ -256,7 +256,7 @@ const DetailsDialog = ({
                                       }
                                     }}
                                     disabled={!episode.streamUrl}
-                                    className="w-full flex items-start gap-3 py-2 px-3 rounded hover:bg-white/5 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 text-left"
+                                    className="w-full flex items-start gap-3 py-2 px-3 rounded hover:bg-neutral-900/80 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 text-left"
                                   >
                                     <span className="text-[#86868b] text-sm font-medium min-w-[2rem]">
                                       {episode.number}
