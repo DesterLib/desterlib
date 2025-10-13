@@ -37,6 +37,7 @@ export default function Settings({ addNotification }: SettingsProps) {
     total: number;
     collectionId: string;
   } | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Parsing preference: auto (filename first, fallback to directory), filename, or directory
   const [parsingMethod, setParsingMethod] = useState<
@@ -79,6 +80,20 @@ export default function Settings({ addNotification }: SettingsProps) {
   useEffect(() => {
     fetchCollections();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    if (openDropdownId) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [openDropdownId]);
 
   const fetchCollections = async () => {
     setLoading(true);
@@ -612,19 +627,149 @@ export default function Settings({ addNotification }: SettingsProps) {
                     {collections.map((collection) => (
                       <div
                         key={collection.id}
-                        className="p-5 bg-white/5 border border-white/10 rounded-lg hover:bg-white/[0.07] transition-colors"
+                        className="p-4 md:p-5 bg-white/5 border border-white/10 rounded-lg hover:bg-white/[0.07] transition-colors relative"
                       >
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start justify-between gap-4 mb-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-white text-lg font-semibold mb-1">
-                              {collection.name}
-                            </h3>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-white text-lg font-semibold">
+                                {collection.name}
+                              </h3>
+                              <div className="relative ml-auto">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenDropdownId(
+                                      openDropdownId === collection.id
+                                        ? null
+                                        : collection.id
+                                    );
+                                  }}
+                                  disabled={
+                                    syncingId === collection.id ||
+                                    updatingMetadataId === collection.id
+                                  }
+                                  className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Actions"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                                    />
+                                  </svg>
+                                </button>
+
+                                {/* Dropdown Menu */}
+                                {openDropdownId === collection.id && (
+                                  <Animated
+                                    show={true}
+                                    preset="slideDown"
+                                    duration={200}
+                                  >
+                                    <div className="absolute top-full right-0 mt-2 w-48 bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg shadow-xl overflow-hidden z-10">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setOpenDropdownId(null);
+                                          handleSyncCollection(
+                                            collection.name,
+                                            collection.id
+                                          );
+                                        }}
+                                        disabled={
+                                          syncingId === collection.id ||
+                                          updatingMetadataId === collection.id
+                                        }
+                                        className="w-full px-4 py-3 text-left text-white text-sm hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+                                      >
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                          />
+                                        </svg>
+                                        {syncingId === collection.id
+                                          ? "Validating..."
+                                          : "Validate Paths"}
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setOpenDropdownId(null);
+                                          handleUpdateMetadata(
+                                            collection.name,
+                                            collection.id
+                                          );
+                                        }}
+                                        disabled={
+                                          syncingId === collection.id ||
+                                          updatingMetadataId === collection.id
+                                        }
+                                        className="w-full px-4 py-3 text-left text-white text-sm hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 border-t border-white/10"
+                                      >
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                          />
+                                        </svg>
+                                        {updatingMetadataId === collection.id
+                                          ? "Updating..."
+                                          : "Update Metadata"}
+                                      </button>
+                                      <button
+                                        disabled
+                                        className="w-full px-4 py-3 text-left text-red-400/50 text-sm cursor-not-allowed flex items-center gap-3 border-t border-white/10"
+                                        title="Delete functionality not yet implemented"
+                                      >
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                          />
+                                        </svg>
+                                        Remove
+                                      </button>
+                                    </div>
+                                  </Animated>
+                                )}
+                              </div>
+                            </div>
                             {collection.description && (
                               <p className="text-white/60 text-sm mb-2">
                                 {collection.description}
                               </p>
                             )}
-                            <div className="flex flex-wrap gap-3 text-sm text-white/50">
+                            <div className="flex flex-wrap gap-2 md:gap-3 text-sm text-white/50">
                               <span>{collection.mediaCount} items</span>
                               <span>•</span>
                               <span>
@@ -634,80 +779,36 @@ export default function Settings({ addNotification }: SettingsProps) {
                                 ).toLocaleDateString()}
                               </span>
                             </div>
-
-                            {/* Progress Bar */}
-                            {updateProgress &&
-                              updateProgress.collectionId === collection.id && (
-                                <div className="mt-3">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs text-white/60">
-                                      Updating metadata...
-                                    </span>
-                                    <span className="text-xs text-white/60">
-                                      {updateProgress.current} /{" "}
-                                      {updateProgress.total}
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                                    <div
-                                      className="bg-white h-full rounded-full transition-all duration-300"
-                                      style={{
-                                        width: `${
-                                          (updateProgress.current /
-                                            updateProgress.total) *
-                                          100
-                                        }%`,
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                          </div>
-
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={() =>
-                                handleSyncCollection(
-                                  collection.name,
-                                  collection.id
-                                )
-                              }
-                              disabled={
-                                syncingId === collection.id ||
-                                updatingMetadataId === collection.id
-                              }
-                              className="px-4 py-2 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-sm rounded-[50px] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                            >
-                              {syncingId === collection.id
-                                ? "Validating..."
-                                : "Validate Paths"}
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleUpdateMetadata(
-                                  collection.name,
-                                  collection.id
-                                )
-                              }
-                              disabled={
-                                syncingId === collection.id ||
-                                updatingMetadataId === collection.id
-                              }
-                              className="px-4 py-2 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-sm rounded-[50px] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                            >
-                              {updatingMetadataId === collection.id
-                                ? "Updating..."
-                                : "Update Metadata"}
-                            </button>
-                            <button
-                              disabled
-                              className="px-4 py-2 bg-red-500/10 text-red-400/50 text-sm rounded-[50px] cursor-not-allowed font-medium whitespace-nowrap"
-                              title="Delete functionality not yet implemented"
-                            >
-                              Remove
-                            </button>
                           </div>
                         </div>
+
+                        {/* Progress Bar */}
+                        {updateProgress &&
+                          updateProgress.collectionId === collection.id && (
+                            <div className="mt-3">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-white/60">
+                                  Updating metadata...
+                                </span>
+                                <span className="text-xs text-white/60">
+                                  {updateProgress.current} /{" "}
+                                  {updateProgress.total}
+                                </span>
+                              </div>
+                              <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                                <div
+                                  className="bg-white h-full rounded-full transition-all duration-300"
+                                  style={{
+                                    width: `${
+                                      (updateProgress.current /
+                                        updateProgress.total) *
+                                      100
+                                    }%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
                       </div>
                     ))}
                   </div>
