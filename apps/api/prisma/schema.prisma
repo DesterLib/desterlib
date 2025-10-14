@@ -242,6 +242,12 @@ model Collection {
   description String?
   posterUrl   String?
   backdropUrl String?
+  
+  // Library-specific fields
+  isLibrary   Boolean            @default(false)
+  libraryPath String?            // File system path for libraries
+  libraryType MediaType?         // Type of media in this library
+  
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
@@ -251,9 +257,15 @@ model Collection {
   children    Collection[]       @relation("CollectionHierarchy")
 
   media       MediaCollection[]
+  
+  // Settings relationship for libraries
+  settingsId  String?
+  settings    Settings?          @relation(fields: [settingsId], references: [id], onDelete: SetNull)
 
   @@index([slug])
   @@index([parentId])
+  @@index([isLibrary])
+  @@index([settingsId])
 }
 
 // ────────────────────────────
@@ -303,4 +315,16 @@ model ExternalId {
   @@unique([source, mediaId])
   @@index([mediaId])
   @@index([externalId])
+}
+
+// ────────────────────────────
+// SETTINGS & CONFIGURATION
+// ────────────────────────────
+model Settings {
+  id                String       @id @default("default")
+  isSetupComplete   Boolean      @default(false)
+  tmdbApiKey        String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  libraries         Collection[] // Libraries are just special collections
 }

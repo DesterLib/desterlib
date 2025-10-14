@@ -1,0 +1,54 @@
+export const tabsContainerVariants = {
+  initial: { width: 0, opacity: 0 },
+  animate: { width: "auto", opacity: 1 },
+  exit: { width: 0, opacity: 0 },
+};
+
+export const tabsContainerTransition = {
+  type: "spring" as const,
+  bounce: 0.2,
+  duration: 0.6,
+};
+
+export const searchContainerMotion = {
+  initial: { marginLeft: 8 },
+  animate: (isSearchOpen: boolean) => ({
+    marginLeft: isSearchOpen ? 0 : 8,
+  }),
+};
+
+export const searchButtonMotion = {
+  animate: (isSearchOpen: boolean) => ({
+    borderTopRightRadius: isSearchOpen ? 12 : 50,
+    borderBottomRightRadius: isSearchOpen ? 12 : 50,
+  }),
+};
+
+export const searchInputVariants = {
+  initial: { width: 0, opacity: 0 },
+  animate: { width: 500, opacity: 1 },
+  exit: { width: 0, opacity: 0 },
+};
+
+export const searchInputTransition = {
+  type: "spring" as const,
+  bounce: 0.2,
+  duration: 0.6,
+};
+
+export const filtersContainerVariants = {
+  hidden: {},
+  visible: {},
+};
+
+export const filtersContainerTransition = {
+  type: "spring" as const,
+  bounce: 0.2,
+  duration: 0.6,
+  staggerChildren: 0.1,
+};
+
+export const filterButtonVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: { opacity: 1, scale: 1 },
+};

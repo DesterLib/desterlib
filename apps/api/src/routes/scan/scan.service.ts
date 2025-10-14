@@ -7,6 +7,7 @@ import {
   removeExternalIds,
   metadataService,
 } from "../../lib/metadata/index.js";
+import { notificationService } from "../../lib/notifications/notification.service.js";
 
 const prisma = new PrismaClient();
 
@@ -1064,8 +1065,29 @@ export class ScanService {
     // Use provided collection name or default to folder name
     const finalCollectionName = collectionName || basename(path);
 
+    // Notify scan started
+    notificationService.started(
+      "scan",
+      `Scanning ${mediaType.toLowerCase()} files in: ${path}`,
+      {
+        path,
+        mediaType,
+        collectionName: finalCollectionName,
+      }
+    );
+
     // Scan the directory
     const files = await this.scanDirectory(path, mediaType, path);
+
+    // Notify files found
+    notificationService.progress(
+      "scan",
+      `Found ${files.length} ${mediaType.toLowerCase()} files`,
+      {
+        totalFiles: files.length,
+        path,
+      }
+    );
 
     // Sort files by path for consistent ordering
     files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
@@ -1096,6 +1118,14 @@ export class ScanService {
 
     // Save to database based on media type
     if (files.length > 0) {
+      notificationService.progress(
+        "scan",
+        `Saving ${files.length} files to database...`,
+        {
+          totalFiles: files.length,
+        }
+      );
+
       let saveStats;
       switch (mediaType) {
         case MediaType.TV_SHOW:
@@ -1130,6 +1160,17 @@ export class ScanService {
         stats = saveStats;
       }
     }
+
+    // Notify scan completed
+    notificationService.completed(
+      "scan",
+      `Scan completed: ${stats.added} added, ${stats.updated} updated, ${stats.skipped} skipped`,
+      {
+        collectionName: finalCollectionName,
+        stats,
+        totalFiles: files.length,
+      }
+    );
 
     return {
       collectionName: finalCollectionName,

@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
+import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
+import logger, { morganStream } from "./config/logger.js";
 import { requestContextMiddleware } from "./lib/requestContext.js";
 import { responseEnhancerMiddleware } from "./lib/response.js";
 import { notFoundHandler, errorHandler } from "./lib/errorHandler.js";
@@ -13,6 +15,8 @@ import musicRouter from "./routes/music/music.module.js";
 import comicsRouter from "./routes/comics/comics.module.js";
 import collectionsRouter from "./routes/collections/collections.module.js";
 import searchRouter from "./routes/search/search.module.js";
+import settingsRouter from "./routes/settings/settings.module.js";
+import notificationsRouter from "./routes/notifications/notifications.module.js";
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -26,6 +30,15 @@ app.use(
 );
 
 app.use(express.json());
+
+// HTTP request logging
+app.use(
+  morgan(
+    ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms',
+    { stream: morganStream }
+  )
+);
+
 app.use(requestContextMiddleware);
 app.use(responseEnhancerMiddleware);
 
@@ -112,6 +125,8 @@ app.get("/health", (_req, res) => {
 });
 
 // API Routes
+app.use("/api/settings", settingsRouter);
+app.use("/api/notifications", notificationsRouter);
 app.use("/api/scan", scanRouter);
 app.use("/api/media", mediaRouter);
 app.use("/api/collections", collectionsRouter);
@@ -126,8 +141,8 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
-  console.log(
+  logger.info(`API listening on http://localhost:${port}`);
+  logger.info(
     `📚 API Documentation available at http://localhost:${port}/api-docs`
   );
 });

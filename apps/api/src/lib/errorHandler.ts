@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "./errors.js";
+import logger from "../config/logger.js";
 
 type ErrorEnvelope = {
   success: false;
@@ -52,16 +53,22 @@ export function errorHandler(
     };
     if (err.statusCode >= 500) {
       // Log server errors with stack for operators
-      // eslint-disable-next-line no-console
-      console.error(err);
+      logger.error(`AppError [${err.code}]: ${err.message}`, {
+        statusCode: err.statusCode,
+        stack: err.stack,
+        extra: err.extra,
+        requestId: getRequestId(res),
+      });
     }
     res.status(err.statusCode).json(payload);
     return;
   }
 
   // Unknown errors
-  // eslint-disable-next-line no-console
-  console.error(err);
+  logger.error(
+    "Unhandled error:",
+    err instanceof Error ? err : new Error(String(err))
+  );
   const payload: ErrorEnvelope = {
     success: false,
     requestId: getRequestId(res),

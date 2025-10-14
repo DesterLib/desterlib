@@ -36,5 +36,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+.pnpm-store
 
 apps/api/dev.db
+apps/api/logs

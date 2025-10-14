@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { scanService, type MediaType } from "./scan.service.js";
 import { BadRequestError, AppError } from "../../lib/errors.js";
+import { notificationService } from "../../lib/notifications/notification.service.js";
 
 export class ScanController {
   /**
@@ -74,6 +75,13 @@ export class ScanController {
         scan: result,
       });
     } catch (error) {
+      // Notify scan failed
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      notificationService.failed("scan", `Scan failed: ${errorMsg}`, {
+        path: req.body.path,
+        error: errorMsg,
+      });
+
       if (error instanceof AppError) {
         next(error);
       } else {
@@ -109,10 +117,30 @@ export class ScanController {
         throw new BadRequestError("MediaType is required in request body");
       }
 
+      // Notify sync started
+      notificationService.started(
+        "sync",
+        `Syncing collection: ${collectionName}`,
+        {
+          collectionName,
+          mediaType,
+        }
+      );
+
       // Perform the sync
       const result = await scanService.syncCollection(
         collectionName,
         mediaType as MediaType
+      );
+
+      // Notify sync completed
+      notificationService.completed(
+        "sync",
+        `Sync complete: ${result.stats.checked} checked, ${result.stats.updated} updated, ${result.stats.removed} removed`,
+        {
+          collectionName,
+          stats: result.stats,
+        }
       );
 
       res.jsonOk({
@@ -120,6 +148,13 @@ export class ScanController {
         sync: result,
       });
     } catch (error) {
+      // Notify sync failed
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      notificationService.failed("sync", `Sync failed: ${errorMsg}`, {
+        collectionName: req.body.collectionName,
+        error: errorMsg,
+      });
+
       if (error instanceof AppError) {
         next(error);
       } else {

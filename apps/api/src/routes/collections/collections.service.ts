@@ -188,6 +188,25 @@ export class CollectionsService {
       empty: totalCollections - collectionsWithMedia,
     };
   }
+
+  /**
+   * Delete a collection by ID
+   */
+  async deleteCollection(id: string) {
+    const collection = await prisma.collection.findUnique({
+      where: { id },
+    });
+
+    if (!collection) {
+      throw new NotFoundError(`Collection with ID "${id}" not found`);
+    }
+
+    await prisma.collection.delete({
+      where: { id },
+    });
+
+    return { id, name: collection.name };
+  }
 }
 
 // Export singleton instance

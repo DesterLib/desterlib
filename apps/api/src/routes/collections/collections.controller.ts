@@ -84,6 +84,37 @@ export class CollectionsController {
       }
     }
   }
+
+  /**
+   * DELETE /api/collections/:id
+   * Delete a collection by ID
+   */
+  async deleteCollection(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        throw new BadRequestError("Collection ID is required");
+      }
+
+      const deleted = await collectionsService.deleteCollection(id);
+
+      res.jsonOk({
+        message: `Collection "${deleted.name}" deleted successfully`,
+        collection: deleted,
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(new AppError("Failed to delete collection", { cause: error }));
+      }
+    }
+  }
 }
 
 // Export singleton instance

@@ -121,4 +121,51 @@ router.get("/:slugOrId", (req, res, next) => {
   collectionsController.getCollectionBySlugOrId(req, res, next);
 });
 
+/**
+ * @openapi
+ * /api/collections/{id}:
+ *   delete:
+ *     summary: Delete a collection
+ *     description: Delete a collection and all its media relationships
+ *     tags:
+ *       - Collections
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Collection ID
+ *     responses:
+ *       200:
+ *         description: Collection deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         message:
+ *                           type: string
+ *       400:
+ *         description: Bad request (missing or invalid ID)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Collection not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.delete("/:id", (req, res, next) => {
+  collectionsController.deleteCollection(req, res, next);
+});
+
 export default router;
