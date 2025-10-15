@@ -1,19 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SettingGroup } from "@/components/settings/setting-group";
 import { librariesSettingsConfig } from "@/config/libraries-settings";
-import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
 
 export const Route = createFileRoute("/settings/libraries")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const [checked, setChecked] = useState(false);
   return (
     <div className="h-full flex flex-col p-4 rounded-xl">
       {/* Fixed Header */}
-      <Switch checked={checked} onCheckedChange={setChecked} />
       <header className="space-y-1 pb-4 flex-shrink-0">
         <h1 className="text-2xl font-bold">{librariesSettingsConfig.title}</h1>
         <p className="text-sm text-white/60">
