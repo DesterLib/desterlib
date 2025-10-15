@@ -36,7 +36,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
   WEB_URL: z.string().optional(),
 
-  // API Keys
+  // External API Keys (Legacy - prefer configuring via Settings UI)
   TMDB_API_KEY: z.string().optional(),
 
   // Rate Limiting

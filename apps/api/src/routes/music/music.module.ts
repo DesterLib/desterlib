@@ -5,7 +5,7 @@ const router: RouterType = Router();
 
 /**
  * @openapi
- * /api/music:
+ * /api/v1/music:
  *   get:
  *     summary: Get all music
  *     description: Retrieve all music items with optional filtering, sorting, and pagination

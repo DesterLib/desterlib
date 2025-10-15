@@ -5,7 +5,7 @@ const router: RouterType = Router();
 
 /**
  * @openapi
- * /api/movies:
+ * /api/v1/movies:
  *   get:
  *     summary: Get all movies
  *     description: Retrieve all movies with optional filtering, sorting, and pagination
@@ -121,7 +121,7 @@ router.get("/", (req, res, next) => {
 
 /**
  * @openapi
- * /api/movies/{id}:
+ * /api/v1/movies/{id}:
  *   get:
  *     summary: Get movie by ID
  *     description: Retrieve a specific movie by its ID

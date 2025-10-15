@@ -3,8 +3,8 @@ import {
   getApiV1CollectionsLibraries,
   getApiV1CollectionsSlugOrId,
   deleteApiV1CollectionsId,
-  patchApiSettings,
-  postApiScan,
+  patchApiV1Settings,
+  postApiV1Scan,
   type MediaType,
 } from "@dester/api-client";
 import "@/lib/api-client"; // Import to ensure client is configured
@@ -17,7 +17,7 @@ export function useLibraries() {
     queryKey: ["libraries"],
     queryFn: async () => {
       const response = await getApiV1CollectionsLibraries();
-      return response.data;
+      return response.data.data?.collections ?? [];
     },
   });
 }
@@ -30,7 +30,10 @@ export function useLibrary(id: string) {
     queryKey: ["library", id],
     queryFn: async () => {
       const response = await getApiV1CollectionsSlugOrId(id);
-      return response.data;
+      if (response.status === 200) {
+        return response.data ?? null;
+      }
+      return null;
     },
     enabled: !!id,
   });
@@ -44,8 +47,7 @@ export function useDeleteLibrary() {
 
   return useMutation({
     mutationFn: async (libraryId: string) => {
-      const response = await deleteApiV1CollectionsId(libraryId);
-      return response.data;
+      await deleteApiV1CollectionsId(libraryId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
@@ -65,8 +67,13 @@ export function useUpdateLibraries() {
     mutationFn: async (
       libraries: Array<{ name: string; type: string; path: string }>
     ) => {
-      const response = await patchApiSettings({ libraries });
-      return response.data;
+      const response = await patchApiV1Settings({
+        libraries: libraries.map((lib) => ({
+          ...lib,
+          type: lib.type as MediaType,
+        })),
+      });
+      return response.data.data?.settings ?? null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
@@ -85,12 +92,17 @@ export function useScanLibrary() {
     mutationFn: async ({
       path,
       mediaType,
+      updateExisting = true,
     }: {
       path: string;
       mediaType: MediaType;
+      updateExisting?: boolean;
     }) => {
-      const response = await postApiScan({ path, mediaType });
-      return response.data;
+      const response = await postApiV1Scan({ path, mediaType, updateExisting });
+      if (response.status === 200) {
+        return response.data.data?.scan ?? null;
+      }
+      return null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });

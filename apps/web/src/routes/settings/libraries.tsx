@@ -14,6 +14,7 @@ import { useSettings, useUpdateSettings } from "@/lib/hooks/useSettings";
 import { librariesSettingsConfig } from "@/config/libraries-settings-config";
 import type { Collection } from "@dester/api-client";
 import type { MediaType } from "@/lib/schemas/library.schema";
+import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/settings/libraries")({
   component: RouteComponent,
@@ -34,6 +35,7 @@ function RouteComponent() {
   const [selectedLibrary, setSelectedLibrary] = useState<
     Collection | undefined
   >();
+  const [scanningLibrary, setScanningLibrary] = useState<string | null>(null);
 
   // Handle adding a new library
   const handleAddLibrary = async (values: {
@@ -44,7 +46,7 @@ function RouteComponent() {
   }) => {
     const updatedLibraries = [
       ...libraries.map((lib: Collection) => ({
-        name: lib.name,
+        name: lib.name || "Unnamed Library",
         type: lib.libraryType || "MOVIE",
         path: lib.libraryPath || "",
       })),
@@ -68,7 +70,10 @@ function RouteComponent() {
     if (!selectedLibrary) return;
 
     const updatedLibraries = libraries.map((lib: Collection) => ({
-      name: lib.id === selectedLibrary.id ? values.name : lib.name,
+      name:
+        lib.id === selectedLibrary.id
+          ? values.name
+          : lib.name || "Unnamed Library",
       type:
         lib.id === selectedLibrary.id
           ? values.type
@@ -81,7 +86,7 @@ function RouteComponent() {
 
   // Handle deleting a library
   const handleDeleteLibrary = async () => {
-    if (!selectedLibrary) return;
+    if (!selectedLibrary?.id) return;
     await deleteLibrary.mutateAsync(selectedLibrary.id);
   };
 
@@ -89,10 +94,16 @@ function RouteComponent() {
   const handleScanLibrary = async (library: Collection) => {
     if (!library.libraryPath || !library.libraryType) return;
 
-    await scanLibrary.mutateAsync({
-      path: library.libraryPath,
-      mediaType: library.libraryType,
-    });
+    setScanningLibrary(library.name || library.id || "Unknown Library");
+    try {
+      await scanLibrary.mutateAsync({
+        path: library.libraryPath,
+        mediaType: library.libraryType,
+      });
+    } finally {
+      // Keep the message visible for a moment before clearing
+      setTimeout(() => setScanningLibrary(null), 3000);
+    }
   };
 
   // Handle TMDB API key update
@@ -110,7 +121,7 @@ function RouteComponent() {
   // Generate the config dynamically with real data
   const config = librariesSettingsConfig({
     libraries,
-    settings,
+    settings: settings || undefined,
     onAddLibrary: () => setAddDialogOpen(true),
     onEditLibrary: (library) => {
       setSelectedLibrary(library);
@@ -157,8 +168,64 @@ function RouteComponent() {
                 "linear-gradient(to bottom, transparent 0px, black 32px, black calc(100% - 32px), transparent 100%)",
             }}
           >
-            {config.groups.map((group) => (
-              <SettingGroup key={group.id} group={group} />
+            {config.groups.map((group, index) => (
+              <div key={group.id}>
+                {/* Show scan progress before the library manager group */}
+                {index === 0 &&
+                  (scanLibrary.isPending ||
+                    scanLibrary.isSuccess ||
+                    scanLibrary.isError) &&
+                  scanningLibrary && (
+                    <div className="mb-4 bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/10">
+                      <div className="flex items-center gap-3">
+                        {scanLibrary.isPending && (
+                          <>
+                            <Loader2 className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-white">
+                                Scanning library: {scanningLibrary}
+                              </p>
+                              <p className="text-xs text-white/60 mt-1">
+                                Scanning media files, fetching metadata from
+                                TMDB, and updating your collection...
+                              </p>
+                            </div>
+                          </>
+                        )}
+                        {scanLibrary.isSuccess && (
+                          <>
+                            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-white">
+                                Scan completed: {scanningLibrary}
+                              </p>
+                              <p className="text-xs text-white/60 mt-1">
+                                Library scan finished. All media has been
+                                updated with the latest metadata from TMDB.
+                              </p>
+                            </div>
+                          </>
+                        )}
+                        {scanLibrary.isError && (
+                          <>
+                            <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-white">
+                                Scan failed: {scanningLibrary}
+                              </p>
+                              <p className="text-xs text-white/60 mt-1">
+                                {scanLibrary.error instanceof Error
+                                  ? scanLibrary.error.message
+                                  : "An error occurred while scanning the library."}
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                <SettingGroup group={group} />
+              </div>
             ))}
           </div>
 
@@ -198,7 +265,7 @@ function RouteComponent() {
         open={tmdbDialogOpen}
         onOpenChange={setTmdbDialogOpen}
         onSubmit={handleUpdateTmdbKey}
-        currentApiKey={settings?.tmdbApiKey}
+        currentApiKey={settings?.tmdbApiKey || undefined}
       />
     </>
   );

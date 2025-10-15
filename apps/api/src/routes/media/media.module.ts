@@ -5,7 +5,7 @@ const router: RouterType = Router();
 
 /**
  * @openapi
- * /api/media:
+ * /api/v1/media:
  *   get:
  *     summary: Get all media
  *     description: Retrieve all media items with optional filtering, sorting, and pagination
@@ -126,7 +126,7 @@ router.get("/", (req, res, next) => {
 
 /**
  * @openapi
- * /api/media/statistics:
+ * /api/v1/media/statistics:
  *   get:
  *     summary: Get media statistics
  *     description: Retrieve statistics about media in the library
@@ -170,7 +170,7 @@ router.get("/statistics", (req, res, next) => {
 
 /**
  * @openapi
- * /api/media/{id}:
+ * /api/v1/media/{id}:
  *   get:
  *     summary: Get media by ID
  *     description: Retrieve a specific media item by its ID
@@ -213,7 +213,7 @@ router.get("/:id", (req, res, next) => {
 
 /**
  * @openapi
- * /api/media/stream/movie/{id}:
+ * /api/v1/media/stream/movie/{id}:
  *   get:
  *     summary: Stream a movie
  *     description: Stream a movie file with byte-range support for seeking
@@ -255,7 +255,7 @@ router.get("/stream/movie/:id", (req, res, next) => {
 
 /**
  * @openapi
- * /api/media/stream/episode/{id}/{seasonNumber}/{episodeNumber}:
+ * /api/v1/media/stream/episode/{id}/{seasonNumber}/{episodeNumber}:
  *   get:
  *     summary: Stream a TV episode
  *     description: Stream a TV episode file with byte-range support for seeking

@@ -18,7 +18,7 @@ import {
 import Logo from "../logo";
 import ModeDialog from "../mode-dialog";
 import { useSearch } from "@/lib/hooks";
-import type { SearchFilters } from "@dester/api-client";
+import type { GetApiV1SearchParams } from "@dester/api-client";
 import SearchResults from "./search-results";
 
 const tabs = [
@@ -47,7 +47,7 @@ const Header = () => {
   }, [searchQuery]);
 
   // Prepare search filters - always search media when filtering by movies/tvshows
-  const searchFilters: SearchFilters = {
+  const searchFilters: GetApiV1SearchParams = {
     q: debouncedQuery,
     ...(searchFilter !== "all" && { type: "media" }),
   };

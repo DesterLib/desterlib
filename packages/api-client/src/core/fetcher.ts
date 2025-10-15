@@ -28,6 +28,15 @@ export function getConfig(): FetcherConfig {
 }
 
 /**
+ * Get CSRF token from cookie
+ */
+function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  return match?.[1] ?? null;
+}
+
+/**
  * Custom fetcher function used by Orval-generated client
  */
 export async function customFetcher<T>(
@@ -36,13 +45,27 @@ export async function customFetcher<T>(
 ): Promise<T> {
   const fullUrl = url.startsWith("http") ? url : `${config.baseURL}${url}`;
 
+  // Get CSRF token for state-changing requests
+  const csrfToken = getCsrfToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...config.headers,
+    ...(options?.headers as Record<string, string>),
+  };
+
+  // Add CSRF token for POST, PUT, PATCH, DELETE
+  if (
+    csrfToken &&
+    options?.method &&
+    ["POST", "PUT", "PATCH", "DELETE"].includes(options.method)
+  ) {
+    headers["x-csrf-token"] = csrfToken;
+  }
+
   const response = await fetch(fullUrl, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...config.headers,
-      ...options?.headers,
-    },
+    credentials: "include", // Include cookies for CSRF
+    headers,
   });
 
   if (!response.ok) {
@@ -57,17 +80,19 @@ export async function customFetcher<T>(
   // Handle empty responses
   const contentType = response.headers.get("content-type");
   if (!contentType || !contentType.includes("application/json")) {
-    return {} as T;
+    return {
+      data: {},
+      status: response.status,
+      headers: response.headers,
+    } as T;
   }
 
   const data = await response.json();
-
-  // Unwrap the API response (assumes your API returns { success, data, requestId })
-  if (data && typeof data === "object" && "data" in data) {
-    return data.data as T;
-  }
-
-  return data as T;
+  return {
+    data,
+    status: response.status,
+    headers: response.headers,
+  } as T;
 }
 
 export type ErrorType<Error> = Error;

@@ -1,10 +1,10 @@
 import { motion } from "motion/react";
-import type { SearchResponse } from "@dester/api-client";
+import type { GetApiV1Search200AllOfData } from "@dester/api-client";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 interface SearchResultsProps {
-  results?: SearchResponse;
+  results?: GetApiV1Search200AllOfData;
   isLoading: boolean;
   query: string;
   filter: "all" | "movies" | "tvshows";

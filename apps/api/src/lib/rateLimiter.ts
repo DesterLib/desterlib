@@ -107,8 +107,12 @@ function createRateLimiter(
         userId: req.user?.id,
       });
 
+      // CORS headers are already set by cors middleware, just send response
       res.status(429).json(rateLimitResponse);
     },
+
+    // Skip rate limiting in development
+    skip: () => env.NODE_ENV === "development",
   };
 
   // Use Redis store if cache is enabled (distributed rate limiting)

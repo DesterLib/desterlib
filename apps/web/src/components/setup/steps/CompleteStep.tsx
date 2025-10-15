@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useSetupStore } from "@/lib/stores/setup";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, Loader2, Home } from "lucide-react";
-import { apiClient } from "@/lib/api-client";
+import { patchApiV1Settings, getApiV1Collections } from "@dester/api-client";
+import "@/lib/api-client"; // Import to ensure client is configured
 import { useNavigate } from "@tanstack/react-router";
 
 export function CompleteStep() {
@@ -17,6 +18,7 @@ export function CompleteStep() {
   useEffect(() => {
     // Auto-complete setup when component mounts
     completeSetup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const completeSetup = async () => {
@@ -26,14 +28,18 @@ export function CompleteStep() {
 
     try {
       // Update settings with TMDB key
-      await apiClient.settings.update({ tmdbApiKey: tmdbKey.apiKey });
+      const response = await patchApiV1Settings({ tmdbApiKey: tmdbKey.apiKey });
+
+      if (!response.data.data?.settings) {
+        throw new Error("Failed to update settings");
+      }
 
       // Create collections
-      for (const collection of collections) {
-        // Note: This assumes there's a collections.create endpoint
-        // You might need to adjust this based on your actual API
+      // Note: This assumes there's a collections.create endpoint
+      // You might need to adjust this based on your actual API
+      if (collections.length > 0) {
         try {
-          await apiClient.collections.list(); // This might need to be adjusted
+          await getApiV1Collections(); // This might need to be adjusted
           // For now, we'll just mark as complete
         } catch (err) {
           console.warn("Collection creation not implemented yet:", err);
@@ -161,7 +167,6 @@ export function CompleteStep() {
         {!isComplete && !isCompleting && (
           <Button
             onClick={previousStep}
-            variant="outline"
             className="px-6 py-3 rounded-xl border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
           >
             <ArrowLeft className="w-4 h-4" />

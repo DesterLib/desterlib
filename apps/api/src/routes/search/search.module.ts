@@ -5,7 +5,7 @@ const router: RouterType = Router();
 
 /**
  * @openapi
- * /api/search:
+ * /api/v1/search:
  *   get:
  *     summary: Search across all content
  *     description: Search for media and collections by title/name

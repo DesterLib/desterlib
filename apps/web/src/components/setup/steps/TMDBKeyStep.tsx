@@ -9,7 +9,8 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { apiClient } from "@/lib/api-client";
+import { patchApiV1Settings } from "@dester/api-client";
+import "@/lib/api-client"; // Import to ensure client is configured
 
 export function TMDBKeyStep() {
   const {
@@ -48,7 +49,7 @@ export function TMDBKeyStep() {
 
     try {
       // Test the API key by updating settings
-      await apiClient.settings.update({ tmdbApiKey: tmdbKey.apiKey });
+      await patchApiV1Settings({ tmdbApiKey: tmdbKey.apiKey });
       clearErrors();
       nextStep();
     } catch {

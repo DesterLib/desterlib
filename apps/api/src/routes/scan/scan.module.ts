@@ -5,7 +5,7 @@ const router: RouterType = Router();
 
 /**
  * @openapi
- * /api/scan:
+ * /api/v1/scan:
  *   post:
  *     summary: Scan a directory for media files
  *     description: Recursively scans a directory and returns all media files matching the specified media type
@@ -73,7 +73,7 @@ router.post("/", (req, res, next) => {
 
 /**
  * @openapi
- * /api/scan/sync:
+ * /api/v1/scan/sync:
  *   post:
  *     summary: Sync a collection
  *     description: Checks for file modifications and removals in a collection
@@ -126,7 +126,7 @@ router.post("/sync", (req, res, next) => {
 
 /**
  * @openapi
- * /api/scan/sync-all:
+ * /api/v1/scan/sync-all:
  *   post:
  *     summary: Sync all collections
  *     description: Checks for file modifications and removals across all collections (for cron jobs)

@@ -6,13 +6,25 @@ const router: ExpressRouter = Router();
 
 /**
  * @swagger
- * /api/settings:
+ * /api/v1/settings:
  *   get:
  *     summary: Get current settings
  *     tags: [Settings]
  *     responses:
  *       200:
  *         description: Settings retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         settings:
+ *                           $ref: '#/components/schemas/Settings'
  */
 router.get("/", (req, res, next) =>
   settingsController.getSettings(req, res, next)
@@ -20,13 +32,25 @@ router.get("/", (req, res, next) =>
 
 /**
  * @swagger
- * /api/settings/setup-status:
+ * /api/v1/settings/setup-status:
  *   get:
  *     summary: Check if initial setup is complete
  *     tags: [Settings]
  *     responses:
  *       200:
  *         description: Setup status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         isSetupComplete:
+ *                           type: boolean
  */
 router.get("/setup-status", (req, res, next) =>
   settingsController.getSetupStatus(req, res, next)
@@ -34,7 +58,7 @@ router.get("/setup-status", (req, res, next) =>
 
 /**
  * @swagger
- * /api/settings/complete-setup:
+ * /api/v1/settings/complete-setup:
  *   post:
  *     summary: Complete initial setup
  *     tags: [Settings]
@@ -61,8 +85,7 @@ router.get("/setup-status", (req, res, next) =>
  *                       type: string
  *                       example: "My Movies"
  *                     type:
- *                       type: string
- *                       enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
+ *                       $ref: '#/components/schemas/MediaType'
  *                       example: "MOVIE"
  *                     path:
  *                       type: string
@@ -74,6 +97,18 @@ router.get("/setup-status", (req, res, next) =>
  *     responses:
  *       200:
  *         description: Setup completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         settings:
+ *                           $ref: '#/components/schemas/Settings'
  */
 router.post("/complete-setup", (req, res, next) =>
   settingsController.completeSetup(req, res, next)
@@ -81,7 +116,7 @@ router.post("/complete-setup", (req, res, next) =>
 
 /**
  * @swagger
- * /api/settings:
+ * /api/v1/settings:
  *   patch:
  *     summary: Update settings
  *     tags: [Settings]
@@ -100,8 +135,7 @@ router.post("/complete-setup", (req, res, next) =>
  *                     name:
  *                       type: string
  *                     type:
- *                       type: string
- *                       enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
+ *                       $ref: '#/components/schemas/MediaType'
  *                     path:
  *                       type: string
  *               tmdbApiKey:
@@ -109,6 +143,18 @@ router.post("/complete-setup", (req, res, next) =>
  *     responses:
  *       200:
  *         description: Settings updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         settings:
+ *                           $ref: '#/components/schemas/Settings'
  */
 router.patch("/", (req, res, next) =>
   settingsController.updateSettings(req, res, next)

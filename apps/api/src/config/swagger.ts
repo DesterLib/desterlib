@@ -644,6 +644,23 @@ const options: swaggerJsdoc.Options = {
               nullable: true,
               example: "https://example.com/backdrop.jpg",
             },
+            isLibrary: {
+              type: "boolean",
+              example: false,
+            },
+            libraryPath: {
+              type: "string",
+              nullable: true,
+              example: "/media/movies",
+            },
+            libraryType: {
+              $ref: "#/components/schemas/MediaType",
+              nullable: true,
+            },
+            mediaCount: {
+              type: "integer",
+              example: 42,
+            },
           },
         },
         MediaCollection: {
@@ -700,6 +717,51 @@ const options: swaggerJsdoc.Options = {
             mediaId: {
               type: "string",
               example: "clx123456789",
+            },
+          },
+        },
+        Settings: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              example: "default",
+            },
+            isSetupComplete: {
+              type: "boolean",
+              example: false,
+            },
+            tmdbApiKey: {
+              type: "string",
+              nullable: true,
+              example: "your_tmdb_api_key",
+            },
+            requireAuth: {
+              type: "boolean",
+              example: true,
+            },
+            allowRegistration: {
+              type: "boolean",
+              example: false,
+            },
+            sessionDuration: {
+              type: "integer",
+              example: 604800,
+              description: "Session duration in seconds",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+            },
+            libraries: {
+              type: "array",
+              items: {
+                $ref: "#/components/schemas/Collection",
+              },
             },
           },
         },

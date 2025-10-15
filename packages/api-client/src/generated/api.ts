@@ -261,6 +261,12 @@ export interface Collection {
   posterUrl?: string | null;
   /** @nullable */
   backdropUrl?: string | null;
+  isLibrary?: boolean;
+  /** @nullable */
+  libraryPath?: string | null;
+  /** @nullable */
+  libraryType?: MediaType;
+  mediaCount?: number;
 }
 
 export interface MediaCollection {
@@ -293,6 +299,20 @@ export interface ExternalId {
   source?: ExternalIdSource;
   externalId?: string;
   mediaId?: string;
+}
+
+export interface Settings {
+  id?: string;
+  isSetupComplete?: boolean;
+  /** @nullable */
+  tmdbApiKey?: string | null;
+  requireAuth?: boolean;
+  allowRegistration?: boolean;
+  /** Session duration in seconds */
+  sessionDuration?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  libraries?: Collection[];
 }
 
 export type GetAdminAlertsHistoryParams = {
@@ -337,7 +357,19 @@ export type PostAuthLogoutBody = {
   refreshToken: string;
 };
 
-export type GetApiComicsParams = {
+export type GetApiV1CollectionsLibraries200AllOfData = {
+  message?: string;
+  collections?: Collection[];
+};
+
+export type GetApiV1CollectionsLibraries200AllOf = {
+  data?: GetApiV1CollectionsLibraries200AllOfData;
+};
+
+export type GetApiV1CollectionsLibraries200 = SuccessResponse &
+  GetApiV1CollectionsLibraries200AllOf;
+
+export type GetApiV1ComicsParams = {
   /**
    * Search in title and description
    */
@@ -388,44 +420,44 @@ export type GetApiComicsParams = {
   /**
    * Field to sort by
    */
-  sortBy?: GetApiComicsSortBy;
+  sortBy?: GetApiV1ComicsSortBy;
   /**
    * Sort order
    */
-  sortOrder?: GetApiComicsSortOrder;
+  sortOrder?: GetApiV1ComicsSortOrder;
 };
 
-export type GetApiComicsSortBy =
-  (typeof GetApiComicsSortBy)[keyof typeof GetApiComicsSortBy];
+export type GetApiV1ComicsSortBy =
+  (typeof GetApiV1ComicsSortBy)[keyof typeof GetApiV1ComicsSortBy];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiComicsSortBy = {
+export const GetApiV1ComicsSortBy = {
   title: "title",
   releaseDate: "releaseDate",
   rating: "rating",
   createdAt: "createdAt",
 } as const;
 
-export type GetApiComicsSortOrder =
-  (typeof GetApiComicsSortOrder)[keyof typeof GetApiComicsSortOrder];
+export type GetApiV1ComicsSortOrder =
+  (typeof GetApiV1ComicsSortOrder)[keyof typeof GetApiV1ComicsSortOrder];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiComicsSortOrder = {
+export const GetApiV1ComicsSortOrder = {
   asc: "asc",
   desc: "desc",
 } as const;
 
-export type GetApiComics200AllOfData = {
+export type GetApiV1Comics200AllOfData = {
   message?: string;
   media?: Media[];
   pagination?: Pagination;
 };
 
-export type GetApiComics200AllOf = {
-  data?: GetApiComics200AllOfData;
+export type GetApiV1Comics200AllOf = {
+  data?: GetApiV1Comics200AllOfData;
 };
 
-export type GetApiComics200 = SuccessResponse & GetApiComics200AllOf;
+export type GetApiV1Comics200 = SuccessResponse & GetApiV1Comics200AllOf;
 
 export type GetApiComicsId200AllOfData = {
   message?: string;
@@ -438,7 +470,7 @@ export type GetApiComicsId200AllOf = {
 
 export type GetApiComicsId200 = SuccessResponse & GetApiComicsId200AllOf;
 
-export type GetApiMediaParams = {
+export type GetApiV1MediaParams = {
   /**
    * Filter by media type
    */
@@ -493,81 +525,81 @@ export type GetApiMediaParams = {
   /**
    * Field to sort by
    */
-  sortBy?: GetApiMediaSortBy;
+  sortBy?: GetApiV1MediaSortBy;
   /**
    * Sort order
    */
-  sortOrder?: GetApiMediaSortOrder;
+  sortOrder?: GetApiV1MediaSortOrder;
 };
 
-export type GetApiMediaSortBy =
-  (typeof GetApiMediaSortBy)[keyof typeof GetApiMediaSortBy];
+export type GetApiV1MediaSortBy =
+  (typeof GetApiV1MediaSortBy)[keyof typeof GetApiV1MediaSortBy];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiMediaSortBy = {
+export const GetApiV1MediaSortBy = {
   title: "title",
   releaseDate: "releaseDate",
   rating: "rating",
   createdAt: "createdAt",
 } as const;
 
-export type GetApiMediaSortOrder =
-  (typeof GetApiMediaSortOrder)[keyof typeof GetApiMediaSortOrder];
+export type GetApiV1MediaSortOrder =
+  (typeof GetApiV1MediaSortOrder)[keyof typeof GetApiV1MediaSortOrder];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiMediaSortOrder = {
+export const GetApiV1MediaSortOrder = {
   asc: "asc",
   desc: "desc",
 } as const;
 
-export type GetApiMedia200AllOfData = {
+export type GetApiV1Media200AllOfData = {
   message?: string;
   media?: Media[];
   pagination?: Pagination;
 };
 
-export type GetApiMedia200AllOf = {
-  data?: GetApiMedia200AllOfData;
+export type GetApiV1Media200AllOf = {
+  data?: GetApiV1Media200AllOfData;
 };
 
-export type GetApiMedia200 = SuccessResponse & GetApiMedia200AllOf;
+export type GetApiV1Media200 = SuccessResponse & GetApiV1Media200AllOf;
 
-export type GetApiMediaStatistics200AllOfDataStatisticsByType = {
+export type GetApiV1MediaStatistics200AllOfDataStatisticsByType = {
   movies?: number;
   tvShows?: number;
   music?: number;
   comics?: number;
 };
 
-export type GetApiMediaStatistics200AllOfDataStatistics = {
+export type GetApiV1MediaStatistics200AllOfDataStatistics = {
   total?: number;
-  byType?: GetApiMediaStatistics200AllOfDataStatisticsByType;
+  byType?: GetApiV1MediaStatistics200AllOfDataStatisticsByType;
 };
 
-export type GetApiMediaStatistics200AllOfData = {
+export type GetApiV1MediaStatistics200AllOfData = {
   message?: string;
-  statistics?: GetApiMediaStatistics200AllOfDataStatistics;
+  statistics?: GetApiV1MediaStatistics200AllOfDataStatistics;
 };
 
-export type GetApiMediaStatistics200AllOf = {
-  data?: GetApiMediaStatistics200AllOfData;
+export type GetApiV1MediaStatistics200AllOf = {
+  data?: GetApiV1MediaStatistics200AllOfData;
 };
 
-export type GetApiMediaStatistics200 = SuccessResponse &
-  GetApiMediaStatistics200AllOf;
+export type GetApiV1MediaStatistics200 = SuccessResponse &
+  GetApiV1MediaStatistics200AllOf;
 
-export type GetApiMediaId200AllOfData = {
+export type GetApiV1MediaId200AllOfData = {
   message?: string;
   media?: Media;
 };
 
-export type GetApiMediaId200AllOf = {
-  data?: GetApiMediaId200AllOfData;
+export type GetApiV1MediaId200AllOf = {
+  data?: GetApiV1MediaId200AllOfData;
 };
 
-export type GetApiMediaId200 = SuccessResponse & GetApiMediaId200AllOf;
+export type GetApiV1MediaId200 = SuccessResponse & GetApiV1MediaId200AllOf;
 
-export type GetApiMoviesParams = {
+export type GetApiV1MoviesParams = {
   /**
    * Search in title and description
    */
@@ -618,57 +650,57 @@ export type GetApiMoviesParams = {
   /**
    * Field to sort by
    */
-  sortBy?: GetApiMoviesSortBy;
+  sortBy?: GetApiV1MoviesSortBy;
   /**
    * Sort order
    */
-  sortOrder?: GetApiMoviesSortOrder;
+  sortOrder?: GetApiV1MoviesSortOrder;
 };
 
-export type GetApiMoviesSortBy =
-  (typeof GetApiMoviesSortBy)[keyof typeof GetApiMoviesSortBy];
+export type GetApiV1MoviesSortBy =
+  (typeof GetApiV1MoviesSortBy)[keyof typeof GetApiV1MoviesSortBy];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiMoviesSortBy = {
+export const GetApiV1MoviesSortBy = {
   title: "title",
   releaseDate: "releaseDate",
   rating: "rating",
   createdAt: "createdAt",
 } as const;
 
-export type GetApiMoviesSortOrder =
-  (typeof GetApiMoviesSortOrder)[keyof typeof GetApiMoviesSortOrder];
+export type GetApiV1MoviesSortOrder =
+  (typeof GetApiV1MoviesSortOrder)[keyof typeof GetApiV1MoviesSortOrder];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiMoviesSortOrder = {
+export const GetApiV1MoviesSortOrder = {
   asc: "asc",
   desc: "desc",
 } as const;
 
-export type GetApiMovies200AllOfData = {
+export type GetApiV1Movies200AllOfData = {
   message?: string;
   media?: Media[];
   pagination?: Pagination;
 };
 
-export type GetApiMovies200AllOf = {
-  data?: GetApiMovies200AllOfData;
+export type GetApiV1Movies200AllOf = {
+  data?: GetApiV1Movies200AllOfData;
 };
 
-export type GetApiMovies200 = SuccessResponse & GetApiMovies200AllOf;
+export type GetApiV1Movies200 = SuccessResponse & GetApiV1Movies200AllOf;
 
-export type GetApiMoviesId200AllOfData = {
+export type GetApiV1MoviesId200AllOfData = {
   message?: string;
   media?: Media;
 };
 
-export type GetApiMoviesId200AllOf = {
-  data?: GetApiMoviesId200AllOfData;
+export type GetApiV1MoviesId200AllOf = {
+  data?: GetApiV1MoviesId200AllOfData;
 };
 
-export type GetApiMoviesId200 = SuccessResponse & GetApiMoviesId200AllOf;
+export type GetApiV1MoviesId200 = SuccessResponse & GetApiV1MoviesId200AllOf;
 
-export type GetApiMusicParams = {
+export type GetApiV1MusicParams = {
   /**
    * Search in title and description
    */
@@ -719,44 +751,44 @@ export type GetApiMusicParams = {
   /**
    * Field to sort by
    */
-  sortBy?: GetApiMusicSortBy;
+  sortBy?: GetApiV1MusicSortBy;
   /**
    * Sort order
    */
-  sortOrder?: GetApiMusicSortOrder;
+  sortOrder?: GetApiV1MusicSortOrder;
 };
 
-export type GetApiMusicSortBy =
-  (typeof GetApiMusicSortBy)[keyof typeof GetApiMusicSortBy];
+export type GetApiV1MusicSortBy =
+  (typeof GetApiV1MusicSortBy)[keyof typeof GetApiV1MusicSortBy];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiMusicSortBy = {
+export const GetApiV1MusicSortBy = {
   title: "title",
   releaseDate: "releaseDate",
   rating: "rating",
   createdAt: "createdAt",
 } as const;
 
-export type GetApiMusicSortOrder =
-  (typeof GetApiMusicSortOrder)[keyof typeof GetApiMusicSortOrder];
+export type GetApiV1MusicSortOrder =
+  (typeof GetApiV1MusicSortOrder)[keyof typeof GetApiV1MusicSortOrder];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiMusicSortOrder = {
+export const GetApiV1MusicSortOrder = {
   asc: "asc",
   desc: "desc",
 } as const;
 
-export type GetApiMusic200AllOfData = {
+export type GetApiV1Music200AllOfData = {
   message?: string;
   media?: Media[];
   pagination?: Pagination;
 };
 
-export type GetApiMusic200AllOf = {
-  data?: GetApiMusic200AllOfData;
+export type GetApiV1Music200AllOf = {
+  data?: GetApiV1Music200AllOfData;
 };
 
-export type GetApiMusic200 = SuccessResponse & GetApiMusic200AllOf;
+export type GetApiV1Music200 = SuccessResponse & GetApiV1Music200AllOf;
 
 export type GetApiMusicId200AllOfData = {
   message?: string;
@@ -810,7 +842,7 @@ export type GetApiNotificationsStream200 = {
   data?: GetApiNotificationsStream200Data;
 };
 
-export type PostApiScanBody = {
+export type PostApiV1ScanBody = {
   /** Absolute path to the directory to scan */
   path: string;
   mediaType: MediaType;
@@ -820,47 +852,47 @@ export type PostApiScanBody = {
   updateExisting?: boolean;
 };
 
-export type PostApiScan200AllOfData = {
+export type PostApiV1Scan200AllOfData = {
   message?: string;
   scan?: ScanResult;
 };
 
-export type PostApiScan200AllOf = {
-  data?: PostApiScan200AllOfData;
+export type PostApiV1Scan200AllOf = {
+  data?: PostApiV1Scan200AllOfData;
 };
 
-export type PostApiScan200 = SuccessResponse & PostApiScan200AllOf;
+export type PostApiV1Scan200 = SuccessResponse & PostApiV1Scan200AllOf;
 
-export type PostApiScanSyncBody = {
+export type PostApiV1ScanSyncBody = {
   /** Name of the collection to sync */
   collectionName: string;
   mediaType: MediaType;
 };
 
-export type PostApiScanSync200AllOfData = {
+export type PostApiV1ScanSync200AllOfData = {
   message?: string;
   sync?: SyncResult;
 };
 
-export type PostApiScanSync200AllOf = {
-  data?: PostApiScanSync200AllOfData;
+export type PostApiV1ScanSync200AllOf = {
+  data?: PostApiV1ScanSync200AllOfData;
 };
 
-export type PostApiScanSync200 = SuccessResponse & PostApiScanSync200AllOf;
+export type PostApiV1ScanSync200 = SuccessResponse & PostApiV1ScanSync200AllOf;
 
-export type PostApiScanSyncAll200AllOfData = {
+export type PostApiV1ScanSyncAll200AllOfData = {
   message?: string;
   syncs?: SyncResult[];
 };
 
-export type PostApiScanSyncAll200AllOf = {
-  data?: PostApiScanSyncAll200AllOfData;
+export type PostApiV1ScanSyncAll200AllOf = {
+  data?: PostApiV1ScanSyncAll200AllOfData;
 };
 
-export type PostApiScanSyncAll200 = SuccessResponse &
-  PostApiScanSyncAll200AllOf;
+export type PostApiV1ScanSyncAll200 = SuccessResponse &
+  PostApiV1ScanSyncAll200AllOf;
 
-export type GetApiSearchParams = {
+export type GetApiV1SearchParams = {
   /**
    * Search query
    */
@@ -868,19 +900,19 @@ export type GetApiSearchParams = {
   /**
    * Filter results by type (optional)
    */
-  type?: GetApiSearchType;
+  type?: GetApiV1SearchType;
 };
 
-export type GetApiSearchType =
-  (typeof GetApiSearchType)[keyof typeof GetApiSearchType];
+export type GetApiV1SearchType =
+  (typeof GetApiV1SearchType)[keyof typeof GetApiV1SearchType];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiSearchType = {
+export const GetApiV1SearchType = {
   media: "media",
   collections: "collections",
 } as const;
 
-export type GetApiSearch200AllOfData = {
+export type GetApiV1Search200AllOfData = {
   message?: string;
   query?: string;
   media?: Media[];
@@ -888,58 +920,79 @@ export type GetApiSearch200AllOfData = {
   total?: number;
 };
 
-export type GetApiSearch200AllOf = {
-  data?: GetApiSearch200AllOfData;
+export type GetApiV1Search200AllOf = {
+  data?: GetApiV1Search200AllOfData;
 };
 
-export type GetApiSearch200 = SuccessResponse & GetApiSearch200AllOf;
+export type GetApiV1Search200 = SuccessResponse & GetApiV1Search200AllOf;
 
-export type PatchApiSettingsBodyLibrariesItemType =
-  (typeof PatchApiSettingsBodyLibrariesItemType)[keyof typeof PatchApiSettingsBodyLibrariesItemType];
+export type GetApiV1Settings200AllOfData = {
+  settings?: Settings;
+};
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const PatchApiSettingsBodyLibrariesItemType = {
-  MOVIE: "MOVIE",
-  TV_SHOW: "TV_SHOW",
-  MUSIC: "MUSIC",
-  COMIC: "COMIC",
-} as const;
+export type GetApiV1Settings200AllOf = {
+  data?: GetApiV1Settings200AllOfData;
+};
 
-export type PatchApiSettingsBodyLibrariesItem = {
+export type GetApiV1Settings200 = SuccessResponse & GetApiV1Settings200AllOf;
+
+export type PatchApiV1SettingsBodyLibrariesItem = {
   name?: string;
-  type?: PatchApiSettingsBodyLibrariesItemType;
+  type?: MediaType;
   path?: string;
 };
 
-export type PatchApiSettingsBody = {
-  libraries?: PatchApiSettingsBodyLibrariesItem[];
+export type PatchApiV1SettingsBody = {
+  libraries?: PatchApiV1SettingsBodyLibrariesItem[];
   tmdbApiKey?: string;
 };
 
-export type PostApiSettingsCompleteSetupBodyLibrariesItemType =
-  (typeof PostApiSettingsCompleteSetupBodyLibrariesItemType)[keyof typeof PostApiSettingsCompleteSetupBodyLibrariesItemType];
+export type PatchApiV1Settings200AllOfData = {
+  settings?: Settings;
+};
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const PostApiSettingsCompleteSetupBodyLibrariesItemType = {
-  MOVIE: "MOVIE",
-  TV_SHOW: "TV_SHOW",
-  MUSIC: "MUSIC",
-  COMIC: "COMIC",
-} as const;
+export type PatchApiV1Settings200AllOf = {
+  data?: PatchApiV1Settings200AllOfData;
+};
 
-export type PostApiSettingsCompleteSetupBodyLibrariesItem = {
+export type PatchApiV1Settings200 = SuccessResponse &
+  PatchApiV1Settings200AllOf;
+
+export type GetApiV1SettingsSetupStatus200AllOfData = {
+  isSetupComplete?: boolean;
+};
+
+export type GetApiV1SettingsSetupStatus200AllOf = {
+  data?: GetApiV1SettingsSetupStatus200AllOfData;
+};
+
+export type GetApiV1SettingsSetupStatus200 = SuccessResponse &
+  GetApiV1SettingsSetupStatus200AllOf;
+
+export type PostApiV1SettingsCompleteSetupBodyLibrariesItem = {
   name: string;
-  type: PostApiSettingsCompleteSetupBodyLibrariesItemType;
+  type: MediaType;
   path: string;
 };
 
-export type PostApiSettingsCompleteSetupBody = {
-  libraries: PostApiSettingsCompleteSetupBodyLibrariesItem[];
+export type PostApiV1SettingsCompleteSetupBody = {
+  libraries: PostApiV1SettingsCompleteSetupBodyLibrariesItem[];
   /** Required TMDB API key for metadata */
   tmdbApiKey: string;
 };
 
-export type GetApiTvShowsParams = {
+export type PostApiV1SettingsCompleteSetup200AllOfData = {
+  settings?: Settings;
+};
+
+export type PostApiV1SettingsCompleteSetup200AllOf = {
+  data?: PostApiV1SettingsCompleteSetup200AllOfData;
+};
+
+export type PostApiV1SettingsCompleteSetup200 = SuccessResponse &
+  PostApiV1SettingsCompleteSetup200AllOf;
+
+export type GetApiV1TvShowsParams = {
   /**
    * Search in title and description
    */
@@ -990,81 +1043,82 @@ export type GetApiTvShowsParams = {
   /**
    * Field to sort by
    */
-  sortBy?: GetApiTvShowsSortBy;
+  sortBy?: GetApiV1TvShowsSortBy;
   /**
    * Sort order
    */
-  sortOrder?: GetApiTvShowsSortOrder;
+  sortOrder?: GetApiV1TvShowsSortOrder;
 };
 
-export type GetApiTvShowsSortBy =
-  (typeof GetApiTvShowsSortBy)[keyof typeof GetApiTvShowsSortBy];
+export type GetApiV1TvShowsSortBy =
+  (typeof GetApiV1TvShowsSortBy)[keyof typeof GetApiV1TvShowsSortBy];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiTvShowsSortBy = {
+export const GetApiV1TvShowsSortBy = {
   title: "title",
   releaseDate: "releaseDate",
   rating: "rating",
   createdAt: "createdAt",
 } as const;
 
-export type GetApiTvShowsSortOrder =
-  (typeof GetApiTvShowsSortOrder)[keyof typeof GetApiTvShowsSortOrder];
+export type GetApiV1TvShowsSortOrder =
+  (typeof GetApiV1TvShowsSortOrder)[keyof typeof GetApiV1TvShowsSortOrder];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const GetApiTvShowsSortOrder = {
+export const GetApiV1TvShowsSortOrder = {
   asc: "asc",
   desc: "desc",
 } as const;
 
-export type GetApiTvShows200AllOfData = {
+export type GetApiV1TvShows200AllOfData = {
   message?: string;
   media?: Media[];
   pagination?: Pagination;
 };
 
-export type GetApiTvShows200AllOf = {
-  data?: GetApiTvShows200AllOfData;
+export type GetApiV1TvShows200AllOf = {
+  data?: GetApiV1TvShows200AllOfData;
 };
 
-export type GetApiTvShows200 = SuccessResponse & GetApiTvShows200AllOf;
+export type GetApiV1TvShows200 = SuccessResponse & GetApiV1TvShows200AllOf;
 
-export type GetApiTvShowsId200AllOfData = {
+export type GetApiV1TvShowsId200AllOfData = {
   message?: string;
   media?: Media;
 };
 
-export type GetApiTvShowsId200AllOf = {
-  data?: GetApiTvShowsId200AllOfData;
+export type GetApiV1TvShowsId200AllOf = {
+  data?: GetApiV1TvShowsId200AllOfData;
 };
 
-export type GetApiTvShowsId200 = SuccessResponse & GetApiTvShowsId200AllOf;
+export type GetApiV1TvShowsId200 = SuccessResponse & GetApiV1TvShowsId200AllOf;
 
-export type GetApiTvShowsIdSeasonsSeasonNumber200AllOfData = {
+export type GetApiV1TvShowsIdSeasonsSeasonNumber200AllOfData = {
   message?: string;
   season?: Season;
 };
 
-export type GetApiTvShowsIdSeasonsSeasonNumber200AllOf = {
-  data?: GetApiTvShowsIdSeasonsSeasonNumber200AllOfData;
+export type GetApiV1TvShowsIdSeasonsSeasonNumber200AllOf = {
+  data?: GetApiV1TvShowsIdSeasonsSeasonNumber200AllOfData;
 };
 
-export type GetApiTvShowsIdSeasonsSeasonNumber200 = SuccessResponse &
-  GetApiTvShowsIdSeasonsSeasonNumber200AllOf;
+export type GetApiV1TvShowsIdSeasonsSeasonNumber200 = SuccessResponse &
+  GetApiV1TvShowsIdSeasonsSeasonNumber200AllOf;
 
-export type GetApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOfData =
+export type GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOfData =
   {
     message?: string;
     episode?: Episode;
   };
 
-export type GetApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOf = {
-  data?: GetApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOfData;
-};
+export type GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOf =
+  {
+    data?: GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOfData;
+  };
 
-export type GetApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200 =
+export type GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200 =
   SuccessResponse &
-    GetApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOf;
+    GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOf;
 
 /**
  * @summary List all database backups
@@ -2075,7 +2129,7 @@ export const getApiV1CollectionsStatistics = async (
  * @summary Get all libraries
  */
 export type getApiV1CollectionsLibrariesResponse200 = {
-  data: void;
+  data: GetApiV1CollectionsLibraries200;
   status: 200;
 };
 
@@ -2194,28 +2248,28 @@ export const deleteApiV1CollectionsId = async (
  * Retrieve all comics with optional filtering, sorting, and pagination
  * @summary Get all comics
  */
-export type getApiComicsResponse200 = {
-  data: GetApiComics200;
+export type getApiV1ComicsResponse200 = {
+  data: GetApiV1Comics200;
   status: 200;
 };
 
-export type getApiComicsResponse400 = {
+export type getApiV1ComicsResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiComicsResponseSuccess = getApiComicsResponse200 & {
+export type getApiV1ComicsResponseSuccess = getApiV1ComicsResponse200 & {
   headers: Headers;
 };
-export type getApiComicsResponseError = getApiComicsResponse400 & {
+export type getApiV1ComicsResponseError = getApiV1ComicsResponse400 & {
   headers: Headers;
 };
 
-export type getApiComicsResponse =
-  | getApiComicsResponseSuccess
-  | getApiComicsResponseError;
+export type getApiV1ComicsResponse =
+  | getApiV1ComicsResponseSuccess
+  | getApiV1ComicsResponseError;
 
-export const getGetApiComicsUrl = (params?: GetApiComicsParams) => {
+export const getGetApiV1ComicsUrl = (params?: GetApiV1ComicsParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -2227,15 +2281,15 @@ export const getGetApiComicsUrl = (params?: GetApiComicsParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/comics?${stringifiedParams}`
-    : `/api/comics`;
+    ? `/api/v1/comics?${stringifiedParams}`
+    : `/api/v1/comics`;
 };
 
-export const getApiComics = async (
-  params?: GetApiComicsParams,
+export const getApiV1Comics = async (
+  params?: GetApiV1ComicsParams,
   options?: RequestInit,
-): Promise<getApiComicsResponse> => {
-  return customFetcher<getApiComicsResponse>(getGetApiComicsUrl(params), {
+): Promise<getApiV1ComicsResponse> => {
+  return customFetcher<getApiV1ComicsResponse>(getGetApiV1ComicsUrl(params), {
     ...options,
     method: "GET",
   });
@@ -2384,28 +2438,28 @@ export const getHealthLive = async (
  * Retrieve all media items with optional filtering, sorting, and pagination
  * @summary Get all media
  */
-export type getApiMediaResponse200 = {
-  data: GetApiMedia200;
+export type getApiV1MediaResponse200 = {
+  data: GetApiV1Media200;
   status: 200;
 };
 
-export type getApiMediaResponse400 = {
+export type getApiV1MediaResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiMediaResponseSuccess = getApiMediaResponse200 & {
+export type getApiV1MediaResponseSuccess = getApiV1MediaResponse200 & {
   headers: Headers;
 };
-export type getApiMediaResponseError = getApiMediaResponse400 & {
+export type getApiV1MediaResponseError = getApiV1MediaResponse400 & {
   headers: Headers;
 };
 
-export type getApiMediaResponse =
-  | getApiMediaResponseSuccess
-  | getApiMediaResponseError;
+export type getApiV1MediaResponse =
+  | getApiV1MediaResponseSuccess
+  | getApiV1MediaResponseError;
 
-export const getGetApiMediaUrl = (params?: GetApiMediaParams) => {
+export const getGetApiV1MediaUrl = (params?: GetApiV1MediaParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -2417,15 +2471,15 @@ export const getGetApiMediaUrl = (params?: GetApiMediaParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/media?${stringifiedParams}`
-    : `/api/media`;
+    ? `/api/v1/media?${stringifiedParams}`
+    : `/api/v1/media`;
 };
 
-export const getApiMedia = async (
-  params?: GetApiMediaParams,
+export const getApiV1Media = async (
+  params?: GetApiV1MediaParams,
   options?: RequestInit,
-): Promise<getApiMediaResponse> => {
-  return customFetcher<getApiMediaResponse>(getGetApiMediaUrl(params), {
+): Promise<getApiV1MediaResponse> => {
+  return customFetcher<getApiV1MediaResponse>(getGetApiV1MediaUrl(params), {
     ...options,
     method: "GET",
   });
@@ -2435,27 +2489,27 @@ export const getApiMedia = async (
  * Retrieve statistics about media in the library
  * @summary Get media statistics
  */
-export type getApiMediaStatisticsResponse200 = {
-  data: GetApiMediaStatistics200;
+export type getApiV1MediaStatisticsResponse200 = {
+  data: GetApiV1MediaStatistics200;
   status: 200;
 };
 
-export type getApiMediaStatisticsResponseSuccess =
-  getApiMediaStatisticsResponse200 & {
+export type getApiV1MediaStatisticsResponseSuccess =
+  getApiV1MediaStatisticsResponse200 & {
     headers: Headers;
   };
-export type getApiMediaStatisticsResponse =
-  getApiMediaStatisticsResponseSuccess;
+export type getApiV1MediaStatisticsResponse =
+  getApiV1MediaStatisticsResponseSuccess;
 
-export const getGetApiMediaStatisticsUrl = () => {
-  return `/api/media/statistics`;
+export const getGetApiV1MediaStatisticsUrl = () => {
+  return `/api/v1/media/statistics`;
 };
 
-export const getApiMediaStatistics = async (
+export const getApiV1MediaStatistics = async (
   options?: RequestInit,
-): Promise<getApiMediaStatisticsResponse> => {
-  return customFetcher<getApiMediaStatisticsResponse>(
-    getGetApiMediaStatisticsUrl(),
+): Promise<getApiV1MediaStatisticsResponse> => {
+  return customFetcher<getApiV1MediaStatisticsResponse>(
+    getGetApiV1MediaStatisticsUrl(),
     {
       ...options,
       method: "GET",
@@ -2467,36 +2521,36 @@ export const getApiMediaStatistics = async (
  * Retrieve a specific media item by its ID
  * @summary Get media by ID
  */
-export type getApiMediaIdResponse200 = {
-  data: GetApiMediaId200;
+export type getApiV1MediaIdResponse200 = {
+  data: GetApiV1MediaId200;
   status: 200;
 };
 
-export type getApiMediaIdResponse404 = {
+export type getApiV1MediaIdResponse404 = {
   data: ErrorResponse;
   status: 404;
 };
 
-export type getApiMediaIdResponseSuccess = getApiMediaIdResponse200 & {
+export type getApiV1MediaIdResponseSuccess = getApiV1MediaIdResponse200 & {
   headers: Headers;
 };
-export type getApiMediaIdResponseError = getApiMediaIdResponse404 & {
+export type getApiV1MediaIdResponseError = getApiV1MediaIdResponse404 & {
   headers: Headers;
 };
 
-export type getApiMediaIdResponse =
-  | getApiMediaIdResponseSuccess
-  | getApiMediaIdResponseError;
+export type getApiV1MediaIdResponse =
+  | getApiV1MediaIdResponseSuccess
+  | getApiV1MediaIdResponseError;
 
-export const getGetApiMediaIdUrl = (id: string) => {
-  return `/api/media/${id}`;
+export const getGetApiV1MediaIdUrl = (id: string) => {
+  return `/api/v1/media/${id}`;
 };
 
-export const getApiMediaId = async (
+export const getApiV1MediaId = async (
   id: string,
   options?: RequestInit,
-): Promise<getApiMediaIdResponse> => {
-  return customFetcher<getApiMediaIdResponse>(getGetApiMediaIdUrl(id), {
+): Promise<getApiV1MediaIdResponse> => {
+  return customFetcher<getApiV1MediaIdResponse>(getGetApiV1MediaIdUrl(id), {
     ...options,
     method: "GET",
   });
@@ -2506,46 +2560,46 @@ export const getApiMediaId = async (
  * Stream a movie file with byte-range support for seeking
  * @summary Stream a movie
  */
-export type getApiMediaStreamMovieIdResponse200 = {
+export type getApiV1MediaStreamMovieIdResponse200 = {
   data: Blob;
   status: 200;
 };
 
-export type getApiMediaStreamMovieIdResponse206 = {
+export type getApiV1MediaStreamMovieIdResponse206 = {
   data: Blob;
   status: 206;
 };
 
-export type getApiMediaStreamMovieIdResponse404 = {
+export type getApiV1MediaStreamMovieIdResponse404 = {
   data: void;
   status: 404;
 };
 
-export type getApiMediaStreamMovieIdResponseSuccess = (
-  | getApiMediaStreamMovieIdResponse200
-  | getApiMediaStreamMovieIdResponse206
+export type getApiV1MediaStreamMovieIdResponseSuccess = (
+  | getApiV1MediaStreamMovieIdResponse200
+  | getApiV1MediaStreamMovieIdResponse206
 ) & {
   headers: Headers;
 };
-export type getApiMediaStreamMovieIdResponseError =
-  getApiMediaStreamMovieIdResponse404 & {
+export type getApiV1MediaStreamMovieIdResponseError =
+  getApiV1MediaStreamMovieIdResponse404 & {
     headers: Headers;
   };
 
-export type getApiMediaStreamMovieIdResponse =
-  | getApiMediaStreamMovieIdResponseSuccess
-  | getApiMediaStreamMovieIdResponseError;
+export type getApiV1MediaStreamMovieIdResponse =
+  | getApiV1MediaStreamMovieIdResponseSuccess
+  | getApiV1MediaStreamMovieIdResponseError;
 
-export const getGetApiMediaStreamMovieIdUrl = (id: string) => {
-  return `/api/media/stream/movie/${id}`;
+export const getGetApiV1MediaStreamMovieIdUrl = (id: string) => {
+  return `/api/v1/media/stream/movie/${id}`;
 };
 
-export const getApiMediaStreamMovieId = async (
+export const getApiV1MediaStreamMovieId = async (
   id: string,
   options?: RequestInit,
-): Promise<getApiMediaStreamMovieIdResponse> => {
-  return customFetcher<getApiMediaStreamMovieIdResponse>(
-    getGetApiMediaStreamMovieIdUrl(id),
+): Promise<getApiV1MediaStreamMovieIdResponse> => {
+  return customFetcher<getApiV1MediaStreamMovieIdResponse>(
+    getGetApiV1MediaStreamMovieIdUrl(id),
     {
       ...options,
       method: "GET",
@@ -2557,53 +2611,53 @@ export const getApiMediaStreamMovieId = async (
  * Stream a TV episode file with byte-range support for seeking
  * @summary Stream a TV episode
  */
-export type getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse200 = {
+export type getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse200 = {
   data: Blob;
   status: 200;
 };
 
-export type getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse206 = {
+export type getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse206 = {
   data: Blob;
   status: 206;
 };
 
-export type getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse404 = {
+export type getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse404 = {
   data: void;
   status: 404;
 };
 
-export type getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponseSuccess =
+export type getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponseSuccess =
   (
-    | getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse200
-    | getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse206
+    | getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse200
+    | getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse206
   ) & {
     headers: Headers;
   };
-export type getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponseError =
-  getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse404 & {
+export type getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponseError =
+  getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse404 & {
     headers: Headers;
   };
 
-export type getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse =
-  | getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponseSuccess
-  | getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponseError;
+export type getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse =
+  | getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponseSuccess
+  | getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponseError;
 
-export const getGetApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberUrl = (
+export const getGetApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberUrl = (
   id: string,
   seasonNumber: number,
   episodeNumber: number,
 ) => {
-  return `/api/media/stream/episode/${id}/${seasonNumber}/${episodeNumber}`;
+  return `/api/v1/media/stream/episode/${id}/${seasonNumber}/${episodeNumber}`;
 };
 
-export const getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumber = async (
+export const getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumber = async (
   id: string,
   seasonNumber: number,
   episodeNumber: number,
   options?: RequestInit,
-): Promise<getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse> => {
-  return customFetcher<getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse>(
-    getGetApiMediaStreamEpisodeIdSeasonNumberEpisodeNumberUrl(
+): Promise<getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse> => {
+  return customFetcher<getApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberResponse>(
+    getGetApiV1MediaStreamEpisodeIdSeasonNumberEpisodeNumberUrl(
       id,
       seasonNumber,
       episodeNumber,
@@ -2619,28 +2673,28 @@ export const getApiMediaStreamEpisodeIdSeasonNumberEpisodeNumber = async (
  * Retrieve all movies with optional filtering, sorting, and pagination
  * @summary Get all movies
  */
-export type getApiMoviesResponse200 = {
-  data: GetApiMovies200;
+export type getApiV1MoviesResponse200 = {
+  data: GetApiV1Movies200;
   status: 200;
 };
 
-export type getApiMoviesResponse400 = {
+export type getApiV1MoviesResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiMoviesResponseSuccess = getApiMoviesResponse200 & {
+export type getApiV1MoviesResponseSuccess = getApiV1MoviesResponse200 & {
   headers: Headers;
 };
-export type getApiMoviesResponseError = getApiMoviesResponse400 & {
+export type getApiV1MoviesResponseError = getApiV1MoviesResponse400 & {
   headers: Headers;
 };
 
-export type getApiMoviesResponse =
-  | getApiMoviesResponseSuccess
-  | getApiMoviesResponseError;
+export type getApiV1MoviesResponse =
+  | getApiV1MoviesResponseSuccess
+  | getApiV1MoviesResponseError;
 
-export const getGetApiMoviesUrl = (params?: GetApiMoviesParams) => {
+export const getGetApiV1MoviesUrl = (params?: GetApiV1MoviesParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -2652,15 +2706,15 @@ export const getGetApiMoviesUrl = (params?: GetApiMoviesParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/movies?${stringifiedParams}`
-    : `/api/movies`;
+    ? `/api/v1/movies?${stringifiedParams}`
+    : `/api/v1/movies`;
 };
 
-export const getApiMovies = async (
-  params?: GetApiMoviesParams,
+export const getApiV1Movies = async (
+  params?: GetApiV1MoviesParams,
   options?: RequestInit,
-): Promise<getApiMoviesResponse> => {
-  return customFetcher<getApiMoviesResponse>(getGetApiMoviesUrl(params), {
+): Promise<getApiV1MoviesResponse> => {
+  return customFetcher<getApiV1MoviesResponse>(getGetApiV1MoviesUrl(params), {
     ...options,
     method: "GET",
   });
@@ -2670,44 +2724,44 @@ export const getApiMovies = async (
  * Retrieve a specific movie by its ID
  * @summary Get movie by ID
  */
-export type getApiMoviesIdResponse200 = {
-  data: GetApiMoviesId200;
+export type getApiV1MoviesIdResponse200 = {
+  data: GetApiV1MoviesId200;
   status: 200;
 };
 
-export type getApiMoviesIdResponse400 = {
+export type getApiV1MoviesIdResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiMoviesIdResponse404 = {
+export type getApiV1MoviesIdResponse404 = {
   data: ErrorResponse;
   status: 404;
 };
 
-export type getApiMoviesIdResponseSuccess = getApiMoviesIdResponse200 & {
+export type getApiV1MoviesIdResponseSuccess = getApiV1MoviesIdResponse200 & {
   headers: Headers;
 };
-export type getApiMoviesIdResponseError = (
-  | getApiMoviesIdResponse400
-  | getApiMoviesIdResponse404
+export type getApiV1MoviesIdResponseError = (
+  | getApiV1MoviesIdResponse400
+  | getApiV1MoviesIdResponse404
 ) & {
   headers: Headers;
 };
 
-export type getApiMoviesIdResponse =
-  | getApiMoviesIdResponseSuccess
-  | getApiMoviesIdResponseError;
+export type getApiV1MoviesIdResponse =
+  | getApiV1MoviesIdResponseSuccess
+  | getApiV1MoviesIdResponseError;
 
-export const getGetApiMoviesIdUrl = (id: string) => {
-  return `/api/movies/${id}`;
+export const getGetApiV1MoviesIdUrl = (id: string) => {
+  return `/api/v1/movies/${id}`;
 };
 
-export const getApiMoviesId = async (
+export const getApiV1MoviesId = async (
   id: string,
   options?: RequestInit,
-): Promise<getApiMoviesIdResponse> => {
-  return customFetcher<getApiMoviesIdResponse>(getGetApiMoviesIdUrl(id), {
+): Promise<getApiV1MoviesIdResponse> => {
+  return customFetcher<getApiV1MoviesIdResponse>(getGetApiV1MoviesIdUrl(id), {
     ...options,
     method: "GET",
   });
@@ -2717,28 +2771,28 @@ export const getApiMoviesId = async (
  * Retrieve all music items with optional filtering, sorting, and pagination
  * @summary Get all music
  */
-export type getApiMusicResponse200 = {
-  data: GetApiMusic200;
+export type getApiV1MusicResponse200 = {
+  data: GetApiV1Music200;
   status: 200;
 };
 
-export type getApiMusicResponse400 = {
+export type getApiV1MusicResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiMusicResponseSuccess = getApiMusicResponse200 & {
+export type getApiV1MusicResponseSuccess = getApiV1MusicResponse200 & {
   headers: Headers;
 };
-export type getApiMusicResponseError = getApiMusicResponse400 & {
+export type getApiV1MusicResponseError = getApiV1MusicResponse400 & {
   headers: Headers;
 };
 
-export type getApiMusicResponse =
-  | getApiMusicResponseSuccess
-  | getApiMusicResponseError;
+export type getApiV1MusicResponse =
+  | getApiV1MusicResponseSuccess
+  | getApiV1MusicResponseError;
 
-export const getGetApiMusicUrl = (params?: GetApiMusicParams) => {
+export const getGetApiV1MusicUrl = (params?: GetApiV1MusicParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -2750,15 +2804,15 @@ export const getGetApiMusicUrl = (params?: GetApiMusicParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/music?${stringifiedParams}`
-    : `/api/music`;
+    ? `/api/v1/music?${stringifiedParams}`
+    : `/api/v1/music`;
 };
 
-export const getApiMusic = async (
-  params?: GetApiMusicParams,
+export const getApiV1Music = async (
+  params?: GetApiV1MusicParams,
   options?: RequestInit,
-): Promise<getApiMusicResponse> => {
-  return customFetcher<getApiMusicResponse>(getGetApiMusicUrl(params), {
+): Promise<getApiV1MusicResponse> => {
+  return customFetcher<getApiV1MusicResponse>(getGetApiV1MusicUrl(params), {
     ...options,
     method: "GET",
   });
@@ -2847,48 +2901,48 @@ export const getApiNotificationsStream = async (
  * Recursively scans a directory and returns all media files matching the specified media type
  * @summary Scan a directory for media files
  */
-export type postApiScanResponse200 = {
-  data: PostApiScan200;
+export type postApiV1ScanResponse200 = {
+  data: PostApiV1Scan200;
   status: 200;
 };
 
-export type postApiScanResponse400 = {
+export type postApiV1ScanResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type postApiScanResponse404 = {
+export type postApiV1ScanResponse404 = {
   data: ErrorResponse;
   status: 404;
 };
 
-export type postApiScanResponseSuccess = postApiScanResponse200 & {
+export type postApiV1ScanResponseSuccess = postApiV1ScanResponse200 & {
   headers: Headers;
 };
-export type postApiScanResponseError = (
-  | postApiScanResponse400
-  | postApiScanResponse404
+export type postApiV1ScanResponseError = (
+  | postApiV1ScanResponse400
+  | postApiV1ScanResponse404
 ) & {
   headers: Headers;
 };
 
-export type postApiScanResponse =
-  | postApiScanResponseSuccess
-  | postApiScanResponseError;
+export type postApiV1ScanResponse =
+  | postApiV1ScanResponseSuccess
+  | postApiV1ScanResponseError;
 
-export const getPostApiScanUrl = () => {
-  return `/api/scan`;
+export const getPostApiV1ScanUrl = () => {
+  return `/api/v1/scan`;
 };
 
-export const postApiScan = async (
-  postApiScanBody: PostApiScanBody,
+export const postApiV1Scan = async (
+  postApiV1ScanBody: PostApiV1ScanBody,
   options?: RequestInit,
-): Promise<postApiScanResponse> => {
-  return customFetcher<postApiScanResponse>(getPostApiScanUrl(), {
+): Promise<postApiV1ScanResponse> => {
+  return customFetcher<postApiV1ScanResponse>(getPostApiV1ScanUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postApiScanBody),
+    body: JSON.stringify(postApiV1ScanBody),
   });
 };
 
@@ -2896,40 +2950,40 @@ export const postApiScan = async (
  * Checks for file modifications and removals in a collection
  * @summary Sync a collection
  */
-export type postApiScanSyncResponse200 = {
-  data: PostApiScanSync200;
+export type postApiV1ScanSyncResponse200 = {
+  data: PostApiV1ScanSync200;
   status: 200;
 };
 
-export type postApiScanSyncResponse404 = {
+export type postApiV1ScanSyncResponse404 = {
   data: ErrorResponse;
   status: 404;
 };
 
-export type postApiScanSyncResponseSuccess = postApiScanSyncResponse200 & {
+export type postApiV1ScanSyncResponseSuccess = postApiV1ScanSyncResponse200 & {
   headers: Headers;
 };
-export type postApiScanSyncResponseError = postApiScanSyncResponse404 & {
+export type postApiV1ScanSyncResponseError = postApiV1ScanSyncResponse404 & {
   headers: Headers;
 };
 
-export type postApiScanSyncResponse =
-  | postApiScanSyncResponseSuccess
-  | postApiScanSyncResponseError;
+export type postApiV1ScanSyncResponse =
+  | postApiV1ScanSyncResponseSuccess
+  | postApiV1ScanSyncResponseError;
 
-export const getPostApiScanSyncUrl = () => {
-  return `/api/scan/sync`;
+export const getPostApiV1ScanSyncUrl = () => {
+  return `/api/v1/scan/sync`;
 };
 
-export const postApiScanSync = async (
-  postApiScanSyncBody: PostApiScanSyncBody,
+export const postApiV1ScanSync = async (
+  postApiV1ScanSyncBody: PostApiV1ScanSyncBody,
   options?: RequestInit,
-): Promise<postApiScanSyncResponse> => {
-  return customFetcher<postApiScanSyncResponse>(getPostApiScanSyncUrl(), {
+): Promise<postApiV1ScanSyncResponse> => {
+  return customFetcher<postApiV1ScanSyncResponse>(getPostApiV1ScanSyncUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postApiScanSyncBody),
+    body: JSON.stringify(postApiV1ScanSyncBody),
   });
 };
 
@@ -2937,56 +2991,59 @@ export const postApiScanSync = async (
  * Checks for file modifications and removals across all collections (for cron jobs)
  * @summary Sync all collections
  */
-export type postApiScanSyncAllResponse200 = {
-  data: PostApiScanSyncAll200;
+export type postApiV1ScanSyncAllResponse200 = {
+  data: PostApiV1ScanSyncAll200;
   status: 200;
 };
 
-export type postApiScanSyncAllResponseSuccess =
-  postApiScanSyncAllResponse200 & {
+export type postApiV1ScanSyncAllResponseSuccess =
+  postApiV1ScanSyncAllResponse200 & {
     headers: Headers;
   };
-export type postApiScanSyncAllResponse = postApiScanSyncAllResponseSuccess;
+export type postApiV1ScanSyncAllResponse = postApiV1ScanSyncAllResponseSuccess;
 
-export const getPostApiScanSyncAllUrl = () => {
-  return `/api/scan/sync-all`;
+export const getPostApiV1ScanSyncAllUrl = () => {
+  return `/api/v1/scan/sync-all`;
 };
 
-export const postApiScanSyncAll = async (
+export const postApiV1ScanSyncAll = async (
   options?: RequestInit,
-): Promise<postApiScanSyncAllResponse> => {
-  return customFetcher<postApiScanSyncAllResponse>(getPostApiScanSyncAllUrl(), {
-    ...options,
-    method: "POST",
-  });
+): Promise<postApiV1ScanSyncAllResponse> => {
+  return customFetcher<postApiV1ScanSyncAllResponse>(
+    getPostApiV1ScanSyncAllUrl(),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
 };
 
 /**
  * Search for media and collections by title/name
  * @summary Search across all content
  */
-export type getApiSearchResponse200 = {
-  data: GetApiSearch200;
+export type getApiV1SearchResponse200 = {
+  data: GetApiV1Search200;
   status: 200;
 };
 
-export type getApiSearchResponse400 = {
+export type getApiV1SearchResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiSearchResponseSuccess = getApiSearchResponse200 & {
+export type getApiV1SearchResponseSuccess = getApiV1SearchResponse200 & {
   headers: Headers;
 };
-export type getApiSearchResponseError = getApiSearchResponse400 & {
+export type getApiV1SearchResponseError = getApiV1SearchResponse400 & {
   headers: Headers;
 };
 
-export type getApiSearchResponse =
-  | getApiSearchResponseSuccess
-  | getApiSearchResponseError;
+export type getApiV1SearchResponse =
+  | getApiV1SearchResponseSuccess
+  | getApiV1SearchResponseError;
 
-export const getGetApiSearchUrl = (params: GetApiSearchParams) => {
+export const getGetApiV1SearchUrl = (params: GetApiV1SearchParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -2998,15 +3055,15 @@ export const getGetApiSearchUrl = (params: GetApiSearchParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/search?${stringifiedParams}`
-    : `/api/search`;
+    ? `/api/v1/search?${stringifiedParams}`
+    : `/api/v1/search`;
 };
 
-export const getApiSearch = async (
-  params: GetApiSearchParams,
+export const getApiV1Search = async (
+  params: GetApiV1SearchParams,
   options?: RequestInit,
-): Promise<getApiSearchResponse> => {
-  return customFetcher<getApiSearchResponse>(getGetApiSearchUrl(params), {
+): Promise<getApiV1SearchResponse> => {
+  return customFetcher<getApiV1SearchResponse>(getGetApiV1SearchUrl(params), {
     ...options,
     method: "GET",
   });
@@ -3015,24 +3072,24 @@ export const getApiSearch = async (
 /**
  * @summary Get current settings
  */
-export type getApiSettingsResponse200 = {
-  data: void;
+export type getApiV1SettingsResponse200 = {
+  data: GetApiV1Settings200;
   status: 200;
 };
 
-export type getApiSettingsResponseSuccess = getApiSettingsResponse200 & {
+export type getApiV1SettingsResponseSuccess = getApiV1SettingsResponse200 & {
   headers: Headers;
 };
-export type getApiSettingsResponse = getApiSettingsResponseSuccess;
+export type getApiV1SettingsResponse = getApiV1SettingsResponseSuccess;
 
-export const getGetApiSettingsUrl = () => {
-  return `/api/settings`;
+export const getGetApiV1SettingsUrl = () => {
+  return `/api/v1/settings`;
 };
 
-export const getApiSettings = async (
+export const getApiV1Settings = async (
   options?: RequestInit,
-): Promise<getApiSettingsResponse> => {
-  return customFetcher<getApiSettingsResponse>(getGetApiSettingsUrl(), {
+): Promise<getApiV1SettingsResponse> => {
+  return customFetcher<getApiV1SettingsResponse>(getGetApiV1SettingsUrl(), {
     ...options,
     method: "GET",
   });
@@ -3041,56 +3098,57 @@ export const getApiSettings = async (
 /**
  * @summary Update settings
  */
-export type patchApiSettingsResponse200 = {
-  data: void;
+export type patchApiV1SettingsResponse200 = {
+  data: PatchApiV1Settings200;
   status: 200;
 };
 
-export type patchApiSettingsResponseSuccess = patchApiSettingsResponse200 & {
-  headers: Headers;
-};
-export type patchApiSettingsResponse = patchApiSettingsResponseSuccess;
+export type patchApiV1SettingsResponseSuccess =
+  patchApiV1SettingsResponse200 & {
+    headers: Headers;
+  };
+export type patchApiV1SettingsResponse = patchApiV1SettingsResponseSuccess;
 
-export const getPatchApiSettingsUrl = () => {
-  return `/api/settings`;
+export const getPatchApiV1SettingsUrl = () => {
+  return `/api/v1/settings`;
 };
 
-export const patchApiSettings = async (
-  patchApiSettingsBody: PatchApiSettingsBody,
+export const patchApiV1Settings = async (
+  patchApiV1SettingsBody: PatchApiV1SettingsBody,
   options?: RequestInit,
-): Promise<patchApiSettingsResponse> => {
-  return customFetcher<patchApiSettingsResponse>(getPatchApiSettingsUrl(), {
+): Promise<patchApiV1SettingsResponse> => {
+  return customFetcher<patchApiV1SettingsResponse>(getPatchApiV1SettingsUrl(), {
     ...options,
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(patchApiSettingsBody),
+    body: JSON.stringify(patchApiV1SettingsBody),
   });
 };
 
 /**
  * @summary Check if initial setup is complete
  */
-export type getApiSettingsSetupStatusResponse200 = {
-  data: void;
+export type getApiV1SettingsSetupStatusResponse200 = {
+  data: GetApiV1SettingsSetupStatus200;
   status: 200;
 };
 
-export type getApiSettingsSetupStatusResponseSuccess =
-  getApiSettingsSetupStatusResponse200 & {
+export type getApiV1SettingsSetupStatusResponseSuccess =
+  getApiV1SettingsSetupStatusResponse200 & {
     headers: Headers;
   };
-export type getApiSettingsSetupStatusResponse =
-  getApiSettingsSetupStatusResponseSuccess;
+export type getApiV1SettingsSetupStatusResponse =
+  getApiV1SettingsSetupStatusResponseSuccess;
 
-export const getGetApiSettingsSetupStatusUrl = () => {
-  return `/api/settings/setup-status`;
+export const getGetApiV1SettingsSetupStatusUrl = () => {
+  return `/api/v1/settings/setup-status`;
 };
 
-export const getApiSettingsSetupStatus = async (
+export const getApiV1SettingsSetupStatus = async (
   options?: RequestInit,
-): Promise<getApiSettingsSetupStatusResponse> => {
-  return customFetcher<getApiSettingsSetupStatusResponse>(
-    getGetApiSettingsSetupStatusUrl(),
+): Promise<getApiV1SettingsSetupStatusResponse> => {
+  return customFetcher<getApiV1SettingsSetupStatusResponse>(
+    getGetApiV1SettingsSetupStatusUrl(),
     {
       ...options,
       method: "GET",
@@ -3101,33 +3159,33 @@ export const getApiSettingsSetupStatus = async (
 /**
  * @summary Complete initial setup
  */
-export type postApiSettingsCompleteSetupResponse200 = {
-  data: void;
+export type postApiV1SettingsCompleteSetupResponse200 = {
+  data: PostApiV1SettingsCompleteSetup200;
   status: 200;
 };
 
-export type postApiSettingsCompleteSetupResponseSuccess =
-  postApiSettingsCompleteSetupResponse200 & {
+export type postApiV1SettingsCompleteSetupResponseSuccess =
+  postApiV1SettingsCompleteSetupResponse200 & {
     headers: Headers;
   };
-export type postApiSettingsCompleteSetupResponse =
-  postApiSettingsCompleteSetupResponseSuccess;
+export type postApiV1SettingsCompleteSetupResponse =
+  postApiV1SettingsCompleteSetupResponseSuccess;
 
-export const getPostApiSettingsCompleteSetupUrl = () => {
-  return `/api/settings/complete-setup`;
+export const getPostApiV1SettingsCompleteSetupUrl = () => {
+  return `/api/v1/settings/complete-setup`;
 };
 
-export const postApiSettingsCompleteSetup = async (
-  postApiSettingsCompleteSetupBody: PostApiSettingsCompleteSetupBody,
+export const postApiV1SettingsCompleteSetup = async (
+  postApiV1SettingsCompleteSetupBody: PostApiV1SettingsCompleteSetupBody,
   options?: RequestInit,
-): Promise<postApiSettingsCompleteSetupResponse> => {
-  return customFetcher<postApiSettingsCompleteSetupResponse>(
-    getPostApiSettingsCompleteSetupUrl(),
+): Promise<postApiV1SettingsCompleteSetupResponse> => {
+  return customFetcher<postApiV1SettingsCompleteSetupResponse>(
+    getPostApiV1SettingsCompleteSetupUrl(),
     {
       ...options,
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(postApiSettingsCompleteSetupBody),
+      body: JSON.stringify(postApiV1SettingsCompleteSetupBody),
     },
   );
 };
@@ -3136,28 +3194,28 @@ export const postApiSettingsCompleteSetup = async (
  * Retrieve all TV shows with optional filtering, sorting, and pagination
  * @summary Get all TV shows
  */
-export type getApiTvShowsResponse200 = {
-  data: GetApiTvShows200;
+export type getApiV1TvShowsResponse200 = {
+  data: GetApiV1TvShows200;
   status: 200;
 };
 
-export type getApiTvShowsResponse400 = {
+export type getApiV1TvShowsResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiTvShowsResponseSuccess = getApiTvShowsResponse200 & {
+export type getApiV1TvShowsResponseSuccess = getApiV1TvShowsResponse200 & {
   headers: Headers;
 };
-export type getApiTvShowsResponseError = getApiTvShowsResponse400 & {
+export type getApiV1TvShowsResponseError = getApiV1TvShowsResponse400 & {
   headers: Headers;
 };
 
-export type getApiTvShowsResponse =
-  | getApiTvShowsResponseSuccess
-  | getApiTvShowsResponseError;
+export type getApiV1TvShowsResponse =
+  | getApiV1TvShowsResponseSuccess
+  | getApiV1TvShowsResponseError;
 
-export const getGetApiTvShowsUrl = (params?: GetApiTvShowsParams) => {
+export const getGetApiV1TvShowsUrl = (params?: GetApiV1TvShowsParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -3169,15 +3227,15 @@ export const getGetApiTvShowsUrl = (params?: GetApiTvShowsParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/tv-shows?${stringifiedParams}`
-    : `/api/tv-shows`;
+    ? `/api/v1/tv-shows?${stringifiedParams}`
+    : `/api/v1/tv-shows`;
 };
 
-export const getApiTvShows = async (
-  params?: GetApiTvShowsParams,
+export const getApiV1TvShows = async (
+  params?: GetApiV1TvShowsParams,
   options?: RequestInit,
-): Promise<getApiTvShowsResponse> => {
-  return customFetcher<getApiTvShowsResponse>(getGetApiTvShowsUrl(params), {
+): Promise<getApiV1TvShowsResponse> => {
+  return customFetcher<getApiV1TvShowsResponse>(getGetApiV1TvShowsUrl(params), {
     ...options,
     method: "GET",
   });
@@ -3187,44 +3245,44 @@ export const getApiTvShows = async (
  * Retrieve a specific TV show by its ID
  * @summary Get TV show by ID
  */
-export type getApiTvShowsIdResponse200 = {
-  data: GetApiTvShowsId200;
+export type getApiV1TvShowsIdResponse200 = {
+  data: GetApiV1TvShowsId200;
   status: 200;
 };
 
-export type getApiTvShowsIdResponse400 = {
+export type getApiV1TvShowsIdResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiTvShowsIdResponse404 = {
+export type getApiV1TvShowsIdResponse404 = {
   data: ErrorResponse;
   status: 404;
 };
 
-export type getApiTvShowsIdResponseSuccess = getApiTvShowsIdResponse200 & {
+export type getApiV1TvShowsIdResponseSuccess = getApiV1TvShowsIdResponse200 & {
   headers: Headers;
 };
-export type getApiTvShowsIdResponseError = (
-  | getApiTvShowsIdResponse400
-  | getApiTvShowsIdResponse404
+export type getApiV1TvShowsIdResponseError = (
+  | getApiV1TvShowsIdResponse400
+  | getApiV1TvShowsIdResponse404
 ) & {
   headers: Headers;
 };
 
-export type getApiTvShowsIdResponse =
-  | getApiTvShowsIdResponseSuccess
-  | getApiTvShowsIdResponseError;
+export type getApiV1TvShowsIdResponse =
+  | getApiV1TvShowsIdResponseSuccess
+  | getApiV1TvShowsIdResponseError;
 
-export const getGetApiTvShowsIdUrl = (id: string) => {
-  return `/api/tv-shows/${id}`;
+export const getGetApiV1TvShowsIdUrl = (id: string) => {
+  return `/api/v1/tv-shows/${id}`;
 };
 
-export const getApiTvShowsId = async (
+export const getApiV1TvShowsId = async (
   id: string,
   options?: RequestInit,
-): Promise<getApiTvShowsIdResponse> => {
-  return customFetcher<getApiTvShowsIdResponse>(getGetApiTvShowsIdUrl(id), {
+): Promise<getApiV1TvShowsIdResponse> => {
+  return customFetcher<getApiV1TvShowsIdResponse>(getGetApiV1TvShowsIdUrl(id), {
     ...options,
     method: "GET",
   });
@@ -3234,43 +3292,43 @@ export const getApiTvShowsId = async (
  * Retrieve a specific season of a TV show
  * @summary Get a specific season
  */
-export type getApiTvShowsIdSeasonsSeasonNumberResponse200 = {
-  data: GetApiTvShowsIdSeasonsSeasonNumber200;
+export type getApiV1TvShowsIdSeasonsSeasonNumberResponse200 = {
+  data: GetApiV1TvShowsIdSeasonsSeasonNumber200;
   status: 200;
 };
 
-export type getApiTvShowsIdSeasonsSeasonNumberResponse404 = {
+export type getApiV1TvShowsIdSeasonsSeasonNumberResponse404 = {
   data: ErrorResponse;
   status: 404;
 };
 
-export type getApiTvShowsIdSeasonsSeasonNumberResponseSuccess =
-  getApiTvShowsIdSeasonsSeasonNumberResponse200 & {
+export type getApiV1TvShowsIdSeasonsSeasonNumberResponseSuccess =
+  getApiV1TvShowsIdSeasonsSeasonNumberResponse200 & {
     headers: Headers;
   };
-export type getApiTvShowsIdSeasonsSeasonNumberResponseError =
-  getApiTvShowsIdSeasonsSeasonNumberResponse404 & {
+export type getApiV1TvShowsIdSeasonsSeasonNumberResponseError =
+  getApiV1TvShowsIdSeasonsSeasonNumberResponse404 & {
     headers: Headers;
   };
 
-export type getApiTvShowsIdSeasonsSeasonNumberResponse =
-  | getApiTvShowsIdSeasonsSeasonNumberResponseSuccess
-  | getApiTvShowsIdSeasonsSeasonNumberResponseError;
+export type getApiV1TvShowsIdSeasonsSeasonNumberResponse =
+  | getApiV1TvShowsIdSeasonsSeasonNumberResponseSuccess
+  | getApiV1TvShowsIdSeasonsSeasonNumberResponseError;
 
-export const getGetApiTvShowsIdSeasonsSeasonNumberUrl = (
+export const getGetApiV1TvShowsIdSeasonsSeasonNumberUrl = (
   id: string,
   seasonNumber: number,
 ) => {
-  return `/api/tv-shows/${id}/seasons/${seasonNumber}`;
+  return `/api/v1/tv-shows/${id}/seasons/${seasonNumber}`;
 };
 
-export const getApiTvShowsIdSeasonsSeasonNumber = async (
+export const getApiV1TvShowsIdSeasonsSeasonNumber = async (
   id: string,
   seasonNumber: number,
   options?: RequestInit,
-): Promise<getApiTvShowsIdSeasonsSeasonNumberResponse> => {
-  return customFetcher<getApiTvShowsIdSeasonsSeasonNumberResponse>(
-    getGetApiTvShowsIdSeasonsSeasonNumberUrl(id, seasonNumber),
+): Promise<getApiV1TvShowsIdSeasonsSeasonNumberResponse> => {
+  return customFetcher<getApiV1TvShowsIdSeasonsSeasonNumberResponse>(
+    getGetApiV1TvShowsIdSeasonsSeasonNumberUrl(id, seasonNumber),
     {
       ...options,
       method: "GET",
@@ -3282,47 +3340,47 @@ export const getApiTvShowsIdSeasonsSeasonNumber = async (
  * Retrieve a specific episode of a TV show
  * @summary Get a specific episode
  */
-export type getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse200 =
+export type getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse200 =
   {
-    data: GetApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200;
+    data: GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200;
     status: 200;
   };
 
-export type getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse404 =
+export type getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse404 =
   {
     data: ErrorResponse;
     status: 404;
   };
 
-export type getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponseSuccess =
-  getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse200 & {
+export type getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponseSuccess =
+  getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse200 & {
     headers: Headers;
   };
-export type getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponseError =
-  getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse404 & {
+export type getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponseError =
+  getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse404 & {
     headers: Headers;
   };
 
-export type getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse =
-  | getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponseSuccess
-  | getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponseError;
+export type getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse =
+  | getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponseSuccess
+  | getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponseError;
 
-export const getGetApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberUrl = (
+export const getGetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberUrl = (
   id: string,
   seasonNumber: number,
   episodeNumber: number,
 ) => {
-  return `/api/tv-shows/${id}/seasons/${seasonNumber}/episodes/${episodeNumber}`;
+  return `/api/v1/tv-shows/${id}/seasons/${seasonNumber}/episodes/${episodeNumber}`;
 };
 
-export const getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber = async (
+export const getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber = async (
   id: string,
   seasonNumber: number,
   episodeNumber: number,
   options?: RequestInit,
-): Promise<getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse> => {
-  return customFetcher<getApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse>(
-    getGetApiTvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberUrl(
+): Promise<getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse> => {
+  return customFetcher<getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberResponse>(
+    getGetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumberUrl(
       id,
       seasonNumber,
       episodeNumber,

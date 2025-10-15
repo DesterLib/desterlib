@@ -5,7 +5,7 @@ const router: RouterType = Router();
 
 /**
  * @openapi
- * /api/tv-shows:
+ * /api/v1/tv-shows:
  *   get:
  *     summary: Get all TV shows
  *     description: Retrieve all TV shows with optional filtering, sorting, and pagination
@@ -121,7 +121,7 @@ router.get("/", (req, res, next) => {
 
 /**
  * @openapi
- * /api/tv-shows/{id}:
+ * /api/v1/tv-shows/{id}:
  *   get:
  *     summary: Get TV show by ID
  *     description: Retrieve a specific TV show by its ID
@@ -170,7 +170,7 @@ router.get("/:id", (req, res, next) => {
 
 /**
  * @openapi
- * /api/tv-shows/{id}/seasons/{seasonNumber}:
+ * /api/v1/tv-shows/{id}/seasons/{seasonNumber}:
  *   get:
  *     summary: Get a specific season
  *     description: Retrieve a specific season of a TV show
@@ -219,7 +219,7 @@ router.get("/:id/seasons/:seasonNumber", (req, res, next) => {
 
 /**
  * @openapi
- * /api/tv-shows/{id}/seasons/{seasonNumber}/episodes/{episodeNumber}:
+ * /api/v1/tv-shows/{id}/seasons/{seasonNumber}/episodes/{episodeNumber}:
  *   get:
  *     summary: Get a specific episode
  *     description: Retrieve a specific episode of a TV show

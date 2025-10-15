@@ -51,6 +51,22 @@ router.get(
  *     responses:
  *       200:
  *         description: Successfully retrieved libraries
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         message:
+ *                           type: string
+ *                         collections:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/Collection'
  */
 router.get(
   "/libraries",

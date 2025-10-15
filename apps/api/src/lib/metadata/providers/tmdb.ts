@@ -4,6 +4,7 @@ import {
 } from "../../../generated/prisma/index.js";
 import { BaseMetadataProvider } from "../provider.js";
 import logger from "../../../config/logger.js";
+import { prisma } from "../../../lib/prisma.js";
 import type {
   MediaMetadata,
   MediaSearchResult,
@@ -14,9 +15,8 @@ import type {
 
 /**
  * TMDB API configuration
- * Set TMDB_API_KEY environment variable to enable
+ * Configure via application settings (Settings > Libraries > TMDB API Key)
  */
-const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 
@@ -134,10 +134,27 @@ export class TMDBProvider extends BaseMetadataProvider {
   readonly supportedMediaTypes = [MediaType.MOVIE, MediaType.TV_SHOW];
 
   /**
+   * Get TMDB API key from database settings
+   */
+  private async getApiKey(): Promise<string | null> {
+    try {
+      const settings = await prisma.settings.findUnique({
+        where: { id: "default" },
+        select: { tmdbApiKey: true },
+      });
+      return settings?.tmdbApiKey || null;
+    } catch (error) {
+      logger.error("Failed to fetch TMDB API key from database:", { error });
+      return null;
+    }
+  }
+
+  /**
    * Check if TMDB API key is configured
    */
   override async isAvailable(): Promise<boolean> {
-    return !!TMDB_API_KEY;
+    const apiKey = await this.getApiKey();
+    return !!apiKey;
   }
 
   /**
@@ -147,14 +164,16 @@ export class TMDBProvider extends BaseMetadataProvider {
     endpoint: string,
     params: Record<string, string | number | boolean> = {}
   ): Promise<T | null> {
-    if (!TMDB_API_KEY) {
+    const apiKey = await this.getApiKey();
+
+    if (!apiKey) {
       logger.warn("TMDB API key not configured");
       return null;
     }
 
     try {
       const url = new URL(`${TMDB_BASE_URL}${endpoint}`);
-      url.searchParams.append("api_key", TMDB_API_KEY);
+      url.searchParams.append("api_key", apiKey);
 
       for (const [key, value] of Object.entries(params)) {
         url.searchParams.append(key, String(value));

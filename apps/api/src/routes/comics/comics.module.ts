@@ -5,7 +5,7 @@ const router: RouterType = Router();
 
 /**
  * @openapi
- * /api/comics:
+ * /api/v1/comics:
  *   get:
  *     summary: Get all comics
  *     description: Retrieve all comics with optional filtering, sorting, and pagination
