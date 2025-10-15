@@ -156,6 +156,43 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        SyncResult: {
+          type: "object",
+          properties: {
+            collectionName: {
+              type: "string",
+              example: "My Movie Collection",
+            },
+            mediaType: {
+              $ref: "#/components/schemas/MediaType",
+            },
+            timestamp: {
+              type: "string",
+              format: "date-time",
+              example: "2025-10-12T10:30:00.000Z",
+            },
+            stats: {
+              type: "object",
+              properties: {
+                updated: {
+                  type: "integer",
+                  description: "Number of files updated",
+                  example: 2,
+                },
+                removed: {
+                  type: "integer",
+                  description: "Number of files removed",
+                  example: 1,
+                },
+                checked: {
+                  type: "integer",
+                  description: "Number of files checked",
+                  example: 10,
+                },
+              },
+            },
+          },
+        },
         Pagination: {
           type: "object",
           properties: {

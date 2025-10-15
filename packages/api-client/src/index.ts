@@ -3,8 +3,8 @@
  * Auto-generated from OpenAPI spec using Orval
  */
 
-// Export configuration
+// Export configuration utilities
 export { configure, getConfig } from "./core/fetcher.js";
 
-// Export all generated API functions
+// Export all generated API functions, types, and schemas
 export * from "./generated/api.js";

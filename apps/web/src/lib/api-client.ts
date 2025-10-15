@@ -1,6 +1,6 @@
-import { DesterClient } from "@dester/api-client";
+import { configure } from "@dester/api-client";
 
-// Create a singleton instance of the API client
-export const apiClient = new DesterClient({
-  baseUrl: import.meta.env.VITE_API_URL || "http://localhost:3000",
+// Configure the API client
+configure({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
 });

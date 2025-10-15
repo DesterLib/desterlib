@@ -1,5 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
+import {
+  getApiV1CollectionsLibraries,
+  getApiV1CollectionsSlugOrId,
+  deleteApiV1CollectionsId,
+  patchApiSettings,
+  postApiScan,
+  type MediaType,
+} from "@dester/api-client";
+import "@/lib/api-client"; // Import to ensure client is configured
 
 /**
  * Hook to fetch all libraries
@@ -8,8 +16,8 @@ export function useLibraries() {
   return useQuery({
     queryKey: ["libraries"],
     queryFn: async () => {
-      const response = await apiClient.collections.getLibraries();
-      return response.collections;
+      const response = await getApiV1CollectionsLibraries();
+      return response.data;
     },
   });
 }
@@ -21,8 +29,8 @@ export function useLibrary(id: string) {
   return useQuery({
     queryKey: ["library", id],
     queryFn: async () => {
-      const response = await apiClient.collections.getById(id);
-      return response.collection;
+      const response = await getApiV1CollectionsSlugOrId(id);
+      return response.data;
     },
     enabled: !!id,
   });
@@ -36,12 +44,10 @@ export function useDeleteLibrary() {
 
   return useMutation({
     mutationFn: async (libraryId: string) => {
-      // Delete the collection
-      const response = await apiClient.collections.deleteCollection(libraryId);
-      return response;
+      const response = await deleteApiV1CollectionsId(libraryId);
+      return response.data;
     },
     onSuccess: () => {
-      // Invalidate and refetch libraries
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       queryClient.invalidateQueries({ queryKey: ["settings"] });
     },
@@ -59,10 +65,8 @@ export function useUpdateLibraries() {
     mutationFn: async (
       libraries: Array<{ name: string; type: string; path: string }>
     ) => {
-      const response = await apiClient.settings.updateWithLibraries({
-        libraries,
-      });
-      return response.settings;
+      const response = await patchApiSettings({ libraries });
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
@@ -83,14 +87,10 @@ export function useScanLibrary() {
       mediaType,
     }: {
       path: string;
-      mediaType: string;
+      mediaType: MediaType;
     }) => {
-      // Cast to any since the scan endpoint expects a specific MediaType
-      const response = await apiClient.scan.scan({
-        path,
-        mediaType: mediaType as "MOVIE" | "TV_SHOW" | "MUSIC" | "COMIC",
-      });
-      return response.scan;
+      const response = await postApiScan({ path, mediaType });
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });

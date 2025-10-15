@@ -8,7 +8,7 @@ export default defineConfig({
     output: {
       target: "./packages/api-client/src/generated/api.ts",
       client: "fetch",
-      mode: "tags-split",
+      mode: "single",
       prettier: true,
       clean: true,
       override: {
