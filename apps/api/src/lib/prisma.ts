@@ -18,16 +18,64 @@ declare global {
 }
 
 /**
- * Create Prisma client with appropriate logging based on environment
+ * Create Prisma client with appropriate logging and connection pooling
+ *
+ * Connection Pool Settings (PostgreSQL):
+ * - connection_limit: Maximum number of database connections (default: num_physical_cpus * 2 + 1)
+ * - pool_timeout: How long to wait for a connection from the pool (default: 10s)
  */
 function createPrismaClient(): PrismaClient {
-  return new PrismaClient({
+  const config: any = {
     log:
       env.NODE_ENV === "development"
         ? (["query", "error", "warn"] as const)
         : (["error"] as const),
     errorFormat: env.NODE_ENV === "development" ? "pretty" : "minimal",
-  });
+  };
+
+  // Add datasource configuration for connection pooling
+  if (env.DATABASE_CONNECTION_LIMIT || env.DATABASE_POOL_TIMEOUT) {
+    config.datasources = {
+      db: {
+        url: buildDatabaseUrl(),
+      },
+    };
+  }
+
+  return new PrismaClient(config);
+}
+
+/**
+ * Build database URL with connection pool parameters
+ */
+function buildDatabaseUrl(): string {
+  const url = new URL(env.DATABASE_URL);
+
+  // Only add pooling params for PostgreSQL
+  if (url.protocol.startsWith("postgres")) {
+    if (env.DATABASE_CONNECTION_LIMIT) {
+      url.searchParams.set(
+        "connection_limit",
+        env.DATABASE_CONNECTION_LIMIT.toString()
+      );
+    }
+    if (env.DATABASE_POOL_TIMEOUT) {
+      url.searchParams.set(
+        "pool_timeout",
+        env.DATABASE_POOL_TIMEOUT.toString()
+      );
+    }
+
+    // Recommended PostgreSQL connection settings
+    if (!url.searchParams.has("connect_timeout")) {
+      url.searchParams.set("connect_timeout", "10");
+    }
+    if (!url.searchParams.has("pool_timeout")) {
+      url.searchParams.set("pool_timeout", "10");
+    }
+  }
+
+  return url.toString();
 }
 
 /**

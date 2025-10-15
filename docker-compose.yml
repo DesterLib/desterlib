@@ -1,0 +1,128 @@
+# Dester API - Docker Compose Configuration
+#
+# Quick Start:
+#   1. Copy .env.docker to .env and configure secrets
+#   2. docker-compose up -d
+#   3. API will be available at http://localhost:3000
+#
+# Commands:
+#   docker-compose up -d              # Start all services
+#   docker-compose logs -f api        # View API logs
+#   docker-compose down               # Stop all services
+#   docker-compose down -v            # Stop and remove volumes
+#   docker-compose exec api sh        # Access API container shell
+#   docker-compose restart api        # Restart API service
+#
+# Migrations:
+#   docker-compose exec api pnpm prisma migrate deploy
+#   docker-compose exec api pnpm prisma studio  # Open Prisma Studio
+
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: dester-postgres
+    environment:
+      POSTGRES_DB: dester
+      POSTGRES_USER: dester
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dester_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dester"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: dester-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_password}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # API Application
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: dester-api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+      # Database
+      DATABASE_URL: postgresql://dester:${POSTGRES_PASSWORD:-dester_password}@postgres:5432/dester?schema=public
+      DATABASE_CONNECTION_LIMIT: 10
+      DATABASE_POOL_TIMEOUT: 10
+
+      # Redis
+      CACHE_ENABLED: true
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      CACHE_TTL: 3600
+
+      # Authentication (CHANGE THESE IN PRODUCTION!)
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production-min-32-chars-long}
+      JWT_EXPIRES_IN: 7d
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-change-this-refresh-secret-min-32-chars}
+      REFRESH_TOKEN_EXPIRES_IN: 30d
+
+      # CORS
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      WEB_URL: ${WEB_URL:-http://localhost:5173}
+
+      # Rate Limiting
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+
+      # Logging
+      LOG_LEVEL: info
+
+      # External APIs
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./media:/media:ro
+      - api_logs:/app/logs
+      - api_backups:/app/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  api_logs:
+    driver: local
+  api_backups:
+    driver: local

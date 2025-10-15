@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
-import { rateLimit } from "express-rate-limit";
 import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
 import cookieParser from "cookie-parser";
@@ -25,6 +24,13 @@ import {
   csrfTokenHandler,
 } from "./lib/csrf.js";
 import { scheduleBackups } from "./lib/backup.js";
+import { warmupCache } from "./lib/metadataCache.js";
+import { rateLimiters } from "./lib/rateLimiter.js";
+import { alertingService } from "./lib/alerting.js";
+import {
+  performanceMiddleware,
+  performanceMonitor,
+} from "./lib/performanceMonitor.js";
 
 // Routes
 import healthRouter from "./routes/health/health.module.js";
@@ -48,30 +54,42 @@ const app = express();
 // Security Middleware
 // ────────────────────────────────────────────────────────────────────────────
 
-// Helmet - Security headers
+// Helmet - Security headers with custom CSP
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Disable for Swagger UI
-    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"], // Swagger UI needs unsafe-inline
+        scriptSrc: ["'self'", "'unsafe-inline'"], // Swagger UI needs unsafe-inline
+        imgSrc: ["'self'", "data:", "https:"], // Allow images from HTTPS and data URIs
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'", "data:"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"],
+        upgradeInsecureRequests: [], // Force HTTPS in production
+      },
+    },
+    crossOriginEmbedderPolicy: false, // Allow cross-origin resources
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    hsts: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true,
+    },
+    noSniff: true,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    xssFilter: true,
   })
 );
 
-// Rate limiting - Prevent abuse
-const limiter = rateLimit({
-  windowMs: env.RATE_LIMIT_WINDOW_MS,
-  max: env.RATE_LIMIT_MAX_REQUESTS,
-  message: {
-    success: false,
-    error: {
-      code: "TOO_MANY_REQUESTS",
-      message: "Too many requests, please try again later",
-    },
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use("/api/", limiter);
+// Rate limiting - Apply standard rate limit to all API routes
+// Specific routes below will have their own more restrictive limits
+app.use("/api/", rateLimiters.standard);
 
 // CORS configuration
 app.use(
@@ -111,6 +129,9 @@ app.use(responseEnhancerMiddleware);
 
 // Metrics tracking
 app.use(metricsMiddleware);
+
+// Performance monitoring
+app.use(performanceMiddleware);
 
 // CSRF cookie setup (must be before CSRF protection)
 app.use(csrfCookieMiddleware);
@@ -194,8 +215,8 @@ app.use("/health", healthRouter);
 
 const API_V1 = "/api/v1";
 
-// Authentication routes (public and protected)
-app.use(`${API_V1}/auth`, authRouter);
+// Authentication routes (public and protected) - Strict rate limiting
+app.use(`${API_V1}/auth`, rateLimiters.auth, authRouter);
 
 // Admin routes (requires admin role)
 app.use(`${API_V1}/admin`, adminRouter);
@@ -211,7 +232,7 @@ app.use(`${API_V1}/movies`, csrfProtection, moviesRouter);
 app.use(`${API_V1}/tv-shows`, csrfProtection, tvShowsRouter);
 app.use(`${API_V1}/music`, csrfProtection, musicRouter);
 app.use(`${API_V1}/comics`, csrfProtection, comicsRouter);
-app.use(`${API_V1}/search`, searchRouter); // GET requests, no CSRF needed
+app.use(`${API_V1}/search`, rateLimiters.search, searchRouter); // GET requests, no CSRF needed
 app.use(`${API_V1}/bulk`, csrfProtection, bulkRouter);
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -242,6 +263,19 @@ webSocketService.initialize(server);
 
 // Schedule automatic backups
 scheduleBackups();
+
+// Warm up cache with frequently accessed data
+warmupCache().catch((error) => {
+  logger.error("Cache warmup failed:", error);
+});
+
+// Start health monitoring and alerting
+alertingService.startMonitoring(60000); // Check every minute
+logger.info("Health monitoring and alerting started");
+
+// Start performance monitoring
+performanceMonitor.startPeriodicChecks(60000); // Check every minute
+logger.info("Performance monitoring started");
 
 // Setup graceful shutdown handlers
 setupGracefulShutdown(server);

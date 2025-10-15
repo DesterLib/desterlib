@@ -248,6 +248,41 @@ class CacheService {
   }
 
   /**
+   * Get Redis info
+   */
+  async info(section?: string): Promise<string> {
+    if (!this.isEnabled() || !this.client) {
+      return "";
+    }
+
+    try {
+      if (section) {
+        return await this.client.info(section);
+      }
+      return await this.client.info();
+    } catch (error) {
+      logger.error("Cache info error:", error);
+      return "";
+    }
+  }
+
+  /**
+   * Get database size (key count)
+   */
+  async dbSize(): Promise<number> {
+    if (!this.isEnabled() || !this.client) {
+      return 0;
+    }
+
+    try {
+      return await this.client.dbsize();
+    } catch (error) {
+      logger.error("Cache dbsize error:", error);
+      return 0;
+    }
+  }
+
+  /**
    * Gracefully close Redis connection
    */
   async close(): Promise<void> {

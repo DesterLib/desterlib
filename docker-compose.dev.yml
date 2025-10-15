@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database (Development)
+  postgres:
+    image: postgres:15-alpine
+    container_name: dester-postgres-dev
+    environment:
+      POSTGRES_DB: dester_dev
+      POSTGRES_USER: dester
+      POSTGRES_PASSWORD: dester_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Redis Cache (Development)
+  redis:
+    image: redis:7-alpine
+    container_name: dester-redis-dev
+    command: redis-server --requirepass redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local

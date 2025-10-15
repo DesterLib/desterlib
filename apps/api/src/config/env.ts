@@ -20,6 +20,8 @@ const envSchema = z.object({
 
   // Database
   DATABASE_URL: z.string().min(1, "Database URL is required"),
+  DATABASE_CONNECTION_LIMIT: z.coerce.number().int().positive().optional(),
+  DATABASE_POOL_TIMEOUT: z.coerce.number().int().positive().optional(), // seconds
 
   // Logging
   LOG_LEVEL: z

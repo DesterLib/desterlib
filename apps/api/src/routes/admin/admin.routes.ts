@@ -19,6 +19,8 @@ import {
   deleteBackup,
 } from "../../lib/backup.js";
 import { updateBusinessMetrics } from "../../lib/metrics.js";
+import { alertingService } from "../../lib/alerting.js";
+import { performanceMonitor } from "../../lib/performanceMonitor.js";
 import logger from "../../config/logger.js";
 
 const router: Router = Router();
@@ -213,6 +215,127 @@ router.post(
     res.jsonOk({
       message: "Business metrics updated successfully",
     });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+// Alerting & Health
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /admin/alerts:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get active alerts
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of active alerts
+ */
+router.get(
+  "/alerts",
+  asyncHandler(async (_req: Request, res: Response) => {
+    const alerts = alertingService.getActiveAlerts();
+    res.jsonOk({
+      count: alerts.length,
+      alerts,
+    });
+  })
+);
+
+/**
+ * @swagger
+ * /admin/alerts/history:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get alert history
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: limit
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *     responses:
+ *       200:
+ *         description: Alert history
+ */
+router.get(
+  "/alerts/history",
+  asyncHandler(async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const history = alertingService.getAlertHistory(limit);
+    res.jsonOk({
+      count: history.length,
+      alerts: history,
+    });
+  })
+);
+
+/**
+ * @swagger
+ * /admin/health/check:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Perform comprehensive health check
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Health check results
+ */
+router.get(
+  "/health/check",
+  asyncHandler(async (_req: Request, res: Response) => {
+    const healthStatus = await alertingService.checkHealth();
+    res.jsonOk(healthStatus);
+  })
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+// Performance Monitoring
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /admin/performance:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get performance statistics
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Performance metrics
+ */
+router.get(
+  "/performance",
+  asyncHandler(async (_req: Request, res: Response) => {
+    const stats = performanceMonitor.getStats();
+    res.jsonOk(stats);
+  })
+);
+
+/**
+ * @swagger
+ * /admin/performance/reset:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Reset performance statistics
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics reset
+ */
+router.post(
+  "/performance/reset",
+  asyncHandler(async (_req: Request, res: Response) => {
+    performanceMonitor.reset();
+    res.jsonOk({ message: "Performance statistics reset" });
   })
 );
 

@@ -1,0 +1,55 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Build outputs
+dist
+build
+.next
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Testing
+coverage
+.nyc_output
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Database
+*.db
+*.db-journal
+dev.db
+prisma/dev.db
+
+# Backups
+backups/
+*.backup
+
+# Git
+.git
+.gitignore
+

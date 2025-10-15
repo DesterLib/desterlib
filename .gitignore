@@ -38,5 +38,7 @@ yarn-error.log*
 *.pem
 .pnpm-store
 
-apps/api/dev.db
+apps/api/prisma/dev.db
+apps/api/prisma/dev.db-journal
 apps/api/logs
+apps/api/backups

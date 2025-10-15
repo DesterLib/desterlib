@@ -23,35 +23,64 @@ desterlib/
 
 - Node.js 18+
 - pnpm 8+
+- Docker & Docker Compose (for database)
 
-### Installation
+### Quick Start
 
 ```bash
-# Install dependencies
+# Option 1: Automated setup (recommended)
+./setup-dev.sh
+
+# Option 2: Manual setup
+# 1. Start PostgreSQL and Redis
+docker-compose -f docker-compose.dev.yml up -d
+
+# 2. Setup database
+cd apps/api
+cp .env.local .env.local
 pnpm install
+pnpm db:generate
+pnpm db:migrate
 
-# Run database migrations
-cd apps/api && pnpm prisma migrate dev
-
-# Start development servers
+# 3. Start API
 pnpm dev
 ```
 
-### Development
+### Development Commands
 
 ```bash
-# Start all apps in development mode
+# Start API in development mode
+cd apps/api
 pnpm dev
 
-# Start specific app
-pnpm --filter api dev
-pnpm --filter web dev
+# Database commands
+pnpm db:migrate      # Create and run migration
+pnpm db:studio       # Open Prisma Studio
+pnpm db:generate     # Generate Prisma Client
 
-# Build all packages
-pnpm build
+# Testing
+pnpm test            # Run tests
+pnpm test:coverage   # Run with coverage
+
+# Build
+pnpm build           # Build for production
+pnpm start           # Start production build
 
 # Type checking
 pnpm check-types
+```
+
+### Docker Deployment
+
+```bash
+# Production (full stack)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f api
+
+# Stop services
+docker-compose down
 ```
 
 ## Features

@@ -124,8 +124,42 @@ class BulkOperationsService {
           continue;
         }
 
-        // TODO: If deleteFiles is true, delete actual files from disk
-        // This requires careful implementation to avoid data loss
+        // Delete physical files if requested
+        if (options.deleteFiles) {
+          const filesToDelete: string[] = [];
+
+          // Collect file paths
+          if (media.movie?.filePath) {
+            filesToDelete.push(media.movie.filePath);
+          }
+          if (media.music?.filePath) {
+            filesToDelete.push(media.music.filePath);
+          }
+          if (media.comic?.filePath) {
+            filesToDelete.push(media.comic.filePath);
+          }
+          if (media.tvShow) {
+            for (const season of media.tvShow.seasons) {
+              for (const episode of season.episodes) {
+                if (episode.filePath) {
+                  filesToDelete.push(episode.filePath);
+                }
+              }
+            }
+          }
+
+          // Delete files from disk
+          const fs = await import("fs/promises");
+          for (const filePath of filesToDelete) {
+            try {
+              await fs.unlink(filePath);
+              logger.info(`Deleted file: ${filePath}`);
+            } catch (error) {
+              logger.error(`Failed to delete file ${filePath}:`, error);
+              // Continue with other files even if one fails
+            }
+          }
+        }
 
         // Delete from database
         await prisma.media.delete({
@@ -440,9 +474,10 @@ class BulkOperationsService {
 
     for (const mediaId of mediaIds) {
       try {
-        // Check if media exists
+        // Check if media exists and get external IDs
         const media = await prisma.media.findUnique({
           where: { id: mediaId },
+          include: { externalIds: true },
         });
 
         if (!media) {
@@ -454,14 +489,60 @@ class BulkOperationsService {
           continue;
         }
 
-        // TODO: Implement actual metadata refresh logic
-        // This would typically involve:
-        // 1. Fetching metadata from TMDB/other sources
-        // 2. Updating the database
-        // For now, we'll just mark it as queued
+        // Find TMDB ID
+        const tmdbId = media.externalIds.find(
+          (ext) => ext.source === "TMDB"
+        )?.externalId;
 
-        logger.info(`Queued media ${mediaId} for metadata refresh`);
-        result.queued++;
+        if (!tmdbId) {
+          result.failed++;
+          result.errors.push({
+            mediaId,
+            error: "No TMDB ID found",
+          });
+          logger.warn(`No TMDB ID found for media ${mediaId}`);
+          continue;
+        }
+
+        // Fetch and update metadata based on media type
+        if (media.type === "MOVIE" || media.type === "TV_SHOW") {
+          // Use metadata service to fetch fresh data
+          const { MetadataService } = await import(
+            "../metadata/metadataService.js"
+          );
+          const metadataService = MetadataService.getInstance();
+
+          const freshMetadata = await metadataService.getMetadata(
+            tmdbId,
+            "TMDB",
+            media.type
+          );
+
+          if (freshMetadata) {
+            await prisma.media.update({
+              where: { id: mediaId },
+              data: {
+                title: freshMetadata.title,
+                description: freshMetadata.description,
+                posterUrl: freshMetadata.posterUrl,
+                backdropUrl: freshMetadata.backdropUrl,
+                releaseDate: freshMetadata.releaseDate,
+                rating: freshMetadata.rating,
+              },
+            });
+            logger.info(`Refreshed metadata for ${media.type} ${mediaId}`);
+            result.queued++;
+          } else {
+            throw new Error("Failed to fetch metadata from TMDB");
+          }
+        } else {
+          // Music and Comics don't use TMDB
+          result.failed++;
+          result.errors.push({
+            mediaId,
+            error: `Metadata refresh not supported for ${media.type}`,
+          });
+        }
       } catch (error) {
         result.failed++;
         result.errors.push({
