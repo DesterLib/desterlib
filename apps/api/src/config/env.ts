@@ -9,6 +9,10 @@
  *   const port = env.PORT;
  */
 
+// Load environment variables from .env file
+import { config } from "dotenv";
+config();
+
 import { z } from "zod";
 
 const envSchema = z.object({

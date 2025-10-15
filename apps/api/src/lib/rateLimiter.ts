@@ -126,7 +126,7 @@ function createRedisStore() {
   return {
     async increment(
       key: string
-    ): Promise<{ totalHits: number; resetTime?: Date }> {
+    ): Promise<{ totalHits: number; resetTime: Date }> {
       const count = await cacheService.incr(
         key,
         env.RATE_LIMIT_WINDOW_MS / 1000

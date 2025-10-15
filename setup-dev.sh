@@ -16,9 +16,9 @@ sleep 3
 cd apps/api
 
 # Copy environment file if it doesn't exist
-if [ ! -f .env.local ]; then
-    echo "📝 Creating .env.local file..."
-    cp .env.local .env.local 2>/dev/null || true
+if [ ! -f .env ]; then
+    echo "📝 Creating .env file..."
+    cp .env.local .env 2>/dev/null || true
 fi
 
 # Install dependencies if needed
