@@ -1,8 +1,19 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+} from "@tanstack/react-router";
 import { CogIcon, LibraryIcon, VideoIcon } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
+  beforeLoad: ({ location }) => {
+    // If we're at the exact settings route, redirect to libraries
+    if (location.pathname === "/settings") {
+      throw redirect({ to: "/settings/libraries" });
+    }
+  },
 });
 
 function RouteComponent() {
