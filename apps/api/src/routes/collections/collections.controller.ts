@@ -1,119 +1,78 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 import { collectionsService } from "./collections.service.js";
-import { BadRequestError, AppError } from "../../lib/errors.js";
 
 export class CollectionsController {
   /**
-   * GET /api/collections
+   * GET /api/v1/collections
    * Get all collections
    */
-  async getCollections(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const collections = await collectionsService.getCollections();
+  async getCollections(_req: Request, res: Response): Promise<void> {
+    const collections = await collectionsService.getCollections();
 
-      res.jsonOk({
-        message: `Found ${collections.length} collections`,
-        collections,
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
-        next(error);
-      } else {
-        next(new AppError("Failed to fetch collections", { cause: error }));
-      }
-    }
+    res.jsonOk({
+      message: `Found ${collections.length} collections`,
+      collections,
+    });
   }
 
   /**
-   * GET /api/collections/:slugOrId
+   * GET /api/v1/collections/:slugOrId
    * Get a single collection by slug or ID
    */
-  async getCollectionBySlugOrId(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { slugOrId } = req.params;
+  async getCollectionBySlugOrId(req: Request, res: Response): Promise<void> {
+    const { slugOrId } = req.params;
 
-      if (!slugOrId) {
-        throw new BadRequestError("Collection slug or ID is required");
-      }
+    // Validated by middleware, safe to assert as string
+    const collection = await collectionsService.getCollectionBySlugOrId(
+      slugOrId as string
+    );
 
-      const collection =
-        await collectionsService.getCollectionBySlugOrId(slugOrId);
-
-      res.jsonOk({
-        message: "Retrieved collection",
-        collection,
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
-        next(error);
-      } else {
-        next(new AppError("Failed to fetch collection", { cause: error }));
-      }
-    }
+    res.jsonOk({
+      message: "Retrieved collection",
+      collection,
+    });
   }
 
   /**
-   * GET /api/collections/statistics
+   * GET /api/v1/collections/statistics
    * Get collection statistics
    */
-  async getStatistics(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const stats = await collectionsService.getStatistics();
+  async getStatistics(_req: Request, res: Response): Promise<void> {
+    const stats = await collectionsService.getStatistics();
 
-      res.jsonOk({
-        message: "Retrieved collection statistics",
-        statistics: stats,
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
-        next(error);
-      } else {
-        next(new AppError("Failed to fetch statistics", { cause: error }));
-      }
-    }
+    res.jsonOk({
+      message: "Retrieved collection statistics",
+      statistics: stats,
+    });
   }
 
   /**
-   * DELETE /api/collections/:id
+   * GET /api/v1/collections/libraries
+   * Get all libraries (collections with isLibrary=true)
+   */
+  async getLibraries(_req: Request, res: Response): Promise<void> {
+    const libraries = await collectionsService.getLibraries();
+
+    res.jsonOk({
+      message: `Found ${libraries.length} libraries`,
+      collections: libraries,
+    });
+  }
+
+  /**
+   * DELETE /api/v1/collections/:id
    * Delete a collection by ID
    */
-  async deleteCollection(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { id } = req.params;
+  async deleteCollection(req: Request, res: Response): Promise<void> {
+    const { id } = req.params;
 
-      if (!id) {
-        throw new BadRequestError("Collection ID is required");
-      }
+    // Validated by middleware, safe to assert as string
+    const deleted = await collectionsService.deleteCollection(id as string);
 
-      const deleted = await collectionsService.deleteCollection(id);
-
-      res.jsonOk({
-        message: `Collection "${deleted.name}" deleted successfully`,
-        collection: deleted,
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
-        next(error);
-      } else {
-        next(new AppError("Failed to delete collection", { cause: error }));
-      }
-    }
+    res.jsonOk({
+      message: `Collection "${deleted.name}" deleted successfully`,
+      collection: deleted,
+    });
   }
 }
 

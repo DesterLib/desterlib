@@ -1,6 +1,5 @@
-import { PrismaClient, MediaType } from "../../generated/prisma/index.js";
-
-const prisma = new PrismaClient();
+import { MediaType } from "../../generated/prisma/index.js";
+import { prisma } from "../../lib/prisma.js";
 
 export interface LibraryInput {
   name: string;

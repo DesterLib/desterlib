@@ -1,5 +1,6 @@
 import EventEmitter from "events";
 import logger from "../../config/logger.js";
+import { webSocketService, WS_EVENTS } from "../websocket.js";
 
 /**
  * Notification types for different operations
@@ -68,6 +69,18 @@ class NotificationService extends EventEmitter {
 
     // Emit to SSE clients
     this.emit("notification", event);
+
+    // Emit via WebSocket for real-time updates
+    if (webSocketService.isInitialized()) {
+      webSocketService.broadcast(WS_EVENTS.NOTIFICATION, event);
+
+      // Also emit specific event types
+      const wsEventKey =
+        `${WS_EVENTS.NOTIFICATION}_${status}` as keyof typeof WS_EVENTS;
+      if (wsEventKey in WS_EVENTS) {
+        webSocketService.broadcast(WS_EVENTS[wsEventKey], event);
+      }
+    }
 
     // Log for debugging/audit
     const logLevel = status === "failed" ? "error" : "info";

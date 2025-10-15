@@ -18,14 +18,16 @@ export class SearchController {
       let results;
 
       switch (type) {
-        case "media":
+        case "media": {
           const media = await searchService.searchMedia(q);
           results = { media, total: media.length };
           break;
-        case "collections":
+        }
+        case "collections": {
           const collections = await searchService.searchCollections(q);
           results = { collections, total: collections.length };
           break;
+        }
         default:
           results = await searchService.searchAll(q);
       }

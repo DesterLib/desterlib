@@ -3,6 +3,7 @@ import {
   ExternalIdSource,
 } from "../../../generated/prisma/index.js";
 import { BaseMetadataProvider } from "../provider.js";
+import logger from "../../../config/logger.js";
 import type {
   MediaMetadata,
   MediaSearchResult,
@@ -135,7 +136,7 @@ export class TMDBProvider extends BaseMetadataProvider {
   /**
    * Check if TMDB API key is configured
    */
-  async isAvailable(): Promise<boolean> {
+  override async isAvailable(): Promise<boolean> {
     return !!TMDB_API_KEY;
   }
 
@@ -147,7 +148,7 @@ export class TMDBProvider extends BaseMetadataProvider {
     params: Record<string, string | number | boolean> = {}
   ): Promise<T | null> {
     if (!TMDB_API_KEY) {
-      console.warn("TMDB API key not configured");
+      logger.warn("TMDB API key not configured");
       return null;
     }
 
@@ -162,15 +163,16 @@ export class TMDBProvider extends BaseMetadataProvider {
       const response = await fetch(url.toString());
 
       if (!response.ok) {
-        console.error(
-          `TMDB API error: ${response.status} ${response.statusText}`
+        logger.error(
+          `TMDB API error: ${response.status} ${response.statusText}`,
+          { status: response.status, statusText: response.statusText, endpoint }
         );
         return null;
       }
 
       return (await response.json()) as T;
     } catch (error) {
-      console.error("TMDB API request failed:", error);
+      logger.error("TMDB API request failed:", { error, endpoint });
       return null;
     }
   }

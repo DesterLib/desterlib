@@ -1,7 +1,7 @@
 {
   "name": "@dester/api-client",
   "version": "1.0.0",
-  "description": "Production-ready TypeScript API client with Zod validation, modular endpoints, and full type safety",
+  "description": "Auto-generated TypeScript API client from OpenAPI spec using Orval",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,7 +18,8 @@
     "media",
     "library",
     "typescript",
-    "zod",
+    "orval",
+    "openapi",
     "type-safe"
   ],
   "author": "",
@@ -31,9 +32,6 @@
     "@repo/typescript-config": "workspace:*",
     "tsup": "^8.0.1",
     "typescript": "^5.6.3"
-  },
-  "dependencies": {
-    "zod": "^3.22.4"
   },
   "exports": {
     ".": {

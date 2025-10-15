@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+coverage
+*.log
+.env
+.env.*
+!.env.example
+src/generated
+prisma/dev.db
+prisma/migrations
+logs
+

@@ -1,11 +1,14 @@
 import { Router, type Router as RouterType } from "express";
+import { asyncHandler } from "../../lib/asyncHandler.js";
+import { validateRequest } from "../../lib/validation.js";
 import { collectionsController } from "./collections.controller.js";
+import { slugOrIdParamSchema, idParamSchema } from "./collections.schemas.js";
 
 const router: RouterType = Router();
 
 /**
  * @openapi
- * /api/collections:
+ * /api/v1/collections:
  *   get:
  *     summary: Get all collections
  *     description: Retrieve all collections with media count and recent media
@@ -14,30 +17,15 @@ const router: RouterType = Router();
  *     responses:
  *       200:
  *         description: Successfully retrieved collections
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         message:
- *                           type: string
- *                         collections:
- *                           type: array
- *                           items:
- *                             $ref: '#/components/schemas/Collection'
  */
-router.get("/", (req, res, next) => {
-  collectionsController.getCollections(req, res, next);
-});
+router.get(
+  "/",
+  asyncHandler(collectionsController.getCollections.bind(collectionsController))
+);
 
 /**
  * @openapi
- * /api/collections/statistics:
+ * /api/v1/collections/statistics:
  *   get:
  *     summary: Get collection statistics
  *     description: Retrieve statistics about collections
@@ -46,35 +34,32 @@ router.get("/", (req, res, next) => {
  *     responses:
  *       200:
  *         description: Successfully retrieved statistics
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         message:
- *                           type: string
- *                         statistics:
- *                           type: object
- *                           properties:
- *                             total:
- *                               type: integer
- *                             withMedia:
- *                               type: integer
- *                             empty:
- *                               type: integer
  */
-router.get("/statistics", (req, res, next) => {
-  collectionsController.getStatistics(req, res, next);
-});
+router.get(
+  "/statistics",
+  asyncHandler(collectionsController.getStatistics.bind(collectionsController))
+);
 
 /**
  * @openapi
- * /api/collections/{slugOrId}:
+ * /api/v1/collections/libraries:
+ *   get:
+ *     summary: Get all libraries
+ *     description: Retrieve all collections that are libraries
+ *     tags:
+ *       - Collections
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved libraries
+ */
+router.get(
+  "/libraries",
+  asyncHandler(collectionsController.getLibraries.bind(collectionsController))
+);
+
+/**
+ * @openapi
+ * /api/v1/collections/{slugOrId}:
  *   get:
  *     summary: Get a collection by slug or ID
  *     description: Retrieve a single collection with all its media
@@ -86,44 +71,23 @@ router.get("/statistics", (req, res, next) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: Collection slug or ID
  *     responses:
  *       200:
  *         description: Successfully retrieved collection
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         message:
- *                           type: string
- *                         collection:
- *                           $ref: '#/components/schemas/Collection'
- *       400:
- *         description: Bad request (missing or invalid slug/ID)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Collection not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get("/:slugOrId", (req, res, next) => {
-  collectionsController.getCollectionBySlugOrId(req, res, next);
-});
+router.get(
+  "/:slugOrId",
+  validateRequest({ params: slugOrIdParamSchema }),
+  asyncHandler(
+    collectionsController.getCollectionBySlugOrId.bind(collectionsController)
+  )
+);
 
 /**
  * @openapi
- * /api/collections/{id}:
+ * /api/v1/collections/{id}:
  *   delete:
  *     summary: Delete a collection
  *     description: Delete a collection and all its media relationships
@@ -135,37 +99,18 @@ router.get("/:slugOrId", (req, res, next) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: Collection ID
  *     responses:
  *       200:
  *         description: Collection deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         message:
- *                           type: string
- *       400:
- *         description: Bad request (missing or invalid ID)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Collection not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete("/:id", (req, res, next) => {
-  collectionsController.deleteCollection(req, res, next);
-});
+router.delete(
+  "/:id",
+  validateRequest({ params: idParamSchema }),
+  asyncHandler(
+    collectionsController.deleteCollection.bind(collectionsController)
+  )
+);
 
 export default router;

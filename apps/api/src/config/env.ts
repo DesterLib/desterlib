@@ -1,0 +1,71 @@
+/**
+ * Environment Configuration with Zod Validation
+ *
+ * This module validates all environment variables at startup.
+ * If validation fails, the application will not start.
+ *
+ * Usage:
+ *   import { env } from './config/env.js';
+ *   const port = env.PORT;
+ */
+
+import { z } from "zod";
+
+const envSchema = z.object({
+  // Server
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+  PORT: z.coerce.number().int().positive().default(3000),
+
+  // Database
+  DATABASE_URL: z.string().min(1, "Database URL is required"),
+
+  // Logging
+  LOG_LEVEL: z
+    .enum(["error", "warn", "info", "http", "verbose", "debug", "silly"])
+    .default("info"),
+
+  // CORS
+  CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  WEB_URL: z.string().optional(),
+
+  // API Keys
+  TMDB_API_KEY: z.string().optional(),
+
+  // Rate Limiting
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000), // 15 minutes
+  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(100),
+
+  // Redis Cache
+  REDIS_URL: z.string().optional(),
+  REDIS_HOST: z.string().default("localhost"),
+  REDIS_PORT: z.coerce.number().int().positive().default(6379),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_DB: z.coerce.number().int().min(0).default(0),
+  CACHE_TTL: z.coerce.number().int().positive().default(3600), // 1 hour in seconds
+  CACHE_ENABLED: z.coerce.boolean().default(false),
+});
+
+/**
+ * Validates and parses environment variables
+ * @throws {ZodError} If validation fails
+ */
+function validateEnv() {
+  const result = envSchema.safeParse(process.env);
+
+  if (!result.success) {
+    // eslint-disable-next-line no-console
+    console.error("❌ Invalid environment variables:");
+    // eslint-disable-next-line no-console
+    console.error(JSON.stringify(result.error.format(), null, 2));
+    process.exit(1);
+  }
+
+  return result.data;
+}
+
+export const env = validateEnv();
+
+// Type export for usage in other files
+export type Env = z.infer<typeof envSchema>;

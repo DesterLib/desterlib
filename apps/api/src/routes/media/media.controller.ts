@@ -91,7 +91,7 @@ export class MediaController {
    * Get media statistics
    */
   async getStatistics(
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {

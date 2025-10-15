@@ -1,7 +1,5 @@
-import { PrismaClient } from "../../generated/prisma/index.js";
+import { prisma } from "../../lib/prisma.js";
 import { NotFoundError } from "../../lib/errors.js";
-
-const prisma = new PrismaClient();
 
 export class CollectionsService {
   /**
@@ -165,6 +163,32 @@ export class CollectionsService {
       createdAt: collection.createdAt,
       updatedAt: collection.updatedAt,
     };
+  }
+
+  /**
+   * Get all libraries (collections with isLibrary=true)
+   */
+  async getLibraries() {
+    const libraries = await prisma.collection.findMany({
+      where: {
+        isLibrary: true,
+      },
+      include: {
+        _count: {
+          select: {
+            media: true,
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
+
+    return libraries.map((library) => ({
+      ...library,
+      mediaCount: library._count.media,
+    }));
   }
 
   /**

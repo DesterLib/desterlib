@@ -1,7 +1,7 @@
-import { Router } from "express";
+import { Router, type Router as RouterType } from "express";
 import { notificationsController } from "./notifications.controller.js";
 
-const router = Router();
+const router: RouterType = Router();
 
 /**
  * @openapi

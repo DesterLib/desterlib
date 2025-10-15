@@ -169,7 +169,7 @@ export class ScanController {
    * This endpoint should be called by a cron job
    */
   async syncAllCollections(
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {

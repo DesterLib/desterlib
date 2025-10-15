@@ -1,7 +1,7 @@
-import { PrismaClient } from "../../generated/prisma/index.js";
+import { prisma } from "../../lib/prisma.js";
+import { env } from "../../config/env.js";
 
-const prisma = new PrismaClient();
-const API_BASE_URL = process.env.API_URL || "http://localhost:3000";
+const API_BASE_URL = `http://localhost:${env.PORT}`;
 
 export class SearchService {
   /**

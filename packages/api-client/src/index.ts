@@ -1,11 +1,10 @@
-// Main API client
-export { DesterClient, type DesterClientConfig } from "./api-client.js";
+/**
+ * Dester API Client
+ * Auto-generated from OpenAPI spec using Orval
+ */
 
-// Core utilities
-export * from "./core/index.js";
+// Export configuration
+export { configure, getConfig } from "./core/fetcher.js";
 
-// Schemas and types
-export * from "./schemas/index.js";
-
-// Endpoints (for custom extensions)
-export * from "./endpoints/index.js";
+// Export all generated API functions
+export * from "./generated/api.js";

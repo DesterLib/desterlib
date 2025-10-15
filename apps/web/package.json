@@ -16,10 +16,12 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.2.6",
     "@tailwindcss/vite": "^4.1.14",
+    "@tanstack/react-form": "^1.23.7",
     "@tanstack/react-query": "^5.90.3",
     "@tanstack/react-router": "^1.132.47",
     "@tanstack/react-router-devtools": "^1.133.1",
     "@tanstack/router": "0.0.1-beta.53",
+    "@tanstack/zod-form-adapter": "^0.42.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.545.0",
@@ -28,6 +30,7 @@
     "react-dom": "^19.1.1",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.14",
+    "zod": "^3.22.4",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

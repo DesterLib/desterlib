@@ -7,6 +7,7 @@ import type {
   EpisodeMetadata,
 } from "./types.js";
 import { tmdbProvider } from "./providers/tmdb.js";
+import logger from "../../config/logger.js";
 
 /**
  * Metadata service that orchestrates multiple metadata providers
@@ -92,10 +93,10 @@ export class MetadataService {
     const results = await Promise.all(
       supportedProviders.map((provider) =>
         provider.search(query, mediaType, options).catch((error) => {
-          console.error(
-            `Error searching with provider ${provider.name}:`,
-            error
-          );
+          logger.error(`Error searching with provider ${provider.name}:`, {
+            error,
+            provider: provider.name,
+          });
           return [] as MediaSearchResult[];
         })
       )
@@ -157,13 +158,15 @@ export class MetadataService {
   ): Promise<MediaMetadata | null> {
     const provider = this.getProvider(source);
     if (!provider) {
-      console.warn(`Provider for source ${source} not found`);
+      logger.warn(`Provider for source ${source} not found`, { source });
       return null;
     }
 
     const available = await provider.isAvailable();
     if (!available) {
-      console.warn(`Provider ${provider.name} is not available`);
+      logger.warn(`Provider ${provider.name} is not available`, {
+        provider: provider.name,
+      });
       return null;
     }
 
@@ -183,15 +186,18 @@ export class MetadataService {
   ): Promise<SeasonMetadata | null> {
     const provider = this.getProvider(source);
     if (!provider?.getSeasonMetadata) {
-      console.warn(
-        `Provider for source ${source} does not support season metadata`
+      logger.warn(
+        `Provider for source ${source} does not support season metadata`,
+        { source }
       );
       return null;
     }
 
     const available = await provider.isAvailable();
     if (!available) {
-      console.warn(`Provider ${provider.name} is not available`);
+      logger.warn(`Provider ${provider.name} is not available`, {
+        provider: provider.name,
+      });
       return null;
     }
 
@@ -212,15 +218,18 @@ export class MetadataService {
   ): Promise<EpisodeMetadata | null> {
     const provider = this.getProvider(source);
     if (!provider?.getEpisodeMetadata) {
-      console.warn(
-        `Provider for source ${source} does not support episode metadata`
+      logger.warn(
+        `Provider for source ${source} does not support episode metadata`,
+        { source }
       );
       return null;
     }
 
     const available = await provider.isAvailable();
     if (!available) {
-      console.warn(`Provider ${provider.name} is not available`);
+      logger.warn(`Provider ${provider.name} is not available`, {
+        provider: provider.name,
+      });
       return null;
     }
 

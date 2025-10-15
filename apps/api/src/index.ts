@@ -1,12 +1,25 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import { rateLimit } from "express-rate-limit";
 import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
+
+// Configuration
+import { env } from "./config/env.js";
 import logger, { morganStream } from "./config/logger.js";
+import { swaggerSpec } from "./config/swagger.js";
+
+// Middleware
 import { requestContextMiddleware } from "./lib/requestContext.js";
 import { responseEnhancerMiddleware } from "./lib/response.js";
 import { notFoundHandler, errorHandler } from "./lib/errorHandler.js";
-import { swaggerSpec } from "./config/swagger.js";
+import { setupGracefulShutdown } from "./lib/shutdown.js";
+import { webSocketService } from "./lib/websocket.js";
+
+// Routes
+import healthRouter from "./routes/health/health.module.js";
 import scanRouter from "./routes/scan/scan.module.js";
 import mediaRouter from "./routes/media/media.module.js";
 import moviesRouter from "./routes/movies/movies.module.js";
@@ -17,19 +30,57 @@ import collectionsRouter from "./routes/collections/collections.module.js";
 import searchRouter from "./routes/search/search.module.js";
 import settingsRouter from "./routes/settings/settings.module.js";
 import notificationsRouter from "./routes/notifications/notifications.module.js";
+import bulkRouter from "./lib/bulk/bulk.routes.js";
 
 const app = express();
-const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 
-// CORS configuration - allow requests from web app
+// ────────────────────────────────────────────────────────────────────────────
+// Security Middleware
+// ────────────────────────────────────────────────────────────────────────────
+
+// Helmet - Security headers
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Disable for Swagger UI
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// Rate limiting - Prevent abuse
+const limiter = rateLimit({
+  windowMs: env.RATE_LIMIT_WINDOW_MS,
+  max: env.RATE_LIMIT_MAX_REQUESTS,
+  message: {
+    success: false,
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Too many requests, please try again later",
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/", limiter);
+
+// CORS configuration
 app.use(
   cors({
-    origin: process.env.WEB_URL || "http://localhost:5173",
+    origin: env.CORS_ORIGIN,
     credentials: true,
   })
 );
 
-app.use(express.json());
+// Compression - Reduce response size
+app.use(compression());
+
+// Body parsing with size limit
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// ────────────────────────────────────────────────────────────────────────────
+// Request Processing Middleware
+// ────────────────────────────────────────────────────────────────────────────
 
 // HTTP request logging
 app.use(
@@ -39,8 +90,15 @@ app.use(
   )
 );
 
+// Request context (request ID, timing)
 app.use(requestContextMiddleware);
+
+// Response helpers (res.jsonOk)
 app.use(responseEnhancerMiddleware);
+
+// ────────────────────────────────────────────────────────────────────────────
+// Documentation
+// ────────────────────────────────────────────────────────────────────────────
 
 // Swagger documentation with dark mode
 const swaggerDarkCss = `
@@ -95,54 +153,53 @@ app.get("/api-docs.json", (_req, res) => {
   res.send(swaggerSpec);
 });
 
-/**
- * @openapi
- * /health:
- *   get:
- *     summary: Health check
- *     description: Returns the API health status
- *     tags:
- *       - System
- *     responses:
- *       200:
- *         description: API is healthy
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         status:
- *                           type: string
- *                           example: ok
- */
-app.get("/health", (_req, res) => {
-  res.jsonOk({ status: "ok" });
-});
+// ────────────────────────────────────────────────────────────────────────────
+// Health Check Routes (no versioning, no rate limiting)
+// ────────────────────────────────────────────────────────────────────────────
 
-// API Routes
-app.use("/api/settings", settingsRouter);
-app.use("/api/notifications", notificationsRouter);
-app.use("/api/scan", scanRouter);
-app.use("/api/media", mediaRouter);
-app.use("/api/collections", collectionsRouter);
-app.use("/api/movies", moviesRouter);
-app.use("/api/tv-shows", tvShowsRouter);
-app.use("/api/music", musicRouter);
-app.use("/api/comics", comicsRouter);
-app.use("/api/search", searchRouter);
+app.use("/health", healthRouter);
+
+// ────────────────────────────────────────────────────────────────────────────
+// API Routes (v1)
+// ────────────────────────────────────────────────────────────────────────────
+
+const API_V1 = "/api/v1";
+
+app.use(`${API_V1}/settings`, settingsRouter);
+app.use(`${API_V1}/notifications`, notificationsRouter);
+app.use(`${API_V1}/scan`, scanRouter);
+app.use(`${API_V1}/media`, mediaRouter);
+app.use(`${API_V1}/collections`, collectionsRouter);
+app.use(`${API_V1}/movies`, moviesRouter);
+app.use(`${API_V1}/tv-shows`, tvShowsRouter);
+app.use(`${API_V1}/music`, musicRouter);
+app.use(`${API_V1}/comics`, comicsRouter);
+app.use(`${API_V1}/search`, searchRouter);
+app.use(`${API_V1}/bulk`, bulkRouter);
+
+// ────────────────────────────────────────────────────────────────────────────
+// Error Handlers
+// ────────────────────────────────────────────────────────────────────────────
 
 app.use(notFoundHandler);
-
 app.use(errorHandler);
 
-app.listen(port, () => {
-  logger.info(`API listening on http://localhost:${port}`);
-  logger.info(
-    `📚 API Documentation available at http://localhost:${port}/api-docs`
-  );
+// ────────────────────────────────────────────────────────────────────────────
+// Server Startup
+// ────────────────────────────────────────────────────────────────────────────
+
+const server = app.listen(env.PORT, () => {
+  logger.info(`🚀 Server started successfully`);
+  logger.info(`   Environment: ${env.NODE_ENV}`);
+  logger.info(`   Port: ${env.PORT}`);
+  logger.info(`   API: http://localhost:${env.PORT}/api/v1`);
+  logger.info(`   Docs: http://localhost:${env.PORT}/api-docs`);
+  logger.info(`   Health: http://localhost:${env.PORT}/health`);
+  logger.info(`   WebSocket: ws://localhost:${env.PORT}/ws`);
 });
+
+// Initialize WebSocket server
+webSocketService.initialize(server);
+
+// Setup graceful shutdown handlers
+setupGracefulShutdown(server);
