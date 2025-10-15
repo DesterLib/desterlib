@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SettingGroup } from "@/components/settings/setting-group";
-import { librariesSettingsConfig } from "@/config/libraries-settings";
+import { librariesSettingsConfig } from "@/config/libraries-settings-config";
 
 export const Route = createFileRoute("/settings/libraries")({
   component: RouteComponent,

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import type { SettingGroup as SettingGroupType } from "@/lib/settings-config";
+import type { SettingGroup as SettingGroupType } from "@/config/settings-config.ts";
 import { SettingItem } from "./setting-item.tsx";
 
 interface SettingGroupProps {

@@ -1,4 +1,4 @@
-import type { SettingsPageConfig } from "@/lib/settings-config";
+import type { SettingsPageConfig } from "@/config/settings-config";
 import {
   Plus,
   Pencil,
@@ -189,7 +189,7 @@ export const librariesSettingsConfig: SettingsPageConfig = {
           label: "TMDB API Key",
           description: "The Movie Database API key for metadata",
           status: "Configured",
-          statusColor: "text-green-400",
+          statusColor: "bg-green-400",
           actions: [
             {
               label: "Update",

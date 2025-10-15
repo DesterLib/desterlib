@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import type { SettingItem } from "@/lib/settings-config";
+import type { SettingItem } from "@/config/settings-config";
+import { Badge } from "../ui/badge";
 
 interface SettingItemProps {
   item: SettingItem;
@@ -37,9 +38,9 @@ export function SettingItem({ item }: SettingItemProps) {
       <div className="flex items-center gap-3">
         {/* Status badge */}
         {item.status && (
-          <span className={`text-xs ${item.statusColor || "text-white/40"}`}>
+          <Badge className={item.statusColor || "text-black"}>
             {item.status}
-          </span>
+          </Badge>
         )}
 
         {/* Display value */}

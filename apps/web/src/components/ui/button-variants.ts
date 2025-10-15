@@ -12,9 +12,9 @@ export const buttonVariants = cva(
         menuItem:
           "rounded-lg flex items-center justify-start hover:bg-neutral-700/60 active:bg-white active:text-black data-[active=true]:bg-white data-[active=true]:text-black",
         modification:
-          "border hover:scale-105 active:scale-95 border-transparent rounded-lg flex items-center justify-center hover:bg-white/10 active:border-white active:bg-white text-blue-400 hover:text-blue-300 active:text-blue-500",
+          "border hover:scale-105 active:scale-95 border-transparent rounded-lg flex items-center justify-center hover:bg-white/10 active:border-white active:bg-white hover:text-blue-400 active:text-blue-500",
         danger:
-          "border hover:scale-105 active:scale-95 border-transparent rounded-lg flex items-center justify-center hover:bg-white/10 active:border-white active:bg-white text-red-400 hover:text-red-300 active:text-red-500",
+          "border hover:scale-105 active:scale-95 border-transparent rounded-lg flex items-center justify-center hover:bg-white/10 active:border-white active:bg-white hover:text-red-400 active:text-red-500",
       },
       size: {
         default: "px-4 h-10 has-[>svg]:px-3",
