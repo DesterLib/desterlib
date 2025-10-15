@@ -13,7 +13,7 @@ import { prisma } from "../prisma.js";
 import { BadRequestError, NotFoundError } from "../errors.js";
 import { invalidateCache } from "../cacheMiddleware.js";
 import logger from "../../config/logger.js";
-import type { MediaType } from "../../generated/prisma/index.js";
+import { Prisma, type MediaType } from "../../generated/prisma/index.js";
 
 export interface BulkDeleteOptions {
   mediaIds: string[];
@@ -195,8 +195,7 @@ class BulkOperationsService {
         }
 
         // Build update object
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const updateData: any = {};
+        const updateData: Prisma.MediaUpdateInput = {};
 
         if (updates.rating !== undefined) {
           updateData.rating = updates.rating;
@@ -211,7 +210,7 @@ class BulkOperationsService {
 
         // Update persons
         if (updates.personIds) {
-          updateData.persons = {
+          updateData.people = {
             set: updates.personIds.map((id) => ({ id })),
           };
         }

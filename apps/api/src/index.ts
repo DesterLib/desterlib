@@ -5,6 +5,7 @@ import compression from "compression";
 import { rateLimit } from "express-rate-limit";
 import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
+import cookieParser from "cookie-parser";
 
 // Configuration
 import { env } from "./config/env.js";
@@ -17,9 +18,17 @@ import { responseEnhancerMiddleware } from "./lib/response.js";
 import { notFoundHandler, errorHandler } from "./lib/errorHandler.js";
 import { setupGracefulShutdown } from "./lib/shutdown.js";
 import { webSocketService } from "./lib/websocket.js";
+import { metricsMiddleware, metricsHandler } from "./lib/metrics.js";
+import {
+  csrfCookieMiddleware,
+  csrfProtection,
+  csrfTokenHandler,
+} from "./lib/csrf.js";
+import { scheduleBackups } from "./lib/backup.js";
 
 // Routes
 import healthRouter from "./routes/health/health.module.js";
+import authRouter from "./routes/auth/auth.module.js";
 import scanRouter from "./routes/scan/scan.module.js";
 import mediaRouter from "./routes/media/media.module.js";
 import moviesRouter from "./routes/movies/movies.module.js";
@@ -31,6 +40,7 @@ import searchRouter from "./routes/search/search.module.js";
 import settingsRouter from "./routes/settings/settings.module.js";
 import notificationsRouter from "./routes/notifications/notifications.module.js";
 import bulkRouter from "./lib/bulk/bulk.routes.js";
+import adminRouter from "./routes/admin/admin.routes.js";
 
 const app = express();
 
@@ -78,6 +88,9 @@ app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Cookie parsing (required for CSRF)
+app.use(cookieParser());
+
 // ────────────────────────────────────────────────────────────────────────────
 // Request Processing Middleware
 // ────────────────────────────────────────────────────────────────────────────
@@ -95,6 +108,12 @@ app.use(requestContextMiddleware);
 
 // Response helpers (res.jsonOk)
 app.use(responseEnhancerMiddleware);
+
+// Metrics tracking
+app.use(metricsMiddleware);
+
+// CSRF cookie setup (must be before CSRF protection)
+app.use(csrfCookieMiddleware);
 
 // ────────────────────────────────────────────────────────────────────────────
 // Documentation
@@ -154,6 +173,16 @@ app.get("/api-docs.json", (_req, res) => {
 });
 
 // ────────────────────────────────────────────────────────────────────────────
+// Monitoring & Security Endpoints
+// ────────────────────────────────────────────────────────────────────────────
+
+// Prometheus metrics endpoint (no auth required for monitoring tools)
+app.get("/metrics", metricsHandler);
+
+// CSRF token endpoint (for web clients)
+app.get("/api/v1/csrf-token", csrfTokenHandler);
+
+// ────────────────────────────────────────────────────────────────────────────
 // Health Check Routes (no versioning, no rate limiting)
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -165,17 +194,25 @@ app.use("/health", healthRouter);
 
 const API_V1 = "/api/v1";
 
-app.use(`${API_V1}/settings`, settingsRouter);
-app.use(`${API_V1}/notifications`, notificationsRouter);
-app.use(`${API_V1}/scan`, scanRouter);
-app.use(`${API_V1}/media`, mediaRouter);
-app.use(`${API_V1}/collections`, collectionsRouter);
-app.use(`${API_V1}/movies`, moviesRouter);
-app.use(`${API_V1}/tv-shows`, tvShowsRouter);
-app.use(`${API_V1}/music`, musicRouter);
-app.use(`${API_V1}/comics`, comicsRouter);
-app.use(`${API_V1}/search`, searchRouter);
-app.use(`${API_V1}/bulk`, bulkRouter);
+// Authentication routes (public and protected)
+app.use(`${API_V1}/auth`, authRouter);
+
+// Admin routes (requires admin role)
+app.use(`${API_V1}/admin`, adminRouter);
+
+// Application routes (some may require authentication)
+// CSRF protection is applied selectively within these routers
+app.use(`${API_V1}/settings`, csrfProtection, settingsRouter);
+app.use(`${API_V1}/notifications`, csrfProtection, notificationsRouter);
+app.use(`${API_V1}/scan`, csrfProtection, scanRouter);
+app.use(`${API_V1}/media`, csrfProtection, mediaRouter);
+app.use(`${API_V1}/collections`, csrfProtection, collectionsRouter);
+app.use(`${API_V1}/movies`, csrfProtection, moviesRouter);
+app.use(`${API_V1}/tv-shows`, csrfProtection, tvShowsRouter);
+app.use(`${API_V1}/music`, csrfProtection, musicRouter);
+app.use(`${API_V1}/comics`, csrfProtection, comicsRouter);
+app.use(`${API_V1}/search`, searchRouter); // GET requests, no CSRF needed
+app.use(`${API_V1}/bulk`, csrfProtection, bulkRouter);
 
 // ────────────────────────────────────────────────────────────────────────────
 // Error Handlers
@@ -195,11 +232,16 @@ const server = app.listen(env.PORT, () => {
   logger.info(`   API: http://localhost:${env.PORT}/api/v1`);
   logger.info(`   Docs: http://localhost:${env.PORT}/api-docs`);
   logger.info(`   Health: http://localhost:${env.PORT}/health`);
+  logger.info(`   Metrics: http://localhost:${env.PORT}/metrics`);
   logger.info(`   WebSocket: ws://localhost:${env.PORT}/ws`);
+  logger.info(`   CSRF Protection: Enabled`);
 });
 
 // Initialize WebSocket server
 webSocketService.initialize(server);
+
+// Schedule automatic backups
+scheduleBackups();
 
 // Setup graceful shutdown handlers
 setupGracefulShutdown(server);

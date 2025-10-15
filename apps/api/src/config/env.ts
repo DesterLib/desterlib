@@ -45,6 +45,17 @@ const envSchema = z.object({
   REDIS_DB: z.coerce.number().int().min(0).default(0),
   CACHE_TTL: z.coerce.number().int().positive().default(3600), // 1 hour in seconds
   CACHE_ENABLED: z.coerce.boolean().default(false),
+
+  // Authentication
+  JWT_SECRET: z.string().min(32, "JWT secret must be at least 32 characters"),
+  JWT_EXPIRES_IN: z.string().default("7d"), // JWT expiration (e.g., "7d", "24h")
+  REFRESH_TOKEN_SECRET: z
+    .string()
+    .min(32, "Refresh token secret must be at least 32 characters"),
+  REFRESH_TOKEN_EXPIRES_IN: z.string().default("30d"),
+
+  // API Keys
+  API_KEY_PREFIX: z.string().default("dester"),
 });
 
 /**
