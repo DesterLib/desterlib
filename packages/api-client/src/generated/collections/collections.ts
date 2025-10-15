@@ -5,68 +5,64 @@
  * A media library management system similar to Plex/Jellyfin
  * OpenAPI spec version: 0.0.1
  */
-import type {
-  DeleteApiCollectionsId200,
-  ErrorResponse,
-  GetApiCollections200,
-  GetApiCollectionsSlugOrId200,
-  GetApiCollectionsStatistics200,
-} from "../api.schemas";
-
 import { customFetcher } from "../../core/fetcher";
 
 /**
  * Retrieve all collections with media count and recent media
  * @summary Get all collections
  */
-export type getApiCollectionsResponse200 = {
-  data: GetApiCollections200;
+export type getApiV1CollectionsResponse200 = {
+  data: void;
   status: 200;
 };
 
-export type getApiCollectionsResponseSuccess = getApiCollectionsResponse200 & {
-  headers: Headers;
-};
-export type getApiCollectionsResponse = getApiCollectionsResponseSuccess;
+export type getApiV1CollectionsResponseSuccess =
+  getApiV1CollectionsResponse200 & {
+    headers: Headers;
+  };
+export type getApiV1CollectionsResponse = getApiV1CollectionsResponseSuccess;
 
-export const getGetApiCollectionsUrl = () => {
-  return `/api/collections`;
+export const getGetApiV1CollectionsUrl = () => {
+  return `/api/v1/collections`;
 };
 
-export const getApiCollections = async (
+export const getApiV1Collections = async (
   options?: RequestInit,
-): Promise<getApiCollectionsResponse> => {
-  return customFetcher<getApiCollectionsResponse>(getGetApiCollectionsUrl(), {
-    ...options,
-    method: "GET",
-  });
+): Promise<getApiV1CollectionsResponse> => {
+  return customFetcher<getApiV1CollectionsResponse>(
+    getGetApiV1CollectionsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**
  * Retrieve statistics about collections
  * @summary Get collection statistics
  */
-export type getApiCollectionsStatisticsResponse200 = {
-  data: GetApiCollectionsStatistics200;
+export type getApiV1CollectionsStatisticsResponse200 = {
+  data: void;
   status: 200;
 };
 
-export type getApiCollectionsStatisticsResponseSuccess =
-  getApiCollectionsStatisticsResponse200 & {
+export type getApiV1CollectionsStatisticsResponseSuccess =
+  getApiV1CollectionsStatisticsResponse200 & {
     headers: Headers;
   };
-export type getApiCollectionsStatisticsResponse =
-  getApiCollectionsStatisticsResponseSuccess;
+export type getApiV1CollectionsStatisticsResponse =
+  getApiV1CollectionsStatisticsResponseSuccess;
 
-export const getGetApiCollectionsStatisticsUrl = () => {
-  return `/api/collections/statistics`;
+export const getGetApiV1CollectionsStatisticsUrl = () => {
+  return `/api/v1/collections/statistics`;
 };
 
-export const getApiCollectionsStatistics = async (
+export const getApiV1CollectionsStatistics = async (
   options?: RequestInit,
-): Promise<getApiCollectionsStatisticsResponse> => {
-  return customFetcher<getApiCollectionsStatisticsResponse>(
-    getGetApiCollectionsStatisticsUrl(),
+): Promise<getApiV1CollectionsStatisticsResponse> => {
+  return customFetcher<getApiV1CollectionsStatisticsResponse>(
+    getGetApiV1CollectionsStatisticsUrl(),
     {
       ...options,
       method: "GET",
@@ -78,27 +74,27 @@ export const getApiCollectionsStatistics = async (
  * Retrieve all collections that are libraries
  * @summary Get all libraries
  */
-export type getApiCollectionsLibrariesResponse200 = {
+export type getApiV1CollectionsLibrariesResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getApiCollectionsLibrariesResponseSuccess =
-  getApiCollectionsLibrariesResponse200 & {
+export type getApiV1CollectionsLibrariesResponseSuccess =
+  getApiV1CollectionsLibrariesResponse200 & {
     headers: Headers;
   };
-export type getApiCollectionsLibrariesResponse =
-  getApiCollectionsLibrariesResponseSuccess;
+export type getApiV1CollectionsLibrariesResponse =
+  getApiV1CollectionsLibrariesResponseSuccess;
 
-export const getGetApiCollectionsLibrariesUrl = () => {
-  return `/api/collections/libraries`;
+export const getGetApiV1CollectionsLibrariesUrl = () => {
+  return `/api/v1/collections/libraries`;
 };
 
-export const getApiCollectionsLibraries = async (
+export const getApiV1CollectionsLibraries = async (
   options?: RequestInit,
-): Promise<getApiCollectionsLibrariesResponse> => {
-  return customFetcher<getApiCollectionsLibrariesResponse>(
-    getGetApiCollectionsLibrariesUrl(),
+): Promise<getApiV1CollectionsLibrariesResponse> => {
+  return customFetcher<getApiV1CollectionsLibrariesResponse>(
+    getGetApiV1CollectionsLibrariesUrl(),
     {
       ...options,
       method: "GET",
@@ -110,46 +106,39 @@ export const getApiCollectionsLibraries = async (
  * Retrieve a single collection with all its media
  * @summary Get a collection by slug or ID
  */
-export type getApiCollectionsSlugOrIdResponse200 = {
-  data: GetApiCollectionsSlugOrId200;
+export type getApiV1CollectionsSlugOrIdResponse200 = {
+  data: void;
   status: 200;
 };
 
-export type getApiCollectionsSlugOrIdResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type getApiCollectionsSlugOrIdResponse404 = {
-  data: ErrorResponse;
+export type getApiV1CollectionsSlugOrIdResponse404 = {
+  data: void;
   status: 404;
 };
 
-export type getApiCollectionsSlugOrIdResponseSuccess =
-  getApiCollectionsSlugOrIdResponse200 & {
+export type getApiV1CollectionsSlugOrIdResponseSuccess =
+  getApiV1CollectionsSlugOrIdResponse200 & {
     headers: Headers;
   };
-export type getApiCollectionsSlugOrIdResponseError = (
-  | getApiCollectionsSlugOrIdResponse400
-  | getApiCollectionsSlugOrIdResponse404
-) & {
-  headers: Headers;
+export type getApiV1CollectionsSlugOrIdResponseError =
+  getApiV1CollectionsSlugOrIdResponse404 & {
+    headers: Headers;
+  };
+
+export type getApiV1CollectionsSlugOrIdResponse =
+  | getApiV1CollectionsSlugOrIdResponseSuccess
+  | getApiV1CollectionsSlugOrIdResponseError;
+
+export const getGetApiV1CollectionsSlugOrIdUrl = (slugOrId: string) => {
+  return `/api/v1/collections/${slugOrId}`;
 };
 
-export type getApiCollectionsSlugOrIdResponse =
-  | getApiCollectionsSlugOrIdResponseSuccess
-  | getApiCollectionsSlugOrIdResponseError;
-
-export const getGetApiCollectionsSlugOrIdUrl = (slugOrId: string) => {
-  return `/api/collections/${slugOrId}`;
-};
-
-export const getApiCollectionsSlugOrId = async (
+export const getApiV1CollectionsSlugOrId = async (
   slugOrId: string,
   options?: RequestInit,
-): Promise<getApiCollectionsSlugOrIdResponse> => {
-  return customFetcher<getApiCollectionsSlugOrIdResponse>(
-    getGetApiCollectionsSlugOrIdUrl(slugOrId),
+): Promise<getApiV1CollectionsSlugOrIdResponse> => {
+  return customFetcher<getApiV1CollectionsSlugOrIdResponse>(
+    getGetApiV1CollectionsSlugOrIdUrl(slugOrId),
     {
       ...options,
       method: "GET",
@@ -161,46 +150,39 @@ export const getApiCollectionsSlugOrId = async (
  * Delete a collection and all its media relationships
  * @summary Delete a collection
  */
-export type deleteApiCollectionsIdResponse200 = {
-  data: DeleteApiCollectionsId200;
+export type deleteApiV1CollectionsIdResponse200 = {
+  data: void;
   status: 200;
 };
 
-export type deleteApiCollectionsIdResponse400 = {
-  data: ErrorResponse;
-  status: 400;
-};
-
-export type deleteApiCollectionsIdResponse404 = {
-  data: ErrorResponse;
+export type deleteApiV1CollectionsIdResponse404 = {
+  data: void;
   status: 404;
 };
 
-export type deleteApiCollectionsIdResponseSuccess =
-  deleteApiCollectionsIdResponse200 & {
+export type deleteApiV1CollectionsIdResponseSuccess =
+  deleteApiV1CollectionsIdResponse200 & {
     headers: Headers;
   };
-export type deleteApiCollectionsIdResponseError = (
-  | deleteApiCollectionsIdResponse400
-  | deleteApiCollectionsIdResponse404
-) & {
-  headers: Headers;
+export type deleteApiV1CollectionsIdResponseError =
+  deleteApiV1CollectionsIdResponse404 & {
+    headers: Headers;
+  };
+
+export type deleteApiV1CollectionsIdResponse =
+  | deleteApiV1CollectionsIdResponseSuccess
+  | deleteApiV1CollectionsIdResponseError;
+
+export const getDeleteApiV1CollectionsIdUrl = (id: string) => {
+  return `/api/v1/collections/${id}`;
 };
 
-export type deleteApiCollectionsIdResponse =
-  | deleteApiCollectionsIdResponseSuccess
-  | deleteApiCollectionsIdResponseError;
-
-export const getDeleteApiCollectionsIdUrl = (id: string) => {
-  return `/api/collections/${id}`;
-};
-
-export const deleteApiCollectionsId = async (
+export const deleteApiV1CollectionsId = async (
   id: string,
   options?: RequestInit,
-): Promise<deleteApiCollectionsIdResponse> => {
-  return customFetcher<deleteApiCollectionsIdResponse>(
-    getDeleteApiCollectionsIdUrl(id),
+): Promise<deleteApiV1CollectionsIdResponse> => {
+  return customFetcher<deleteApiV1CollectionsIdResponse>(
+    getDeleteApiV1CollectionsIdUrl(id),
     {
       ...options,
       method: "DELETE",

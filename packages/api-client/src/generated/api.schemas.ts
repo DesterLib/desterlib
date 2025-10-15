@@ -278,57 +278,47 @@ export interface ExternalId {
   mediaId?: string;
 }
 
-export type GetApiCollections200AllOfData = {
-  message?: string;
-  collections?: Collection[];
+export type GetAdminAlertsHistoryParams = {
+  limit?: number;
 };
 
-export type GetApiCollections200AllOf = {
-  data?: GetApiCollections200AllOfData;
+export type PostAuthRegisterBodyRole =
+  (typeof PostAuthRegisterBodyRole)[keyof typeof PostAuthRegisterBodyRole];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PostAuthRegisterBodyRole = {
+  ADMIN: "ADMIN",
+  USER: "USER",
+  GUEST: "GUEST",
+} as const;
+
+export type PostAuthRegisterBody = {
+  username: string;
+  email?: string;
+  displayName?: string;
+  password?: string;
+  pin?: string;
+  isPasswordless?: boolean;
+  role?: PostAuthRegisterBodyRole;
 };
 
-export type GetApiCollections200 = SuccessResponse & GetApiCollections200AllOf;
-
-export type GetApiCollectionsStatistics200AllOfDataStatistics = {
-  total?: number;
-  withMedia?: number;
-  empty?: number;
+export type PostAuthLoginBody = {
+  username: string;
+  password?: string;
+  pin?: string;
 };
 
-export type GetApiCollectionsStatistics200AllOfData = {
-  message?: string;
-  statistics?: GetApiCollectionsStatistics200AllOfDataStatistics;
+export type PostAuthLoginPasswordlessBody = {
+  username: string;
 };
 
-export type GetApiCollectionsStatistics200AllOf = {
-  data?: GetApiCollectionsStatistics200AllOfData;
+export type PostAuthRefreshBody = {
+  refreshToken: string;
 };
 
-export type GetApiCollectionsStatistics200 = SuccessResponse &
-  GetApiCollectionsStatistics200AllOf;
-
-export type GetApiCollectionsSlugOrId200AllOfData = {
-  message?: string;
-  collection?: Collection;
+export type PostAuthLogoutBody = {
+  refreshToken: string;
 };
-
-export type GetApiCollectionsSlugOrId200AllOf = {
-  data?: GetApiCollectionsSlugOrId200AllOfData;
-};
-
-export type GetApiCollectionsSlugOrId200 = SuccessResponse &
-  GetApiCollectionsSlugOrId200AllOf;
-
-export type DeleteApiCollectionsId200AllOfData = {
-  message?: string;
-};
-
-export type DeleteApiCollectionsId200AllOf = {
-  data?: DeleteApiCollectionsId200AllOfData;
-};
-
-export type DeleteApiCollectionsId200 = SuccessResponse &
-  DeleteApiCollectionsId200AllOf;
 
 export type GetApiComicsParams = {
   /**
