@@ -98,16 +98,19 @@ export default function UserMenu() {
 
               {/* Menu Items */}
               <div className="py-1">
-                <button
-                  onClick={() => {
-                    navigate({ to: "/settings" });
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10 transition-colors flex items-center gap-3"
-                >
-                  <Settings className="w-4 h-4" />
-                  Settings
-                </button>
+                {/* Only show settings for non-guest users */}
+                {user?.role !== "GUEST" && (
+                  <button
+                    onClick={() => {
+                      navigate({ to: "/settings" });
+                      setIsOpen(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10 transition-colors flex items-center gap-3"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </button>
+                )}
 
                 <button
                   onClick={() => {

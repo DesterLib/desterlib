@@ -6,7 +6,7 @@ export interface User {
   id: string;
   username: string;
   email?: string;
-  role: "USER" | "ADMIN";
+  role: "USER" | "ADMIN" | "GUEST";
   createdAt: string;
   updatedAt: string;
 }
@@ -22,7 +22,7 @@ export interface RegisterData {
   email?: string;
   password?: string;
   pin?: string;
-  role?: "USER" | "ADMIN";
+  role?: "USER" | "ADMIN" | "GUEST";
 }
 
 export interface AuthResponse {

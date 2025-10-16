@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { SearchIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../button";
@@ -22,8 +22,9 @@ import { useSearch } from "@/lib/hooks";
 import type { GetApiV1SearchParams } from "@dester/api-client";
 import SearchResults from "./search-results";
 import { useLocation } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/useAuth";
 
-const tabs = [
+const allTabs = [
   { id: "home", label: "Home", href: "/" },
   { id: "library", label: "Library", href: "/library" },
   { id: "settings", label: "Settings", href: "/settings" },
@@ -31,6 +32,15 @@ const tabs = [
 
 const Header = () => {
   const location = useLocation();
+  const { user } = useAuth();
+
+  // Filter tabs based on user role - hide Settings for guests and unauthenticated users
+  const tabs = useMemo(() => {
+    if (!user || user.role === "GUEST") {
+      return allTabs.filter((tab) => tab.id !== "settings");
+    }
+    return allTabs;
+  }, [user]);
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -52,7 +62,7 @@ const Header = () => {
     if (currentTab) {
       setActiveTab(currentTab.id);
     }
-  }, [location.pathname]);
+  }, [location.pathname, tabs]);
 
   // Check if current path matches any of the header tabs
   const isOnHeaderTab = tabs.some((tab) => {
