@@ -140,4 +140,13 @@
   .scrollbar-hidden::-webkit-scrollbar {
     display: none;
   }
+
+  /* Performance optimization for backdrop-blur */
+  .backdrop-blur-lg,
+  .backdrop-blur-xl {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
 }

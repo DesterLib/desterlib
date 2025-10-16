@@ -33,6 +33,7 @@ const allTabs = [
 const Header = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const [hasMounted, setHasMounted] = useState(false);
 
   // Filter tabs based on user role - hide Settings for guests and unauthenticated users
   const tabs = useMemo(() => {
@@ -49,6 +50,11 @@ const Header = () => {
   const [searchFilter, setSearchFilter] = useState<
     "all" | "movies" | "tvshows"
   >("all");
+
+  // Skip initial animations
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Sync activeTab with current route
   useEffect(() => {
@@ -107,20 +113,20 @@ const Header = () => {
         <div className="w-full flex justify-center items-center">
           <motion.button
             onClick={() => setIsDialogOpen(true)}
-            className="border mr-2 h-12 w-12 bg-neutral-900/60 backdrop-blur-lg border-white/10 rounded-[50px] flex items-center justify-center [will-change:backdrop-filter]"
+            className="border mr-2 h-12 w-12 bg-neutral-900/60 backdrop-blur-lg border-white/10 rounded-[50px] flex items-center justify-center"
           >
             <Logo className="w-8 h-8" />
           </motion.button>
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {!isSearchOpen && (
               <motion.div
-                initial="initial"
+                initial={hasMounted ? "initial" : false}
                 animate="animate"
                 exit="exit"
                 variants={tabsContainerVariants}
                 transition={tabsContainerTransition}
               >
-                <div className="flex space-x-1 w-fit bg-neutral-900/60 backdrop-blur-lg p-1 rounded-[50px] border border-white/10 [will-change:backdrop-filter]">
+                <div className="flex space-x-1 w-fit bg-neutral-900/60 backdrop-blur-lg p-1 rounded-[50px] border border-white/10">
                   {tabs.map((tab) => (
                     <NavLink
                       key={tab.id}
@@ -137,7 +143,7 @@ const Header = () => {
           <motion.div
             initial={searchContainerMotion.initial}
             animate={searchContainerMotion.animate(isSearchOpen)}
-            className="border bg-neutral-900/60 backdrop-blur-lg border-white/10 rounded-[50px] flex items-center [will-change:backdrop-filter]"
+            className="border bg-neutral-900/60 backdrop-blur-lg border-white/10 rounded-[50px] flex items-center"
           >
             <div className="p-1">
               <motion.button

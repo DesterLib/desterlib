@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
-export default function UserMenu() {
+function UserMenu() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -26,7 +26,7 @@ export default function UserMenu() {
       <div className="border bg-neutral-900/60 rounded-[50px] p-1 ml-2">
         <button
           onClick={() => navigate({ to: "/login" })}
-          className="h-10 px-4 backdrop-blur-lg rounded-[50px] flex items-center gap-2 hover:bg-white/10 transition-colors [will-change:backdrop-filter]"
+          className="h-10 px-4 backdrop-blur-lg rounded-[50px] flex items-center gap-2 hover:bg-white/10 transition-colors"
         >
           <LogIn className="w-4 h-4" />
           <span className="text-sm font-medium text-white">Sign In</span>
@@ -37,42 +37,48 @@ export default function UserMenu() {
 
   return (
     <div className="relative ml-2">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-12 px-4 bg-neutral-900/60 backdrop-blur-lg border border-white/10 rounded-[50px] flex items-center gap-2 justify-between hover:bg-white/10 transition-colors [will-change:backdrop-filter]"
-      >
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-            {user?.role === "ADMIN" ? (
-              <Shield className="w-4 h-4 text-white" />
-            ) : (
-              <User className="w-4 h-4 text-white" />
-            )}
+      <div className="border bg-neutral-900/60 rounded-[50px] p-1">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="h-10 px-1 backdrop-blur-lg  rounded-[50px] flex items-center gap-2 justify-between hover:bg-white/10 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+              {user?.role === "ADMIN" ? (
+                <Shield className="w-4 h-4 text-white" />
+              ) : (
+                <User className="w-4 h-4 text-white" />
+              )}
+            </div>
+            <span className="text-sm font-medium text-white">
+              {user?.username}
+            </span>
           </div>
-          <span className="text-sm font-medium text-white">
-            {user?.username}
-          </span>
-        </div>
-        <ChevronDown
-          className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-        />
-      </button>
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+      </div>
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isOpen && (
           <>
             {/* Backdrop to close menu */}
-            <div
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               className="fixed inset-0 z-40"
               onClick={() => setIsOpen(false)}
             />
 
             {/* Dropdown Menu */}
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.15 }}
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
               className="absolute right-0 mt-2 w-56 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden"
             >
               {/* User Info */}
@@ -131,3 +137,5 @@ export default function UserMenu() {
     </div>
   );
 }
+
+export default memo(UserMenu);

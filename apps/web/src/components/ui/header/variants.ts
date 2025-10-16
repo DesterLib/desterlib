@@ -5,9 +5,8 @@ export const tabsContainerVariants = {
 };
 
 export const tabsContainerTransition = {
-  type: "spring" as const,
-  bounce: 0.2,
-  duration: 0.6,
+  duration: 0.3,
+  ease: "easeInOut" as const,
 };
 
 export const searchContainerMotion = {
@@ -31,9 +30,8 @@ export const searchInputVariants = {
 };
 
 export const searchInputTransition = {
-  type: "spring" as const,
-  bounce: 0.2,
-  duration: 0.6,
+  duration: 0.3,
+  ease: "easeInOut" as const,
 };
 
 export const filtersContainerVariants = {
@@ -42,10 +40,9 @@ export const filtersContainerVariants = {
 };
 
 export const filtersContainerTransition = {
-  type: "spring" as const,
-  bounce: 0.2,
-  duration: 0.6,
-  staggerChildren: 0.1,
+  duration: 0.2,
+  ease: "easeInOut" as const,
+  staggerChildren: 0.05,
 };
 
 export const filterButtonVariants = {
