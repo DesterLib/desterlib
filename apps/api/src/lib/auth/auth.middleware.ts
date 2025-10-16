@@ -1,17 +1,12 @@
 /**
  * Authentication Middleware
  *
- * Provides middleware for protecting routes with JWT, API keys, and role-based access
+ * Provides middleware for protecting routes with better-auth sessions, API keys, and role-based access
  */
 
 import type { Request, Response, NextFunction } from "express";
 import { UnauthorizedError, ForbiddenError } from "../errors.js";
-import {
-  verifyAccessToken,
-  extractBearerToken,
-  verifyApiKey,
-  validateApiKeyFormat,
-} from "./auth.utils.js";
+import { verifyApiKey, validateApiKeyFormat } from "./auth.utils.js";
 import { prisma } from "../prisma.js";
 import logger from "../../config/logger.js";
 import type { UserRole } from "../../generated/prisma/index.js";
@@ -38,12 +33,12 @@ declare global {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// JWT Authentication
+// Better-Auth Session Authentication
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Require JWT authentication
- * Validates JWT token and attaches user to request
+ * Require better-auth session authentication
+ * Validates session cookie and attaches user to request
  */
 export async function requireAuth(
   req: Request,
@@ -51,22 +46,41 @@ export async function requireAuth(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Extract token from Authorization header
-    const token = extractBearerToken(req.headers.authorization);
+    let userId: string | undefined;
 
-    if (!token) {
-      throw new UnauthorizedError("No authentication token provided");
+    // Extract session token from cookies - try multiple possible cookie names
+    const sessionTokenCookie =
+      req.cookies?.["better-auth.session_token"] ||
+      req.cookies?.["session-token"] ||
+      req.cookies?.["session"] ||
+      req.cookies?.["better_auth.session_token"];
+
+    if (sessionTokenCookie) {
+      // Better-auth cookies contain {token}.{signature}
+      // Extract just the token part (before the dot)
+      const sessionToken = sessionTokenCookie.split(".")[0];
+
+      // Find session in database
+      const session = await prisma.session.findUnique({
+        where: { token: sessionToken },
+        select: {
+          userId: true,
+          expiresAt: true,
+        },
+      });
+
+      if (session && session.expiresAt > new Date()) {
+        userId = session.userId;
+      }
     }
 
-    // Verify token
-    const payload = verifyAccessToken(token);
-    if (!payload) {
-      throw new UnauthorizedError("Invalid or expired token");
+    if (!userId) {
+      throw new UnauthorizedError("No valid session found");
     }
 
     // Check if user still exists and is active
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: userId },
       select: {
         id: true,
         username: true,
@@ -216,11 +230,11 @@ export async function requireApiKey(
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Combined Authentication (JWT or API Key)
+// Combined Authentication (Session or API Key)
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Allow authentication via JWT or API key
+ * Allow authentication via better-auth session or API key
  */
 export async function requireAuthOrApiKey(
   req: Request,
@@ -233,13 +247,8 @@ export async function requireAuthOrApiKey(
     return requireApiKey(req, res, next);
   }
 
-  // Otherwise, check for JWT
-  const authHeader = req.headers.authorization;
-  if (authHeader) {
-    return requireAuth(req, res, next);
-  }
-
-  next(new UnauthorizedError("Authentication required (JWT or API key)"));
+  // Otherwise, check for session
+  return requireAuth(req, res, next);
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -247,7 +256,7 @@ export async function requireAuthOrApiKey(
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Optional authentication - attaches user if token is valid, but doesn't require it
+ * Optional authentication - attaches user if session or API key is valid, but doesn't require it
  */
 export async function optionalAuth(
   req: Request,
@@ -255,35 +264,58 @@ export async function optionalAuth(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Try JWT first
-    const token = extractBearerToken(req.headers.authorization);
-    if (token) {
-      const payload = verifyAccessToken(token);
-      if (payload) {
-        const user = await prisma.user.findUnique({
-          where: { id: payload.userId },
-          select: {
-            id: true,
-            username: true,
-            role: true,
-            isActive: true,
-            isLocked: true,
-            isPasswordless: true,
-          },
-        });
+    let userId: string | undefined;
 
-        if (user && user.isActive && !user.isLocked) {
-          req.user = {
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            isPasswordless: user.isPasswordless,
-          };
-        }
+    // Try better-auth session
+    const sessionTokenCookie =
+      req.cookies?.["better-auth.session_token"] ||
+      req.cookies?.["session-token"] ||
+      req.cookies?.["session"] ||
+      req.cookies?.["better_auth.session_token"];
+
+    if (sessionTokenCookie) {
+      // Better-auth cookies contain {token}.{signature}
+      // Extract just the token part (before the dot)
+      const sessionToken = sessionTokenCookie.split(".")[0];
+
+      const session = await prisma.session.findUnique({
+        where: { token: sessionToken },
+        select: {
+          userId: true,
+          expiresAt: true,
+        },
+      });
+
+      if (session && session.expiresAt > new Date()) {
+        userId = session.userId;
       }
     }
 
-    // Try API key if no JWT
+    // If we have a userId, fetch the user
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          username: true,
+          role: true,
+          isActive: true,
+          isLocked: true,
+          isPasswordless: true,
+        },
+      });
+
+      if (user && user.isActive && !user.isLocked) {
+        req.user = {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          isPasswordless: user.isPasswordless,
+        };
+      }
+    }
+
+    // Try API key if still no user
     if (!req.user) {
       const apiKey = req.headers["x-api-key"] as string | undefined;
       if (apiKey && validateApiKeyFormat(apiKey)) {

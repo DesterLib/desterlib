@@ -34,7 +34,6 @@ import {
 
 // Routes
 import healthRouter from "./routes/health/health.module.js";
-import authRouter from "./routes/auth/auth.module.js";
 import scanRouter from "./routes/scan/scan.module.js";
 import { authHandler } from "./lib/auth.js";
 import mediaRouter from "./routes/media/media.module.js";
@@ -227,9 +226,6 @@ const API_V1 = "/api/v1";
 
 // Better-auth routes - handles all /api/auth/* endpoints
 app.all("/api/auth/*", authHandler);
-
-// Legacy authentication routes (can be removed after migrating)
-app.use(`${API_V1}/auth`, rateLimiters.auth, authRouter);
 
 // Admin routes (requires admin role)
 app.use(`${API_V1}/admin`, adminRouter);
