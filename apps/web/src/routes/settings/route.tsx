@@ -3,20 +3,15 @@ import {
   Link,
   Outlet,
   redirect,
+  useNavigate,
 } from "@tanstack/react-router";
 import { CogIcon, LibraryIcon, VideoIcon, ActivityIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
-  beforeLoad: ({ location, context }) => {
-    // Block unauthenticated users and guests from accessing settings
-    const user = (context as { auth?: { user?: { role?: string } } })?.auth
-      ?.user;
-    if (!user || user?.role === "GUEST") {
-      throw redirect({ to: "/login" });
-    }
-
+  beforeLoad: ({ location }) => {
     // If we're at the exact settings route, redirect to libraries
     if (location.pathname === "/settings") {
       throw redirect({ to: "/settings/libraries" });
@@ -25,8 +20,16 @@ export const Route = createFileRoute("/settings")({
 });
 
 function RouteComponent() {
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = user?.role === "ADMIN";
+
+  // Redirect unauthenticated users or guests
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || user?.role === "GUEST")) {
+      navigate({ to: "/" });
+    }
+  }, [isAuthenticated, user?.role, isLoading, navigate]);
 
   return (
     <div className="pt-[138px] px-4 max-w-7xl mx-auto flex gap-4 h-[calc(100vh-138px)]">

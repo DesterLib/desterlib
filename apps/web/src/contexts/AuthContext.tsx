@@ -12,8 +12,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: session, isPending } = useSession();
 
   const login = async (credentials: LoginCredentials) => {
+    // Convert username to email format if it doesn't contain @
+    const emailOrUsername = credentials.username.includes("@")
+      ? credentials.username
+      : `${credentials.username}@dester.local`;
+
     const result = await signIn.email({
-      email: credentials.username,
+      email: emailOrUsername,
       password: credentials.password || credentials.pin || "",
       fetchOptions: {
         onSuccess: () => {
@@ -73,7 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: session.user.id,
           username: session.user.name || session.user.email || "",
           email: session.user.email || "",
-          role: "USER", // Better-auth uses different role system
+          role:
+            ((session.user as unknown as { role?: string }).role as
+              | "USER"
+              | "ADMIN"
+              | "GUEST") || "USER",
           createdAt:
             session.user.createdAt?.toString() || new Date().toISOString(),
           updatedAt:

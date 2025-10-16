@@ -24,6 +24,11 @@ export const auth = betterAuth({
         required: true,
         unique: true,
       },
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "USER",
+      },
     },
   },
   session: {
@@ -36,6 +41,17 @@ export const auth = betterAuth({
     "http://localhost:3000",
     env.APP_URL || "http://localhost:3000",
   ],
+  onAfterSignUp: async (user: { user: { id: string } }) => {
+    // Check if this is the first user - make them admin
+    const userCount = await prisma.user.count();
+    if (userCount === 1) {
+      // This is the first user
+      await prisma.user.update({
+        where: { id: user.user.id },
+        data: { role: "ADMIN" },
+      });
+    }
+  },
 });
 
 export const authHandler = async (req: Request, res: Response) => {
