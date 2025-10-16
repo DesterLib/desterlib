@@ -86,6 +86,9 @@ const Header = () => {
   // Check if we're on the settings page
   const isOnSettingsPage = location.pathname.startsWith("/settings");
 
+  // Check if we're on the library page
+  const isOnLibraryPage = location.pathname.startsWith("/library");
+
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -183,7 +186,7 @@ const Header = () => {
             )}
           </AnimatePresence>
           <AnimatePresence>
-            {!isOnSettingsPage && (
+            {!isOnSettingsPage && !isOnLibraryPage && (
               <motion.div
                 key="search"
                 layout
@@ -248,7 +251,7 @@ const Header = () => {
           </motion.div>
         </motion.div>
         <AnimatePresence>
-          {isSearchOpen && !isOnSettingsPage && (
+          {isSearchOpen && !isOnSettingsPage && !isOnLibraryPage && (
             <motion.div
               initial="hidden"
               animate="visible"
