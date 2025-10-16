@@ -226,6 +226,7 @@ const Header = () => {
                     isLoading={isLoading}
                     query={debouncedQuery}
                     filter={searchFilter}
+                    onClose={handleCloseSearch}
                   />
                 )}
               </div>

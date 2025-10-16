@@ -8,6 +8,7 @@ interface SearchResultsProps {
   isLoading: boolean;
   query: string;
   filter: "all" | "movies" | "tvshows";
+  onClose?: () => void;
 }
 
 const SearchResults = ({
@@ -15,6 +16,7 @@ const SearchResults = ({
   isLoading,
   query,
   filter,
+  onClose,
 }: SearchResultsProps) => {
   const navigate = useNavigate();
 
@@ -80,6 +82,7 @@ const SearchResults = ({
                           to: "/media/$mediaId",
                           params: { mediaId: item.id },
                         });
+                        onClose?.();
                       }
                     }}
                     className="group cursor-pointer rounded-2xl overflow-hidden hover:bg-white/5 transition-colors duration-200"
@@ -139,6 +142,11 @@ const SearchResults = ({
                   {results.collections.map((collection) => (
                     <div
                       key={collection.id}
+                      onClick={() => {
+                        // Navigate to library page and close search
+                        navigate({ to: "/library" });
+                        onClose?.();
+                      }}
                       className="relative cursor-pointer group"
                     >
                       <div className="w-full aspect-video bg-neutral-800 rounded-lg shadow-lg group-hover:scale-105 group-hover:ring-2 group-hover:ring-offset-2 group-hover:ring-offset-black group-hover:ring-white/20 group-hover:rounded-xl transition-all duration-200 ease-out flex items-center justify-center">

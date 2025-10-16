@@ -58,7 +58,7 @@ function MediaDetails() {
     } else {
       // Fallback for web browser (could open in new tab or show message)
       console.log("playVideo channel not available. Message:", message);
-      alert("Video playback is only available in the mobile app");
+      alert("Video playback is only available inside the flutter wrapper");
     }
   };
 
