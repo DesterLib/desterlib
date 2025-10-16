@@ -24,6 +24,8 @@ import type { GetApiV1SearchParams } from "@dester/api-client";
 import SearchResults from "./search-results";
 import { useLocation } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
+import { useOffline } from "@/hooks/useOffline";
+import HeaderOffline from "./header-offline";
 
 const allTabs = [
   { id: "home", label: "Home", href: "/" },
@@ -34,6 +36,7 @@ const allTabs = [
 const Header = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const { isOnline } = useOffline();
   const [hasMounted, setHasMounted] = useState(false);
 
   // Filter tabs based on user role - hide Settings for guests and unauthenticated users
@@ -110,6 +113,11 @@ const Header = () => {
     setSearchQuery("");
     setDebouncedQuery("");
   };
+
+  // Use offline header when not connected - check after all hooks
+  if (!isOnline) {
+    return <HeaderOffline />;
+  }
 
   return (
     <div className="w-full fixed top-0 left-0 right-0 z-50">

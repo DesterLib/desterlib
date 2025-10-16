@@ -1,0 +1,31 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { requireAuth } from "@/lib/route-guards";
+import { motion } from "motion/react";
+
+export const Route = createFileRoute("/read")({
+  component: ReadPage,
+  beforeLoad: async () => {
+    // Require authentication (bypassed in offline mode)
+    await requireAuth();
+  },
+});
+
+function ReadPage() {
+  return (
+    <div className="pt-[138px] px-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="space-y-8"
+      >
+        <div className="text-center py-12">
+          <h1 className="text-4xl font-bold text-white mb-4">Read</h1>
+          <p className="text-white/60">
+            Books and reading content will appear here
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

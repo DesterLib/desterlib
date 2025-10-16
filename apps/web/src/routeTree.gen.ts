@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ReadRouteImport } from './routes/read'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ListenRouteImport } from './routes/listen'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LibraryIndexRouteImport } from './routes/library/index'
@@ -30,9 +32,19 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReadRoute = ReadRouteImport.update({
+  id: '/read',
+  path: '/read',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListenRoute = ListenRouteImport.update({
+  id: '/listen',
+  path: '/listen',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
@@ -74,7 +86,9 @@ const MediaMediaIdRoute = MediaMediaIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/listen': typeof ListenRoute
   '/login': typeof LoginRoute
+  '/read': typeof ReadRoute
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
   '/media/$mediaId': typeof MediaMediaIdRoute
@@ -86,7 +100,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/listen': typeof ListenRoute
   '/login': typeof LoginRoute
+  '/read': typeof ReadRoute
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
   '/media/$mediaId': typeof MediaMediaIdRoute
@@ -99,7 +115,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/listen': typeof ListenRoute
   '/login': typeof LoginRoute
+  '/read': typeof ReadRoute
   '/register': typeof RegisterRoute
   '/setup': typeof SetupRoute
   '/media/$mediaId': typeof MediaMediaIdRoute
@@ -113,7 +131,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/settings'
+    | '/listen'
     | '/login'
+    | '/read'
     | '/register'
     | '/setup'
     | '/media/$mediaId'
@@ -125,7 +145,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/settings'
+    | '/listen'
     | '/login'
+    | '/read'
     | '/register'
     | '/setup'
     | '/media/$mediaId'
@@ -137,7 +159,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/settings'
+    | '/listen'
     | '/login'
+    | '/read'
     | '/register'
     | '/setup'
     | '/media/$mediaId'
@@ -150,7 +174,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  ListenRoute: typeof ListenRoute
   LoginRoute: typeof LoginRoute
+  ReadRoute: typeof ReadRoute
   RegisterRoute: typeof RegisterRoute
   SetupRoute: typeof SetupRoute
   MediaMediaIdRoute: typeof MediaMediaIdRoute
@@ -173,11 +199,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/read': {
+      id: '/read'
+      path: '/read'
+      fullPath: '/read'
+      preLoaderRoute: typeof ReadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listen': {
+      id: '/listen'
+      path: '/listen'
+      fullPath: '/listen'
+      preLoaderRoute: typeof ListenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -251,7 +291,9 @@ const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
+  ListenRoute: ListenRoute,
   LoginRoute: LoginRoute,
+  ReadRoute: ReadRoute,
   RegisterRoute: RegisterRoute,
   SetupRoute: SetupRoute,
   MediaMediaIdRoute: MediaMediaIdRoute,

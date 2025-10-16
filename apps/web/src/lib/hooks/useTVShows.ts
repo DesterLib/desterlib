@@ -6,24 +6,30 @@ import {
 } from "@dester/api-client";
 import "@/lib/api-client"; // Import to ensure client is configured
 
+const emptyTVShowsData = {
+  media: [],
+  pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
+};
+
 export const useTVShows = (filters?: GetApiV1TvShowsParams) => {
   return useQuery({
     queryKey: ["tv-shows", filters],
     queryFn: async () => {
-      const response = await getApiV1TvShows(filters);
-      if (response.status === 200) {
-        return (
-          response.data.data ?? {
-            media: [],
-            pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
-          }
-        );
+      try {
+        const response = await getApiV1TvShows(filters);
+        if (response.status === 200) {
+          return response.data.data ?? emptyTVShowsData;
+        }
+        return emptyTVShowsData;
+      } catch (error) {
+        // If offline, let React Query handle it with cached data
+        if (error instanceof Error && !error.message.includes("fetch")) {
+          console.error("Error fetching TV shows:", error);
+        }
+        throw error;
       }
-      return {
-        media: [],
-        pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
-      };
     },
+    placeholderData: emptyTVShowsData,
   });
 };
 
@@ -31,12 +37,21 @@ export const useTVShow = (id: string) => {
   return useQuery({
     queryKey: ["tv-shows", id],
     queryFn: async () => {
-      const response = await getApiV1TvShowsId(id);
-      if (response.status === 200) {
-        return response.data.data?.media ?? null;
+      try {
+        const response = await getApiV1TvShowsId(id);
+        if (response.status === 200) {
+          return response.data.data?.media ?? null;
+        }
+        return null;
+      } catch (error) {
+        // If offline, let React Query handle it with cached data
+        if (error instanceof Error && !error.message.includes("fetch")) {
+          console.error("Error fetching TV show:", error);
+        }
+        throw error;
       }
-      return null;
     },
     enabled: !!id,
+    placeholderData: null,
   });
 };

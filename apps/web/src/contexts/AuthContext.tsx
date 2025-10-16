@@ -1,5 +1,6 @@
 import { createContext, type ReactNode } from "react";
 import { useSession, signIn, signUp, signOut } from "@/lib/auth-client";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import type {
   AuthContextType,
   LoginCredentials,
@@ -10,6 +11,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: session, isPending } = useSession();
+  const { isOnline } = useOnlineStatus();
 
   const login = async (credentials: LoginCredentials) => {
     // Convert username to email format if it doesn't contain @
@@ -72,25 +74,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Better-auth handles this automatically
   };
 
+  // In offline mode, provide a mock offline user
+  const offlineUser = !isOnline
+    ? {
+        id: "offline-user",
+        username: "Offline User",
+        email: "offline@local",
+        role: "USER" as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    : null;
+
   const value: AuthContextType = {
-    user: session?.user
-      ? {
-          id: session.user.id,
-          username: session.user.name || session.user.email || "",
-          email: session.user.email || "",
-          role:
-            ((session.user as unknown as { role?: string }).role as
-              | "USER"
-              | "ADMIN"
-              | "GUEST") || "USER",
-          createdAt:
-            session.user.createdAt?.toString() || new Date().toISOString(),
-          updatedAt:
-            session.user.updatedAt?.toString() || new Date().toISOString(),
-        }
-      : null,
-    isLoading: isPending,
-    isAuthenticated: !!session?.user,
+    user: !isOnline
+      ? offlineUser
+      : session?.user
+        ? {
+            id: session.user.id,
+            username: session.user.name || session.user.email || "",
+            email: session.user.email || "",
+            role:
+              ((session.user as unknown as { role?: string }).role as
+                | "USER"
+                | "ADMIN"
+                | "GUEST") || "USER",
+            createdAt:
+              session.user.createdAt?.toString() || new Date().toISOString(),
+            updatedAt:
+              session.user.updatedAt?.toString() || new Date().toISOString(),
+          }
+        : null,
+    isLoading: !isOnline ? false : isPending,
+    isAuthenticated: !isOnline ? true : !!session?.user,
     login,
     register,
     logout,

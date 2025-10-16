@@ -1,33 +1,48 @@
 import ExpandableRow from "@/components/ui/expandable_row";
 import { useMovies } from "@/lib/hooks/useMovies";
 import { useTVShows } from "@/lib/hooks/useTVShows";
+import { useOffline } from "@/hooks/useOffline";
 import type { Media } from "@dester/api-client";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
+import { WifiOff } from "lucide-react";
+import WatchHomeOffline from "./home-offline";
 
 const WatchHome = () => {
   const navigate = useNavigate();
+  const { isOnline } = useOffline();
 
   // Fetch movies
   const {
     data: moviesData,
     isLoading: moviesLoading,
-    error: moviesError,
+    isError: moviesIsError,
+    isFetching: moviesIsFetching,
   } = useMovies();
 
   // Fetch TV shows
   const {
     data: tvShowsData,
     isLoading: tvShowsLoading,
-    error: tvShowsError,
+    isError: tvShowsIsError,
+    isFetching: tvShowsIsFetching,
   } = useTVShows();
 
   const handleItemClick = (id: string) => {
     navigate({ to: "/media/$mediaId", params: { mediaId: id } });
   };
 
-  // Show loading state - show if either is still loading
-  if (moviesLoading || tvShowsLoading) {
+  // Switch to offline UI when not connected
+  if (!isOnline) {
+    return <WatchHomeOffline />;
+  }
+
+  // Show loading state - only if initial load and no cached data
+  const hasMoviesData = moviesData?.media && moviesData.media.length > 0;
+  const hasTVShowsData = tvShowsData?.media && tvShowsData.media.length > 0;
+  const hasCachedData = hasMoviesData || hasTVShowsData;
+
+  if ((moviesLoading || tvShowsLoading) && !hasCachedData) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-white/60">Loading...</p>
@@ -35,8 +50,8 @@ const WatchHome = () => {
     );
   }
 
-  // Show error state only if both errored
-  if (moviesError && tvShowsError) {
+  // Show error state only if both errored AND we're online AND no cached data
+  if (moviesIsError && tvShowsIsError && isOnline && !hasCachedData) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-red-400">
@@ -46,11 +61,33 @@ const WatchHome = () => {
     );
   }
 
+  // If offline and no cached data, show offline message
+  if (!isOnline && !hasCachedData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-4">
+        <WifiOff className="w-12 h-12 text-white/40" />
+        <p className="text-white/60">
+          You're offline and no content is cached yet.
+        </p>
+        <p className="text-white/40 text-sm">
+          Connect to the internet to load content.
+        </p>
+      </div>
+    );
+  }
+
   // Check if both lists are empty
   const hasMovies = moviesData?.media && moviesData.media.length > 0;
   const hasTVShows = tvShowsData?.media && tvShowsData.media.length > 0;
+  const isStillFetching = moviesIsFetching || tvShowsIsFetching;
 
-  if (!hasMovies && !hasTVShows && !moviesLoading && !tvShowsLoading) {
+  if (
+    !hasMovies &&
+    !hasTVShows &&
+    !moviesLoading &&
+    !tvShowsLoading &&
+    !isStillFetching
+  ) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-white/60">No content available yet.</p>

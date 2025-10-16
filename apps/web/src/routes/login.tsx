@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -7,24 +7,64 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Film, Loader2, ArrowLeft } from "lucide-react";
 import { loginSchema } from "@/lib/schemas/auth.schema";
+import { authClient } from "@/lib/auth-client";
+import { getActiveServer, getForceOfflineMode } from "@/lib/server-storage";
+
+async function checkApiReachable(): Promise<boolean> {
+  try {
+    // Check if force offline mode is enabled
+    const forceOffline = getForceOfflineMode();
+    if (forceOffline) {
+      return false;
+    }
+
+    // Get active server from localStorage
+    const activeServer = getActiveServer();
+    if (!activeServer) {
+      return false;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const response = await fetch(`${activeServer.url}/api/v1/health`, {
+      method: "GET",
+      signal: controller.signal,
+      credentials: "omit",
+    });
+    clearTimeout(timeoutId);
+    return response.ok || response.status < 500;
+  } catch {
+    return false;
+  }
+}
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
+  beforeLoad: async () => {
+    // Check if API is offline - if so, redirect to home
+    const apiOnline = await checkApiReachable();
+    if (!apiOnline) {
+      throw redirect({ to: "/" });
+    }
+
+    // Check if already authenticated - if so, redirect to home
+    try {
+      const session = await authClient.getSession();
+      if (session.data?.user) {
+        throw redirect({ to: "/" });
+      }
+    } catch {
+      // Not authenticated, allow access to login page
+    }
+  },
 });
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
   const [usePin, setUsePin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate({ to: "/" });
-    }
-  }, [isAuthenticated, navigate]);
 
   const form = useForm({
     defaultValues: {

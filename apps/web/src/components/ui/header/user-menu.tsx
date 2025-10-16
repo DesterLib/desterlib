@@ -1,6 +1,7 @@
 import { useState, memo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
+import { useOffline } from "@/hooks/useOffline";
 import {
   User,
   Settings,
@@ -9,21 +10,27 @@ import {
   Shield,
   LogIn,
   Star,
+  WifiOff,
+  Server,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
+import { ServersDialog } from "@/components/ui/servers-dialog";
 
 function UserMenu() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { isOnline } = useOffline();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [isServersDialogOpen, setIsServersDialogOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate({ to: "/login" });
   };
 
-  if (!isAuthenticated) {
+  // Don't show sign in button when offline
+  if (!isAuthenticated && isOnline) {
     return (
       <div className="border bg-neutral-900/60 rounded-[50px] p-1 ml-2">
         <button
@@ -33,6 +40,18 @@ function UserMenu() {
           <LogIn className="w-4 h-4" />
           <span className="text-sm font-medium text-white">Sign In</span>
         </button>
+      </div>
+    );
+  }
+
+  // Show offline badge when offline and not authenticated
+  if (!isAuthenticated && !isOnline) {
+    return (
+      <div className="border bg-neutral-900/60 rounded-[50px] p-1 ml-2">
+        <div className="h-10 px-4 backdrop-blur-lg rounded-[50px] flex items-center gap-2">
+          <WifiOff className="w-4 h-4 text-orange-400" />
+          <span className="text-sm font-medium text-white">Offline Mode</span>
+        </div>
       </div>
     );
   }
@@ -101,7 +120,7 @@ function UserMenu() {
                 {user?.email && (
                   <p className="text-xs text-white/60 mt-0.5">{user.email}</p>
                 )}
-                <div className="mt-2">
+                <div className="mt-2 flex gap-2">
                   <Badge
                     variant={
                       user?.role === "SUPER_ADMIN"
@@ -130,13 +149,34 @@ function UserMenu() {
                           ? "Guest"
                           : "User"}
                   </Badge>
+                  {!isOnline && (
+                    <Badge
+                      variant="outline"
+                      className="inline-flex items-center gap-1 bg-orange-500/20 text-orange-300 border-orange-500/30"
+                    >
+                      <WifiOff className="w-3 h-3" />
+                      API Offline
+                    </Badge>
+                  )}
                 </div>
               </div>
 
               {/* Menu Items */}
               <div className="py-1">
-                {/* Only show settings for non-guest users */}
-                {user?.role !== "GUEST" && (
+                {/* Servers - Always visible */}
+                <button
+                  onClick={() => {
+                    setIsServersDialogOpen(true);
+                    setIsOpen(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10 transition-colors flex items-center gap-3"
+                >
+                  <Server className="w-4 h-4" />
+                  Servers
+                </button>
+
+                {/* Only show settings for non-guest users and when online */}
+                {user?.role !== "GUEST" && isOnline && (
                   <button
                     onClick={() => {
                       navigate({ to: "/settings" });
@@ -149,21 +189,37 @@ function UserMenu() {
                   </button>
                 )}
 
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </button>
+                {/* Only show sign out when online */}
+                {isOnline && (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                )}
+
+                {/* Show offline message when offline */}
+                {!isOnline && (
+                  <div className="px-4 py-2.5 text-xs text-white/60">
+                    Connect to the API to access settings and sign out.
+                  </div>
+                )}
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
+      {/* Servers Dialog */}
+      <ServersDialog
+        isOpen={isServersDialogOpen}
+        onClose={() => setIsServersDialogOpen(false)}
+      />
     </div>
   );
 }
