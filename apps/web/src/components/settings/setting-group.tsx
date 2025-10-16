@@ -9,9 +9,9 @@ interface SettingGroupProps {
 export function SettingGroup({ group }: SettingGroupProps) {
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">{group.title}</h2>
+          <h2 className="text-base md:text-lg font-semibold">{group.title}</h2>
           {group.description && (
             <p className="text-xs text-white/50 mt-0.5">{group.description}</p>
           )}
@@ -21,6 +21,7 @@ export function SettingGroup({ group }: SettingGroupProps) {
             variant={group.headerAction.variant || "default"}
             size="sm"
             onClick={group.headerAction.onClick}
+            className="w-full md:w-auto"
           >
             {group.headerAction.icon && (
               <group.headerAction.icon className="w-4 h-4 mr-2" />

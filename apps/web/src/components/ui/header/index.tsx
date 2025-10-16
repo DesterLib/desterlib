@@ -123,7 +123,7 @@ const Header = () => {
   }
 
   return (
-    <div className="w-full fixed top-0 left-0 right-0 z-50">
+    <div className="hidden md:block w-full fixed top-0 left-0 right-0 z-50">
       <nav className="w-fit mx-auto space-y-4 p-4">
         <motion.div
           layout="position"

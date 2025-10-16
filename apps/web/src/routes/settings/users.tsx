@@ -197,28 +197,20 @@ function RouteComponent() {
   }
 
   return (
-    <div className="h-full flex flex-col p-4 rounded-xl">
+    <div className="flex flex-col px-4 md:p-4 rounded-xl md:h-full">
       {/* Fixed Header */}
-      <header className="space-y-1 pb-4 flex-shrink-0">
-        <h1 className="text-2xl font-bold">{config.title}</h1>
-        <p className="text-sm text-white/60">{config.description}</p>
+      <header className="space-y-1 pb-4 pt-2 md:pt-0 flex-shrink-0">
+        <h1 className="text-xl md:text-2xl font-bold">{config.title}</h1>
+        <p className="text-xs md:text-sm text-white/60">{config.description}</p>
       </header>
 
       {/* Scrollable Content with Gradient Masks */}
-      <div className="relative flex-1 overflow-hidden">
-        {/* Top Gradient Mask */}
-        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
+      <div className="md:relative md:flex-1 md:overflow-hidden">
+        {/* Top Gradient Mask - Desktop only */}
+        <div className="hidden md:block absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
 
         {/* Scrollable Content */}
-        <div
-          className="h-full overflow-y-auto space-y-6 px-1 py-8"
-          style={{
-            maskImage:
-              "linear-gradient(to bottom, transparent 0px, black 32px, black calc(100% - 32px), transparent 100%)",
-            WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0px, black 32px, black calc(100% - 32px), transparent 100%)",
-          }}
-        >
+        <div className="space-y-6 px-1 py-4 md:py-8 md:h-full md:overflow-y-auto">
           {/* Operation Status */}
           {operationStatus && (
             <div className="mb-4 bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/10">
@@ -259,8 +251,8 @@ function RouteComponent() {
           ))}
         </div>
 
-        {/* Bottom Gradient Mask */}
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
+        {/* Bottom Gradient Mask - Desktop only */}
+        <div className="hidden md:block absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
       </div>
 
       {/* Edit User Dialog */}

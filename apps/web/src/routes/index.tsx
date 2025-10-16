@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { appMode } = useAppStore();
   return (
-    <div className="pt-[138px] px-4">
+    <div className="pt-4 md:pt-[138px] px-4">
       {appMode === "watch" && <WatchHome />}
       {appMode === "listen" && <ListenHome />}
     </div>

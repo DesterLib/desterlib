@@ -12,7 +12,7 @@ export const Route = createFileRoute("/listen")({
 
 function ListenPage() {
   return (
-    <div className="pt-[138px] px-4">
+    <div className="pt-4 md:pt-[138px] px-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
