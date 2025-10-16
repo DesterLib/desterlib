@@ -5,7 +5,14 @@ import {
   redirect,
   useNavigate,
 } from "@tanstack/react-router";
-import { LibraryIcon, VideoIcon, ActivityIcon, Edit, Menu } from "lucide-react";
+import {
+  LibraryIcon,
+  VideoIcon,
+  ActivityIcon,
+  Edit,
+  Menu,
+  Users,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -96,6 +103,16 @@ function RouteComponent() {
           <div className="bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-2xl p-4 space-y-4">
             <h2 className="text-lg font-semibold text-white">Admin</h2>
             <div className="space-y-1">
+              <Button
+                variant="ghost"
+                className="w-full border-none justify-start gap-3 px-3 py-2 h-10 text-sm text-white hover:bg-white/10"
+                asChild
+              >
+                <Link to="/settings/users">
+                  <Users className="w-4 h-4" />
+                  <span>User Management</span>
+                </Link>
+              </Button>
               <Button
                 variant="ghost"
                 className="w-full border-none justify-start gap-3 px-3 py-2 h-10 text-sm text-white hover:bg-white/10"

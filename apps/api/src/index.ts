@@ -36,6 +36,7 @@ import {
 import healthRouter from "./routes/health/health.module.js";
 import scanRouter from "./routes/scan/scan.module.js";
 import { authHandler } from "./lib/auth.js";
+import usersRouter from "./routes/users/users.module.js";
 import mediaRouter from "./routes/media/media.module.js";
 import moviesRouter from "./routes/movies/movies.module.js";
 import tvShowsRouter from "./routes/tv-shows/tv-shows.module.js";
@@ -224,8 +225,12 @@ app.use("/health", healthRouter);
 
 const API_V1 = "/api/v1";
 
-// Better-auth routes - handles all /api/auth/* endpoints
+// Better-auth routes - handles all authentication /api/auth/* endpoints
+// (register, login, logout, session management, etc.)
 app.all("/api/auth/*", authHandler);
+
+// User management routes (admin only)
+app.use(`${API_V1}/users`, csrfProtection, usersRouter);
 
 // Admin routes (requires admin role)
 app.use(`${API_V1}/admin`, adminRouter);

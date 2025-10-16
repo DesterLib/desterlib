@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LibraryIndexRouteImport } from './routes/library/index'
+import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SettingsSystemRouteImport } from './routes/settings/system'
 import { Route as SettingsLibrariesRouteImport } from './routes/settings/libraries'
 import { Route as MediaMediaIdRouteImport } from './routes/media/$mediaId'
@@ -49,6 +50,11 @@ const LibraryIndexRoute = LibraryIndexRouteImport.update({
   path: '/library/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsUsersRoute = SettingsUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsSystemRoute = SettingsSystemRouteImport.update({
   id: '/system',
   path: '/system',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/media/$mediaId': typeof MediaMediaIdRoute
   '/settings/libraries': typeof SettingsLibrariesRoute
   '/settings/system': typeof SettingsSystemRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/library': typeof LibraryIndexRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/media/$mediaId': typeof MediaMediaIdRoute
   '/settings/libraries': typeof SettingsLibrariesRoute
   '/settings/system': typeof SettingsSystemRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/library': typeof LibraryIndexRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/media/$mediaId': typeof MediaMediaIdRoute
   '/settings/libraries': typeof SettingsLibrariesRoute
   '/settings/system': typeof SettingsSystemRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/library/': typeof LibraryIndexRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/media/$mediaId'
     | '/settings/libraries'
     | '/settings/system'
+    | '/settings/users'
     | '/library'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/media/$mediaId'
     | '/settings/libraries'
     | '/settings/system'
+    | '/settings/users'
     | '/library'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/media/$mediaId'
     | '/settings/libraries'
     | '/settings/system'
+    | '/settings/users'
     | '/library/'
   fileRoutesById: FileRoutesById
 }
@@ -189,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/users': {
+      id: '/settings/users'
+      path: '/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof SettingsUsersRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/system': {
       id: '/settings/system'
       path: '/system'
@@ -216,11 +235,13 @@ declare module '@tanstack/react-router' {
 interface SettingsRouteRouteChildren {
   SettingsLibrariesRoute: typeof SettingsLibrariesRoute
   SettingsSystemRoute: typeof SettingsSystemRoute
+  SettingsUsersRoute: typeof SettingsUsersRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsLibrariesRoute: SettingsLibrariesRoute,
   SettingsSystemRoute: SettingsSystemRoute,
+  SettingsUsersRoute: SettingsUsersRoute,
 }
 
 const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(

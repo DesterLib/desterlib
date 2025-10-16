@@ -319,44 +319,6 @@ export type GetApiV1AdminAlertsHistoryParams = {
   limit?: number;
 };
 
-export type PostApiV1AuthRegisterBodyRole =
-  (typeof PostApiV1AuthRegisterBodyRole)[keyof typeof PostApiV1AuthRegisterBodyRole];
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const PostApiV1AuthRegisterBodyRole = {
-  ADMIN: "ADMIN",
-  USER: "USER",
-  GUEST: "GUEST",
-} as const;
-
-export type PostApiV1AuthRegisterBody = {
-  username: string;
-  email?: string;
-  displayName?: string;
-  password?: string;
-  pin?: string;
-  isPasswordless?: boolean;
-  role?: PostApiV1AuthRegisterBodyRole;
-};
-
-export type PostApiV1AuthLoginBody = {
-  username: string;
-  password?: string;
-  pin?: string;
-};
-
-export type PostApiV1AuthLoginPasswordlessBody = {
-  username: string;
-};
-
-export type PostApiV1AuthRefreshBody = {
-  refreshToken: string;
-};
-
-export type PostApiV1AuthLogoutBody = {
-  refreshToken: string;
-};
-
 export type GetApiV1CollectionsLibraries200AllOfData = {
   message?: string;
   collections?: Collection[];
@@ -811,16 +773,16 @@ export type GetApiV1Music200AllOf = {
 
 export type GetApiV1Music200 = SuccessResponse & GetApiV1Music200AllOf;
 
-export type GetApiMusicId200AllOfData = {
+export type GetApiV1MusicId200AllOfData = {
   message?: string;
   media?: Media;
 };
 
-export type GetApiMusicId200AllOf = {
-  data?: GetApiMusicId200AllOfData;
+export type GetApiV1MusicId200AllOf = {
+  data?: GetApiV1MusicId200AllOfData;
 };
 
-export type GetApiMusicId200 = SuccessResponse & GetApiMusicId200AllOf;
+export type GetApiV1MusicId200 = SuccessResponse & GetApiV1MusicId200AllOf;
 
 export type GetApiNotificationsStream200Type =
   (typeof GetApiNotificationsStream200Type)[keyof typeof GetApiNotificationsStream200Type];
@@ -1140,6 +1102,140 @@ export type GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOf =
 export type GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200 =
   SuccessResponse &
     GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200AllOf;
+
+export type GetApiV1UsersParams = {
+  /**
+   * Maximum number of users to return
+   */
+  limit?: number;
+  /**
+   * Number of users to skip
+   */
+  offset?: number;
+};
+
+export type GetApiV1Users200UsersItemRole =
+  (typeof GetApiV1Users200UsersItemRole)[keyof typeof GetApiV1Users200UsersItemRole];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const GetApiV1Users200UsersItemRole = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  ADMIN: "ADMIN",
+  USER: "USER",
+  GUEST: "GUEST",
+} as const;
+
+export type GetApiV1Users200UsersItem = {
+  id?: string;
+  username?: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  displayName?: string | null;
+  /** @nullable */
+  avatar?: string | null;
+  role?: GetApiV1Users200UsersItemRole;
+  isPasswordless?: boolean;
+  isActive?: boolean;
+  isLocked?: boolean;
+  /** @nullable */
+  lastLoginAt?: string | null;
+  createdAt?: string;
+};
+
+export type GetApiV1Users200Pagination = {
+  total?: number;
+  limit?: number;
+  offset?: number;
+  hasMore?: boolean;
+};
+
+export type GetApiV1Users200 = {
+  users?: GetApiV1Users200UsersItem[];
+  pagination?: GetApiV1Users200Pagination;
+};
+
+export type GetApiV1UsersUserId200UserRole =
+  (typeof GetApiV1UsersUserId200UserRole)[keyof typeof GetApiV1UsersUserId200UserRole];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const GetApiV1UsersUserId200UserRole = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  ADMIN: "ADMIN",
+  USER: "USER",
+  GUEST: "GUEST",
+} as const;
+
+export type GetApiV1UsersUserId200User = {
+  id?: string;
+  username?: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  displayName?: string | null;
+  /** @nullable */
+  avatar?: string | null;
+  role?: GetApiV1UsersUserId200UserRole;
+  isPasswordless?: boolean;
+  isActive?: boolean;
+  isLocked?: boolean;
+  /** @nullable */
+  lastLoginAt?: string | null;
+  createdAt?: string;
+};
+
+export type GetApiV1UsersUserId200 = {
+  user?: GetApiV1UsersUserId200User;
+};
+
+export type PutApiV1UsersUserIdBodyRole =
+  (typeof PutApiV1UsersUserIdBodyRole)[keyof typeof PutApiV1UsersUserIdBodyRole];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PutApiV1UsersUserIdBodyRole = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  ADMIN: "ADMIN",
+  USER: "USER",
+  GUEST: "GUEST",
+} as const;
+
+export type PutApiV1UsersUserIdBody = {
+  email?: string;
+  displayName?: string;
+  avatar?: string;
+  role?: PutApiV1UsersUserIdBodyRole;
+  isActive?: boolean;
+};
+
+export type PutApiV1UsersUserId200UserRole =
+  (typeof PutApiV1UsersUserId200UserRole)[keyof typeof PutApiV1UsersUserId200UserRole];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PutApiV1UsersUserId200UserRole = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  ADMIN: "ADMIN",
+  USER: "USER",
+  GUEST: "GUEST",
+} as const;
+
+export type PutApiV1UsersUserId200User = {
+  id?: string;
+  username?: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  displayName?: string | null;
+  role?: PutApiV1UsersUserId200UserRole;
+  isActive?: boolean;
+};
+
+export type PutApiV1UsersUserId200 = {
+  user?: PutApiV1UsersUserId200User;
+};
+
+export type DeleteApiV1UsersUserId200 = {
+  message?: string;
+};
 
 /**
  * @summary List all database backups
@@ -1464,685 +1560,6 @@ export const postApiV1AdminPerformanceReset = async (
     {
       ...options,
       method: "POST",
-    },
-  );
-};
-
-/**
- * @summary Register a new user
- */
-export type postApiV1AuthRegisterResponse201 = {
-  data: void;
-  status: 201;
-};
-
-export type postApiV1AuthRegisterResponseSuccess =
-  postApiV1AuthRegisterResponse201 & {
-    headers: Headers;
-  };
-export type postApiV1AuthRegisterResponse =
-  postApiV1AuthRegisterResponseSuccess;
-
-export const getPostApiV1AuthRegisterUrl = () => {
-  return `/api/v1/auth/register`;
-};
-
-export const postApiV1AuthRegister = async (
-  postApiV1AuthRegisterBody: PostApiV1AuthRegisterBody,
-  options?: RequestInit,
-): Promise<postApiV1AuthRegisterResponse> => {
-  return customFetcher<postApiV1AuthRegisterResponse>(
-    getPostApiV1AuthRegisterUrl(),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(postApiV1AuthRegisterBody),
-    },
-  );
-};
-
-/**
- * @summary Login with username and password or PIN
- */
-export type postApiV1AuthLoginResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type postApiV1AuthLoginResponseSuccess =
-  postApiV1AuthLoginResponse200 & {
-    headers: Headers;
-  };
-export type postApiV1AuthLoginResponse = postApiV1AuthLoginResponseSuccess;
-
-export const getPostApiV1AuthLoginUrl = () => {
-  return `/api/v1/auth/login`;
-};
-
-export const postApiV1AuthLogin = async (
-  postApiV1AuthLoginBody: PostApiV1AuthLoginBody,
-  options?: RequestInit,
-): Promise<postApiV1AuthLoginResponse> => {
-  return customFetcher<postApiV1AuthLoginResponse>(getPostApiV1AuthLoginUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postApiV1AuthLoginBody),
-  });
-};
-
-/**
- * @summary Login without password (passwordless accounts only)
- */
-export type postApiV1AuthLoginPasswordlessResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type postApiV1AuthLoginPasswordlessResponseSuccess =
-  postApiV1AuthLoginPasswordlessResponse200 & {
-    headers: Headers;
-  };
-export type postApiV1AuthLoginPasswordlessResponse =
-  postApiV1AuthLoginPasswordlessResponseSuccess;
-
-export const getPostApiV1AuthLoginPasswordlessUrl = () => {
-  return `/api/v1/auth/login/passwordless`;
-};
-
-export const postApiV1AuthLoginPasswordless = async (
-  postApiV1AuthLoginPasswordlessBody: PostApiV1AuthLoginPasswordlessBody,
-  options?: RequestInit,
-): Promise<postApiV1AuthLoginPasswordlessResponse> => {
-  return customFetcher<postApiV1AuthLoginPasswordlessResponse>(
-    getPostApiV1AuthLoginPasswordlessUrl(),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(postApiV1AuthLoginPasswordlessBody),
-    },
-  );
-};
-
-/**
- * @summary Refresh access token
- */
-export type postApiV1AuthRefreshResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type postApiV1AuthRefreshResponseSuccess =
-  postApiV1AuthRefreshResponse200 & {
-    headers: Headers;
-  };
-export type postApiV1AuthRefreshResponse = postApiV1AuthRefreshResponseSuccess;
-
-export const getPostApiV1AuthRefreshUrl = () => {
-  return `/api/v1/auth/refresh`;
-};
-
-export const postApiV1AuthRefresh = async (
-  postApiV1AuthRefreshBody: PostApiV1AuthRefreshBody,
-  options?: RequestInit,
-): Promise<postApiV1AuthRefreshResponse> => {
-  return customFetcher<postApiV1AuthRefreshResponse>(
-    getPostApiV1AuthRefreshUrl(),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(postApiV1AuthRefreshBody),
-    },
-  );
-};
-
-/**
- * @summary Logout current session
- */
-export type postApiV1AuthLogoutResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type postApiV1AuthLogoutResponseSuccess =
-  postApiV1AuthLogoutResponse200 & {
-    headers: Headers;
-  };
-export type postApiV1AuthLogoutResponse = postApiV1AuthLogoutResponseSuccess;
-
-export const getPostApiV1AuthLogoutUrl = () => {
-  return `/api/v1/auth/logout`;
-};
-
-export const postApiV1AuthLogout = async (
-  postApiV1AuthLogoutBody: PostApiV1AuthLogoutBody,
-  options?: RequestInit,
-): Promise<postApiV1AuthLogoutResponse> => {
-  return customFetcher<postApiV1AuthLogoutResponse>(
-    getPostApiV1AuthLogoutUrl(),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(postApiV1AuthLogoutBody),
-    },
-  );
-};
-
-/**
- * @summary Logout all sessions
- */
-export type postApiV1AuthLogoutAllResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type postApiV1AuthLogoutAllResponseSuccess =
-  postApiV1AuthLogoutAllResponse200 & {
-    headers: Headers;
-  };
-export type postApiV1AuthLogoutAllResponse =
-  postApiV1AuthLogoutAllResponseSuccess;
-
-export const getPostApiV1AuthLogoutAllUrl = () => {
-  return `/api/v1/auth/logout-all`;
-};
-
-export const postApiV1AuthLogoutAll = async (
-  options?: RequestInit,
-): Promise<postApiV1AuthLogoutAllResponse> => {
-  return customFetcher<postApiV1AuthLogoutAllResponse>(
-    getPostApiV1AuthLogoutAllUrl(),
-    {
-      ...options,
-      method: "POST",
-    },
-  );
-};
-
-/**
- * @summary Get current user information
- */
-export type getApiV1AuthMeResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type getApiV1AuthMeResponseSuccess = getApiV1AuthMeResponse200 & {
-  headers: Headers;
-};
-export type getApiV1AuthMeResponse = getApiV1AuthMeResponseSuccess;
-
-export const getGetApiV1AuthMeUrl = () => {
-  return `/api/v1/auth/me`;
-};
-
-export const getApiV1AuthMe = async (
-  options?: RequestInit,
-): Promise<getApiV1AuthMeResponse> => {
-  return customFetcher<getApiV1AuthMeResponse>(getGetApiV1AuthMeUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-/**
- * @summary Update current user
- */
-export type putApiV1AuthMeResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type putApiV1AuthMeResponseSuccess = putApiV1AuthMeResponse200 & {
-  headers: Headers;
-};
-export type putApiV1AuthMeResponse = putApiV1AuthMeResponseSuccess;
-
-export const getPutApiV1AuthMeUrl = () => {
-  return `/api/v1/auth/me`;
-};
-
-export const putApiV1AuthMe = async (
-  options?: RequestInit,
-): Promise<putApiV1AuthMeResponse> => {
-  return customFetcher<putApiV1AuthMeResponse>(getPutApiV1AuthMeUrl(), {
-    ...options,
-    method: "PUT",
-  });
-};
-
-/**
- * @summary Change password
- */
-export type postApiV1AuthChangePasswordResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type postApiV1AuthChangePasswordResponseSuccess =
-  postApiV1AuthChangePasswordResponse200 & {
-    headers: Headers;
-  };
-export type postApiV1AuthChangePasswordResponse =
-  postApiV1AuthChangePasswordResponseSuccess;
-
-export const getPostApiV1AuthChangePasswordUrl = () => {
-  return `/api/v1/auth/change-password`;
-};
-
-export const postApiV1AuthChangePassword = async (
-  options?: RequestInit,
-): Promise<postApiV1AuthChangePasswordResponse> => {
-  return customFetcher<postApiV1AuthChangePasswordResponse>(
-    getPostApiV1AuthChangePasswordUrl(),
-    {
-      ...options,
-      method: "POST",
-    },
-  );
-};
-
-/**
- * @summary Change PIN
- */
-export type postApiV1AuthChangePinResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type postApiV1AuthChangePinResponseSuccess =
-  postApiV1AuthChangePinResponse200 & {
-    headers: Headers;
-  };
-export type postApiV1AuthChangePinResponse =
-  postApiV1AuthChangePinResponseSuccess;
-
-export const getPostApiV1AuthChangePinUrl = () => {
-  return `/api/v1/auth/change-pin`;
-};
-
-export const postApiV1AuthChangePin = async (
-  options?: RequestInit,
-): Promise<postApiV1AuthChangePinResponse> => {
-  return customFetcher<postApiV1AuthChangePinResponse>(
-    getPostApiV1AuthChangePinUrl(),
-    {
-      ...options,
-      method: "POST",
-    },
-  );
-};
-
-/**
- * @summary Get all active sessions
- */
-export type getApiV1AuthSessionsResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type getApiV1AuthSessionsResponseSuccess =
-  getApiV1AuthSessionsResponse200 & {
-    headers: Headers;
-  };
-export type getApiV1AuthSessionsResponse = getApiV1AuthSessionsResponseSuccess;
-
-export const getGetApiV1AuthSessionsUrl = () => {
-  return `/api/v1/auth/sessions`;
-};
-
-export const getApiV1AuthSessions = async (
-  options?: RequestInit,
-): Promise<getApiV1AuthSessionsResponse> => {
-  return customFetcher<getApiV1AuthSessionsResponse>(
-    getGetApiV1AuthSessionsUrl(),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-/**
- * @summary Revoke a specific session
- */
-export type deleteApiV1AuthSessionsSessionIdResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type deleteApiV1AuthSessionsSessionIdResponseSuccess =
-  deleteApiV1AuthSessionsSessionIdResponse200 & {
-    headers: Headers;
-  };
-export type deleteApiV1AuthSessionsSessionIdResponse =
-  deleteApiV1AuthSessionsSessionIdResponseSuccess;
-
-export const getDeleteApiV1AuthSessionsSessionIdUrl = (sessionId: string) => {
-  return `/api/v1/auth/sessions/${sessionId}`;
-};
-
-export const deleteApiV1AuthSessionsSessionId = async (
-  sessionId: string,
-  options?: RequestInit,
-): Promise<deleteApiV1AuthSessionsSessionIdResponse> => {
-  return customFetcher<deleteApiV1AuthSessionsSessionIdResponse>(
-    getDeleteApiV1AuthSessionsSessionIdUrl(sessionId),
-    {
-      ...options,
-      method: "DELETE",
-    },
-  );
-};
-
-/**
- * @summary List all API keys
- */
-export type getApiV1AuthApiKeysResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type getApiV1AuthApiKeysResponseSuccess =
-  getApiV1AuthApiKeysResponse200 & {
-    headers: Headers;
-  };
-export type getApiV1AuthApiKeysResponse = getApiV1AuthApiKeysResponseSuccess;
-
-export const getGetApiV1AuthApiKeysUrl = () => {
-  return `/api/v1/auth/api-keys`;
-};
-
-export const getApiV1AuthApiKeys = async (
-  options?: RequestInit,
-): Promise<getApiV1AuthApiKeysResponse> => {
-  return customFetcher<getApiV1AuthApiKeysResponse>(
-    getGetApiV1AuthApiKeysUrl(),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-/**
- * @summary Create a new API key
- */
-export type postApiV1AuthApiKeysResponse201 = {
-  data: void;
-  status: 201;
-};
-
-export type postApiV1AuthApiKeysResponseSuccess =
-  postApiV1AuthApiKeysResponse201 & {
-    headers: Headers;
-  };
-export type postApiV1AuthApiKeysResponse = postApiV1AuthApiKeysResponseSuccess;
-
-export const getPostApiV1AuthApiKeysUrl = () => {
-  return `/api/v1/auth/api-keys`;
-};
-
-export const postApiV1AuthApiKeys = async (
-  options?: RequestInit,
-): Promise<postApiV1AuthApiKeysResponse> => {
-  return customFetcher<postApiV1AuthApiKeysResponse>(
-    getPostApiV1AuthApiKeysUrl(),
-    {
-      ...options,
-      method: "POST",
-    },
-  );
-};
-
-/**
- * @summary Get a specific API key
- */
-export type getApiV1AuthApiKeysKeyIdResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type getApiV1AuthApiKeysKeyIdResponseSuccess =
-  getApiV1AuthApiKeysKeyIdResponse200 & {
-    headers: Headers;
-  };
-export type getApiV1AuthApiKeysKeyIdResponse =
-  getApiV1AuthApiKeysKeyIdResponseSuccess;
-
-export const getGetApiV1AuthApiKeysKeyIdUrl = (keyId: string) => {
-  return `/api/v1/auth/api-keys/${keyId}`;
-};
-
-export const getApiV1AuthApiKeysKeyId = async (
-  keyId: string,
-  options?: RequestInit,
-): Promise<getApiV1AuthApiKeysKeyIdResponse> => {
-  return customFetcher<getApiV1AuthApiKeysKeyIdResponse>(
-    getGetApiV1AuthApiKeysKeyIdUrl(keyId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-/**
- * @summary Update an API key
- */
-export type putApiV1AuthApiKeysKeyIdResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type putApiV1AuthApiKeysKeyIdResponseSuccess =
-  putApiV1AuthApiKeysKeyIdResponse200 & {
-    headers: Headers;
-  };
-export type putApiV1AuthApiKeysKeyIdResponse =
-  putApiV1AuthApiKeysKeyIdResponseSuccess;
-
-export const getPutApiV1AuthApiKeysKeyIdUrl = (keyId: string) => {
-  return `/api/v1/auth/api-keys/${keyId}`;
-};
-
-export const putApiV1AuthApiKeysKeyId = async (
-  keyId: string,
-  options?: RequestInit,
-): Promise<putApiV1AuthApiKeysKeyIdResponse> => {
-  return customFetcher<putApiV1AuthApiKeysKeyIdResponse>(
-    getPutApiV1AuthApiKeysKeyIdUrl(keyId),
-    {
-      ...options,
-      method: "PUT",
-    },
-  );
-};
-
-/**
- * @summary Delete an API key
- */
-export type deleteApiV1AuthApiKeysKeyIdResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type deleteApiV1AuthApiKeysKeyIdResponseSuccess =
-  deleteApiV1AuthApiKeysKeyIdResponse200 & {
-    headers: Headers;
-  };
-export type deleteApiV1AuthApiKeysKeyIdResponse =
-  deleteApiV1AuthApiKeysKeyIdResponseSuccess;
-
-export const getDeleteApiV1AuthApiKeysKeyIdUrl = (keyId: string) => {
-  return `/api/v1/auth/api-keys/${keyId}`;
-};
-
-export const deleteApiV1AuthApiKeysKeyId = async (
-  keyId: string,
-  options?: RequestInit,
-): Promise<deleteApiV1AuthApiKeysKeyIdResponse> => {
-  return customFetcher<deleteApiV1AuthApiKeysKeyIdResponse>(
-    getDeleteApiV1AuthApiKeysKeyIdUrl(keyId),
-    {
-      ...options,
-      method: "DELETE",
-    },
-  );
-};
-
-/**
- * @summary Revoke an API key
- */
-export type postApiV1AuthApiKeysKeyIdRevokeResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type postApiV1AuthApiKeysKeyIdRevokeResponseSuccess =
-  postApiV1AuthApiKeysKeyIdRevokeResponse200 & {
-    headers: Headers;
-  };
-export type postApiV1AuthApiKeysKeyIdRevokeResponse =
-  postApiV1AuthApiKeysKeyIdRevokeResponseSuccess;
-
-export const getPostApiV1AuthApiKeysKeyIdRevokeUrl = (keyId: string) => {
-  return `/api/v1/auth/api-keys/${keyId}/revoke`;
-};
-
-export const postApiV1AuthApiKeysKeyIdRevoke = async (
-  keyId: string,
-  options?: RequestInit,
-): Promise<postApiV1AuthApiKeysKeyIdRevokeResponse> => {
-  return customFetcher<postApiV1AuthApiKeysKeyIdRevokeResponse>(
-    getPostApiV1AuthApiKeysKeyIdRevokeUrl(keyId),
-    {
-      ...options,
-      method: "POST",
-    },
-  );
-};
-
-/**
- * @summary List all users (admin only)
- */
-export type getApiV1UsersResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type getApiV1UsersResponseSuccess = getApiV1UsersResponse200 & {
-  headers: Headers;
-};
-export type getApiV1UsersResponse = getApiV1UsersResponseSuccess;
-
-export const getGetApiV1UsersUrl = () => {
-  return `/api/v1/users`;
-};
-
-export const getApiV1Users = async (
-  options?: RequestInit,
-): Promise<getApiV1UsersResponse> => {
-  return customFetcher<getApiV1UsersResponse>(getGetApiV1UsersUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-/**
- * @summary Get user by ID (admin only)
- */
-export type getApiV1UsersUserIdResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type getApiV1UsersUserIdResponseSuccess =
-  getApiV1UsersUserIdResponse200 & {
-    headers: Headers;
-  };
-export type getApiV1UsersUserIdResponse = getApiV1UsersUserIdResponseSuccess;
-
-export const getGetApiV1UsersUserIdUrl = (userId: string) => {
-  return `/api/v1/users/${userId}`;
-};
-
-export const getApiV1UsersUserId = async (
-  userId: string,
-  options?: RequestInit,
-): Promise<getApiV1UsersUserIdResponse> => {
-  return customFetcher<getApiV1UsersUserIdResponse>(
-    getGetApiV1UsersUserIdUrl(userId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-/**
- * @summary Update user (admin only)
- */
-export type putApiV1UsersUserIdResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type putApiV1UsersUserIdResponseSuccess =
-  putApiV1UsersUserIdResponse200 & {
-    headers: Headers;
-  };
-export type putApiV1UsersUserIdResponse = putApiV1UsersUserIdResponseSuccess;
-
-export const getPutApiV1UsersUserIdUrl = (userId: string) => {
-  return `/api/v1/users/${userId}`;
-};
-
-export const putApiV1UsersUserId = async (
-  userId: string,
-  options?: RequestInit,
-): Promise<putApiV1UsersUserIdResponse> => {
-  return customFetcher<putApiV1UsersUserIdResponse>(
-    getPutApiV1UsersUserIdUrl(userId),
-    {
-      ...options,
-      method: "PUT",
-    },
-  );
-};
-
-/**
- * @summary Delete user (admin only)
- */
-export type deleteApiV1UsersUserIdResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type deleteApiV1UsersUserIdResponseSuccess =
-  deleteApiV1UsersUserIdResponse200 & {
-    headers: Headers;
-  };
-export type deleteApiV1UsersUserIdResponse =
-  deleteApiV1UsersUserIdResponseSuccess;
-
-export const getDeleteApiV1UsersUserIdUrl = (userId: string) => {
-  return `/api/v1/users/${userId}`;
-};
-
-export const deleteApiV1UsersUserId = async (
-  userId: string,
-  options?: RequestInit,
-): Promise<deleteApiV1UsersUserIdResponse> => {
-  return customFetcher<deleteApiV1UsersUserIdResponse>(
-    getDeleteApiV1UsersUserIdUrl(userId),
-    {
-      ...options,
-      method: "DELETE",
     },
   );
 };
@@ -2940,44 +2357,44 @@ export const getApiV1Music = async (
  * Retrieve a specific music item by its ID
  * @summary Get music by ID
  */
-export type getApiMusicIdResponse200 = {
-  data: GetApiMusicId200;
+export type getApiV1MusicIdResponse200 = {
+  data: GetApiV1MusicId200;
   status: 200;
 };
 
-export type getApiMusicIdResponse400 = {
+export type getApiV1MusicIdResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiMusicIdResponse404 = {
+export type getApiV1MusicIdResponse404 = {
   data: ErrorResponse;
   status: 404;
 };
 
-export type getApiMusicIdResponseSuccess = getApiMusicIdResponse200 & {
+export type getApiV1MusicIdResponseSuccess = getApiV1MusicIdResponse200 & {
   headers: Headers;
 };
-export type getApiMusicIdResponseError = (
-  | getApiMusicIdResponse400
-  | getApiMusicIdResponse404
+export type getApiV1MusicIdResponseError = (
+  | getApiV1MusicIdResponse400
+  | getApiV1MusicIdResponse404
 ) & {
   headers: Headers;
 };
 
-export type getApiMusicIdResponse =
-  | getApiMusicIdResponseSuccess
-  | getApiMusicIdResponseError;
+export type getApiV1MusicIdResponse =
+  | getApiV1MusicIdResponseSuccess
+  | getApiV1MusicIdResponseError;
 
-export const getGetApiMusicIdUrl = (id: string) => {
-  return `/api/music/${id}`;
+export const getGetApiV1MusicIdUrl = (id: string) => {
+  return `/api/v1/music/${id}`;
 };
 
-export const getApiMusicId = async (
+export const getApiV1MusicId = async (
   id: string,
   options?: RequestInit,
-): Promise<getApiMusicIdResponse> => {
-  return customFetcher<getApiMusicIdResponse>(getGetApiMusicIdUrl(id), {
+): Promise<getApiV1MusicIdResponse> => {
+  return customFetcher<getApiV1MusicIdResponse>(getGetApiV1MusicIdUrl(id), {
     ...options,
     method: "GET",
   });
@@ -3506,6 +2923,142 @@ export const getApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary List all users (admin only)
+ */
+export type getApiV1UsersResponse200 = {
+  data: GetApiV1Users200;
+  status: 200;
+};
+
+export type getApiV1UsersResponseSuccess = getApiV1UsersResponse200 & {
+  headers: Headers;
+};
+export type getApiV1UsersResponse = getApiV1UsersResponseSuccess;
+
+export const getGetApiV1UsersUrl = (params?: GetApiV1UsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/users?${stringifiedParams}`
+    : `/api/v1/users`;
+};
+
+export const getApiV1Users = async (
+  params?: GetApiV1UsersParams,
+  options?: RequestInit,
+): Promise<getApiV1UsersResponse> => {
+  return customFetcher<getApiV1UsersResponse>(getGetApiV1UsersUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+/**
+ * @summary Get user by ID (admin only)
+ */
+export type getApiV1UsersUserIdResponse200 = {
+  data: GetApiV1UsersUserId200;
+  status: 200;
+};
+
+export type getApiV1UsersUserIdResponseSuccess =
+  getApiV1UsersUserIdResponse200 & {
+    headers: Headers;
+  };
+export type getApiV1UsersUserIdResponse = getApiV1UsersUserIdResponseSuccess;
+
+export const getGetApiV1UsersUserIdUrl = (userId: string) => {
+  return `/api/v1/users/${userId}`;
+};
+
+export const getApiV1UsersUserId = async (
+  userId: string,
+  options?: RequestInit,
+): Promise<getApiV1UsersUserIdResponse> => {
+  return customFetcher<getApiV1UsersUserIdResponse>(
+    getGetApiV1UsersUserIdUrl(userId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+/**
+ * @summary Update user (admin only)
+ */
+export type putApiV1UsersUserIdResponse200 = {
+  data: PutApiV1UsersUserId200;
+  status: 200;
+};
+
+export type putApiV1UsersUserIdResponseSuccess =
+  putApiV1UsersUserIdResponse200 & {
+    headers: Headers;
+  };
+export type putApiV1UsersUserIdResponse = putApiV1UsersUserIdResponseSuccess;
+
+export const getPutApiV1UsersUserIdUrl = (userId: string) => {
+  return `/api/v1/users/${userId}`;
+};
+
+export const putApiV1UsersUserId = async (
+  userId: string,
+  putApiV1UsersUserIdBody: PutApiV1UsersUserIdBody,
+  options?: RequestInit,
+): Promise<putApiV1UsersUserIdResponse> => {
+  return customFetcher<putApiV1UsersUserIdResponse>(
+    getPutApiV1UsersUserIdUrl(userId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(putApiV1UsersUserIdBody),
+    },
+  );
+};
+
+/**
+ * @summary Delete user (admin only)
+ */
+export type deleteApiV1UsersUserIdResponse200 = {
+  data: DeleteApiV1UsersUserId200;
+  status: 200;
+};
+
+export type deleteApiV1UsersUserIdResponseSuccess =
+  deleteApiV1UsersUserIdResponse200 & {
+    headers: Headers;
+  };
+export type deleteApiV1UsersUserIdResponse =
+  deleteApiV1UsersUserIdResponseSuccess;
+
+export const getDeleteApiV1UsersUserIdUrl = (userId: string) => {
+  return `/api/v1/users/${userId}`;
+};
+
+export const deleteApiV1UsersUserId = async (
+  userId: string,
+  options?: RequestInit,
+): Promise<deleteApiV1UsersUserIdResponse> => {
+  return customFetcher<deleteApiV1UsersUserIdResponse>(
+    getDeleteApiV1UsersUserIdUrl(userId),
+    {
+      ...options,
+      method: "DELETE",
     },
   );
 };

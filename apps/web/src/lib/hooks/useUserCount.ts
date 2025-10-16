@@ -12,12 +12,10 @@ export function useUserCount() {
     queryFn: async () => {
       try {
         const response = await getApiV1Users();
-        const data = (
-          response.data as unknown as {
-            data: { pagination: { total: number } };
-          }
-        )?.data;
-        return data?.pagination?.total ?? 0;
+        const apiData = response.data as unknown as {
+          data: { pagination: { total: number } };
+        };
+        return apiData.data?.pagination?.total ?? 0;
       } catch {
         // If endpoint is not accessible (requires auth), assume users exist
         return 1;

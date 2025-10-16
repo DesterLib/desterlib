@@ -357,6 +357,7 @@ model ExternalId {
 // ────────────────────────────
 
 enum UserRole {
+  SUPER_ADMIN
   ADMIN
   USER
   GUEST

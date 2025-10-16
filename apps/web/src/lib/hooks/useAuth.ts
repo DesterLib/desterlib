@@ -1,12 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  postApiV1AuthLogin,
-  postApiV1AuthRegister,
-  postApiV1AuthLogout,
-  getApiV1AuthMe,
-  postApiV1AuthRefresh,
-} from "@dester/api-client";
-import "@/lib/api-client";
+import { authClient } from "@/lib/auth-client";
 import type { User, LoginCredentials, RegisterData } from "@/types/auth";
 
 const TOKEN_KEY = "dester_access_token";
@@ -35,11 +28,8 @@ export function useCurrentUser() {
       }
 
       try {
-        const response = await getApiV1AuthMe();
-        return (
-          (response.data as unknown as { data: { user: User } })?.data?.user ??
-          null
-        );
+        const response = await authClient.getSession();
+        return (response.data?.user as unknown as User) ?? null;
       } catch (error) {
         console.error("Failed to fetch current user:", error);
         clearTokens();
@@ -59,18 +49,20 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const response = await postApiV1AuthLogin(credentials);
-      const data = (
-        response.data as unknown as {
-          data: { user: User; accessToken: string; refreshToken: string };
-        }
-      )?.data;
+      const response = await authClient.signIn.email({
+        email: credentials.username, // Map username to email
+        password: credentials.password || credentials.pin || "",
+      });
 
-      if (data?.accessToken && data?.refreshToken) {
-        setTokens(data.accessToken, data.refreshToken);
+      if (response.data?.token) {
+        // Store token - better-auth doesn't return refreshToken in this response
+        setTokens(
+          response.data.token,
+          "" // Refresh token is handled by better-auth internally
+        );
       }
 
-      return data.user;
+      return (response.data?.user as unknown as User) ?? null;
     },
     onSuccess: (user) => {
       // Set the user data in the cache - this will immediately update useCurrentUser
@@ -85,18 +77,21 @@ export function useRegister() {
 
   return useMutation({
     mutationFn: async (data: RegisterData) => {
-      const response = await postApiV1AuthRegister(data);
-      const responseData = (
-        response.data as unknown as {
-          data: { user: User; accessToken: string; refreshToken: string };
-        }
-      )?.data;
+      const response = await authClient.signUp.email({
+        email: data.email || data.username, // Use email if provided, otherwise username
+        name: data.username, // Map username to name
+        password: data.password || data.pin || "",
+      });
 
-      if (responseData?.accessToken && responseData?.refreshToken) {
-        setTokens(responseData.accessToken, responseData.refreshToken);
+      if (response.data?.token) {
+        // Store token - better-auth doesn't return refreshToken in this response
+        setTokens(
+          response.data.token,
+          "" // Refresh token is handled by better-auth internally
+        );
       }
 
-      return responseData.user;
+      return (response.data?.user as unknown as User) ?? null;
     },
     onSuccess: (user) => {
       // Set the user data in the cache - this will immediately update useCurrentUser
@@ -111,13 +106,10 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      const refreshToken = getRefreshToken();
-      if (refreshToken) {
-        try {
-          await postApiV1AuthLogout({ refreshToken });
-        } catch {
-          // Ignore errors, we're logging out anyway
-        }
+      try {
+        await authClient.signOut();
+      } catch {
+        // Ignore errors, we're logging out anyway
       }
       clearTokens();
     },
@@ -137,18 +129,13 @@ export function useRefreshToken() {
       const refreshToken = getRefreshToken();
       if (!refreshToken) throw new Error("No refresh token");
 
-      const response = await postApiV1AuthRefresh({ refreshToken });
-      const data = (
-        response.data as unknown as {
-          data: { accessToken: string; refreshToken: string };
-        }
-      )?.data;
+      // Better-auth handles token refresh automatically
+      const response = await authClient.getSession();
 
-      if (data?.accessToken && data?.refreshToken) {
-        setTokens(data.accessToken, data.refreshToken);
-      }
+      // Note: getSession doesn't return token/refreshToken, it only returns session info
+      // Token refresh is handled internally by better-auth
 
-      return data;
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["auth", "me"] });

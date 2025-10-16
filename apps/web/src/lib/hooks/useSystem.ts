@@ -40,10 +40,8 @@ export function useHealthCheck() {
     queryKey: ["health"],
     queryFn: async () => {
       const response = await getHealth();
-      return (
-        (response.data as unknown as { data: HealthCheckResponse })?.data ??
-        null
-      );
+      const apiData = response.data as unknown as { data: HealthCheckResponse };
+      return apiData.data ?? null;
     },
     refetchInterval: 30000, // Refetch every 30 seconds
   });
@@ -54,10 +52,10 @@ export function useReadinessCheck() {
     queryKey: ["health", "ready"],
     queryFn: async () => {
       const response = await getHealthReady();
-      return (
-        (response.data as unknown as { data: ReadinessCheckResponse })?.data ??
-        null
-      );
+      const apiData = response.data as unknown as {
+        data: ReadinessCheckResponse;
+      };
+      return apiData.data ?? null;
     },
     refetchInterval: 30000,
   });
@@ -68,10 +66,10 @@ export function useLivenessCheck() {
     queryKey: ["health", "live"],
     queryFn: async () => {
       const response = await getHealthLive();
-      return (
-        (response.data as unknown as { data: LivenessCheckResponse })?.data ??
-        null
-      );
+      const apiData = response.data as unknown as {
+        data: LivenessCheckResponse;
+      };
+      return apiData.data ?? null;
     },
     refetchInterval: 30000,
   });
@@ -82,10 +80,10 @@ export function useAdminHealthCheck() {
     queryKey: ["admin", "health"],
     queryFn: async () => {
       const response = await getApiV1AdminHealthCheck();
-      return (
-        (response.data as unknown as { data: AdminHealthCheckResponse })
-          ?.data ?? null
-      );
+      const apiData = response.data as unknown as {
+        data: AdminHealthCheckResponse;
+      };
+      return apiData.data ?? null;
     },
     refetchInterval: 30000,
   });
@@ -100,10 +98,10 @@ export function usePerformanceMetrics() {
     queryKey: ["admin", "performance"],
     queryFn: async () => {
       const response = await getApiV1AdminPerformance();
-      return (
-        (response.data as unknown as { data: PerformanceMetricsResponse })
-          ?.data ?? null
-      );
+      const apiData = response.data as unknown as {
+        data: PerformanceMetricsResponse;
+      };
+      return apiData.data ?? null;
     },
     refetchInterval: 10000, // Refetch every 10 seconds
   });
@@ -115,10 +113,10 @@ export function useResetPerformanceMetrics() {
   return useMutation<ResetPerformanceResponse | null>({
     mutationFn: async () => {
       const response = await postApiV1AdminPerformanceReset();
-      return (
-        (response.data as unknown as { data: ResetPerformanceResponse })
-          ?.data ?? null
-      );
+      const apiData = response.data as unknown as {
+        data: ResetPerformanceResponse;
+      };
+      return apiData.data ?? null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "performance"] });
@@ -135,10 +133,10 @@ export function useActiveAlerts() {
     queryKey: ["admin", "alerts"],
     queryFn: async () => {
       const response = await getApiV1AdminAlerts();
-      return (
-        (response.data as unknown as { data: ActiveAlertsResponse })?.data ??
-        null
-      );
+      const apiData = response.data as unknown as {
+        data: ActiveAlertsResponse;
+      };
+      return apiData.data ?? null;
     },
     refetchInterval: 15000, // Refetch every 15 seconds
   });
@@ -149,10 +147,10 @@ export function useAlertHistory() {
     queryKey: ["admin", "alerts", "history"],
     queryFn: async () => {
       const response = await getApiV1AdminAlertsHistory();
-      return (
-        (response.data as unknown as { data: AlertHistoryResponse })?.data ??
-        null
-      );
+      const apiData = response.data as unknown as {
+        data: AlertHistoryResponse;
+      };
+      return apiData.data ?? null;
     },
   });
 }
@@ -166,9 +164,8 @@ export function useBackups() {
     queryKey: ["admin", "backups"],
     queryFn: async () => {
       const response = await getApiV1AdminBackups();
-      return (
-        (response.data as unknown as { data: BackupsResponse })?.data ?? null
-      );
+      const apiData = response.data as unknown as { data: BackupsResponse };
+      return apiData.data ?? null;
     },
   });
 }
@@ -179,10 +176,10 @@ export function useCreateBackup() {
   return useMutation<CreateBackupResponse | null>({
     mutationFn: async () => {
       const response = await postApiV1AdminBackups();
-      return (
-        (response.data as unknown as { data: CreateBackupResponse })?.data ??
-        null
-      );
+      const apiData = response.data as unknown as {
+        data: CreateBackupResponse;
+      };
+      return apiData.data ?? null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "backups"] });
@@ -196,10 +193,10 @@ export function useRestoreBackup() {
   return useMutation<RestoreBackupResponse | null, Error, string>({
     mutationFn: async (filename: string) => {
       const response = await postApiV1AdminBackupsFilenameRestore(filename);
-      return (
-        (response.data as unknown as { data: RestoreBackupResponse })?.data ??
-        null
-      );
+      const apiData = response.data as unknown as {
+        data: RestoreBackupResponse;
+      };
+      return apiData.data ?? null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "backups"] });
@@ -213,10 +210,10 @@ export function useDeleteBackup() {
   return useMutation<DeleteBackupResponse | null, Error, string>({
     mutationFn: async (filename: string) => {
       const response = await deleteApiV1AdminBackupsFilename(filename);
-      return (
-        (response.data as unknown as { data: DeleteBackupResponse })?.data ??
-        null
-      );
+      const apiData = response.data as unknown as {
+        data: DeleteBackupResponse;
+      };
+      return apiData.data ?? null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "backups"] });
@@ -232,10 +229,10 @@ export function useUpdateMetrics() {
   return useMutation<UpdateMetricsResponse | null>({
     mutationFn: async () => {
       const response = await postApiV1AdminMetricsUpdate();
-      return (
-        (response.data as unknown as { data: UpdateMetricsResponse })?.data ??
-        null
-      );
+      const apiData = response.data as unknown as {
+        data: UpdateMetricsResponse;
+      };
+      return apiData.data ?? null;
     },
   });
 }

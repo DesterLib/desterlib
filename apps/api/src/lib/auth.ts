@@ -27,6 +27,7 @@ export const auth = betterAuth({
       role: {
         type: "string",
         required: false,
+        // Note: Default is USER, but first user gets SUPER_ADMIN via DB trigger
         defaultValue: "USER",
       },
     },
@@ -41,17 +42,9 @@ export const auth = betterAuth({
     "http://localhost:3000",
     env.APP_URL || "http://localhost:3000",
   ],
-  onAfterSignUp: async (user: { user: { id: string } }) => {
-    // Check if this is the first user - make them admin
-    const userCount = await prisma.user.count();
-    if (userCount === 1) {
-      // This is the first user
-      await prisma.user.update({
-        where: { id: user.user.id },
-        data: { role: "ADMIN" },
-      });
-    }
-  },
+  // NOTE: SUPER_ADMIN assignment is handled by Prisma middleware
+  // See: src/lib/prisma.ts - the middleware intercepts user creation
+  // and assigns SUPER_ADMIN role to the first user automatically
 });
 
 export const authHandler = async (req: Request, res: Response) => {

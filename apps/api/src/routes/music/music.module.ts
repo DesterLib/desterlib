@@ -121,7 +121,7 @@ router.get("/", (req, res, next) => {
 
 /**
  * @openapi
- * /api/music/{id}:
+ * /api/v1/music/{id}:
  *   get:
  *     summary: Get music by ID
  *     description: Retrieve a specific music item by its ID

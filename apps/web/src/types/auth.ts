@@ -6,7 +6,7 @@ export interface User {
   id: string;
   username: string;
   email?: string;
-  role: "USER" | "ADMIN" | "GUEST";
+  role: "SUPER_ADMIN" | "ADMIN" | "USER" | "GUEST";
   createdAt: string;
   updatedAt: string;
 }

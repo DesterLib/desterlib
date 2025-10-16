@@ -87,11 +87,36 @@ function buildDatabaseUrl(): string {
 /**
  * Singleton instance - reused in development to prevent multiple connections
  */
-export const prisma = global.__prisma ?? createPrismaClient();
+const basePrisma = global.__prisma ?? createPrismaClient();
 
 if (env.NODE_ENV !== "production") {
-  global.__prisma = prisma;
+  global.__prisma = basePrisma;
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Prisma Extension: Auto-assign SUPER_ADMIN to first user
+// ────────────────────────────────────────────────────────────────────────────
+
+export const prisma = basePrisma.$extends({
+  query: {
+    user: {
+      async create({ args, query }) {
+        // Check if this will be the first user
+        const userCount = await basePrisma.user.count();
+
+        if (userCount === 0) {
+          // This is the first user - set role to SUPER_ADMIN
+          logger.info(
+            "[Prisma Extension] Creating first user - assigning SUPER_ADMIN role"
+          );
+          args.data.role = "SUPER_ADMIN";
+        }
+
+        return query(args);
+      },
+    },
+  },
+});
 
 /**
  * Gracefully disconnect from database
@@ -99,7 +124,7 @@ if (env.NODE_ENV !== "production") {
  */
 export async function disconnectPrisma(): Promise<void> {
   try {
-    await prisma.$disconnect();
+    await basePrisma.$disconnect();
     logger.info("Database disconnected successfully");
   } catch (error) {
     logger.error("Error disconnecting from database:", error);
@@ -121,8 +146,8 @@ export async function verifyDatabaseConnection(): Promise<void> {
       logger.info(
         `Attempting to connect to database (attempt ${attempt}/${maxRetries})...`
       );
-      await prisma.$connect();
-      await prisma.$queryRaw`SELECT 1`;
+      await basePrisma.$connect();
+      await basePrisma.$queryRaw`SELECT 1`;
       logger.info("✅ Database connection established successfully");
       return;
     } catch (error: unknown) {
@@ -175,7 +200,7 @@ export async function verifyDatabaseConnection(): Promise<void> {
  */
 export async function checkDatabaseHealth(): Promise<boolean> {
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await basePrisma.$queryRaw`SELECT 1`;
     return true;
   } catch (error) {
     logger.error("Database health check failed:", error);
