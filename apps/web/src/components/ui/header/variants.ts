@@ -6,15 +6,26 @@ export const tabsContainerVariants = {
 
 export const tabsContainerTransition = {
   duration: 0.3,
-  ease: "easeInOut" as const,
+  ease: [0.4, 0, 0.2, 1] as const,
+  layout: {
+    duration: 0.3,
+    ease: [0.4, 0, 0.2, 1] as const,
+  },
 };
 
-export const searchContainerMotion = {
-  initial: { marginLeft: 8, backdropFilter: "blur(0px)" },
-  animate: (isSearchOpen: boolean) => ({
-    marginLeft: isSearchOpen ? 0 : 8,
-    backdropFilter: isSearchOpen ? "blur(10px)" : "blur(0px)",
-  }),
+export const searchContainerVariants = {
+  initial: { scale: 0, opacity: 0, originX: 0 },
+  animate: { scale: 1, opacity: 1 },
+  exit: { scale: 0, opacity: 0, originX: 0 },
+};
+
+export const searchContainerTransition = {
+  duration: 0.3,
+  ease: [0.4, 0, 0.2, 1] as const, // Custom easing for smoother feel
+  layout: {
+    duration: 0.3,
+    ease: [0.4, 0, 0.2, 1] as const,
+  },
 };
 
 export const searchButtonMotion = {
@@ -22,17 +33,21 @@ export const searchButtonMotion = {
     borderTopRightRadius: isSearchOpen ? 12 : 50,
     borderBottomRightRadius: isSearchOpen ? 12 : 50,
   }),
+  transition: {
+    duration: 0.3,
+    ease: [0.4, 0, 0.2, 1] as const,
+  },
 };
 
 export const searchInputVariants = {
-  initial: { width: 0, opacity: 0 },
-  animate: { width: 500, opacity: 1 },
-  exit: { width: 0, opacity: 0 },
+  initial: { width: 0, opacity: 0, scale: 0.95 },
+  animate: { width: 500, opacity: 1, scale: 1 },
+  exit: { width: 0, opacity: 0, scale: 0.95 },
 };
 
 export const searchInputTransition = {
   duration: 0.3,
-  ease: "easeInOut" as const,
+  ease: [0.4, 0, 0.2, 1] as const,
 };
 
 export const filtersContainerVariants = {
@@ -41,12 +56,12 @@ export const filtersContainerVariants = {
 };
 
 export const filtersContainerTransition = {
-  duration: 0.2,
-  ease: "easeInOut" as const,
+  duration: 0.3,
+  ease: [0.4, 0, 0.2, 1] as const,
   staggerChildren: 0.05,
 };
 
 export const filterButtonVariants = {
-  hidden: { opacity: 0, scale: 0.9, backdropFilter: "blur(0px)" },
-  visible: { opacity: 1, scale: 1, backdropFilter: "blur(10px)" },
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: { opacity: 1, scale: 1 },
 };

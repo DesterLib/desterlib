@@ -7,7 +7,8 @@ import NavLink from "./nav-link";
 import {
   tabsContainerVariants,
   tabsContainerTransition,
-  searchContainerMotion,
+  searchContainerVariants,
+  searchContainerTransition,
   searchButtonMotion,
   searchInputVariants,
   searchInputTransition,
@@ -114,27 +115,37 @@ const Header = () => {
     <div className="w-full fixed top-0 left-0 right-0 z-50">
       <nav className="w-fit mx-auto space-y-4 p-4">
         <motion.div
+          layout="preserve-aspect"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
+          transition={{
+            duration: 0.2,
+            layout: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+          }}
           className="w-full flex justify-center items-center"
         >
-          <motion.button
-            onClick={() => setIsDialogOpen(true)}
-            initial={{ backdropFilter: "blur(0px)" }}
-            animate={{
-              backdropFilter: "blur(10px)",
-              transition: { delay: 0.2 },
-            }}
-            exit={{ backdropFilter: "blur(0px)" }}
-            className="border mr-2 h-12 w-12 bg-neutral-900/60 border-white/10 rounded-[50px] flex items-center justify-center"
+          <motion.div
+            layout="position"
+            transition={{ layout: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } }}
           >
-            <Logo className="w-8 h-8" />
-          </motion.button>
-          <AnimatePresence mode="wait">
+            <motion.button
+              onClick={() => setIsDialogOpen(true)}
+              initial={{ backdropFilter: "blur(0px)" }}
+              animate={{
+                backdropFilter: "blur(10px)",
+                transition: { delay: 0.2 },
+              }}
+              exit={{ backdropFilter: "blur(0px)" }}
+              className="border h-12 w-12 bg-neutral-900/60 border-white/10 rounded-[50px] flex items-center justify-center"
+            >
+              <Logo className="w-8 h-8" />
+            </motion.button>
+          </motion.div>
+          <AnimatePresence mode="popLayout">
             {!isSearchOpen && (
               <motion.div
+                layout="position"
                 initial={hasMounted ? "initial" : false}
                 animate="animate"
                 exit="exit"
@@ -146,7 +157,7 @@ const Header = () => {
                   animate={{ backdropFilter: "blur(10px)" }}
                   exit={{ backdropFilter: "blur(0px)" }}
                   transition={{ delay: 0.2 }}
-                  className="flex space-x-1 w-fit bg-neutral-900/60 p-1 rounded-[50px] border border-white/10"
+                  className="flex ml-2 space-x-1 w-fit bg-neutral-900/60 p-1 rounded-[50px] border border-white/10"
                 >
                   {tabs.map((tab) => (
                     <NavLink
@@ -161,56 +172,68 @@ const Header = () => {
               </motion.div>
             )}
           </AnimatePresence>
-          {!isOnSettingsPage && (
-            <motion.div
-              initial={searchContainerMotion.initial}
-              animate={searchContainerMotion.animate(isSearchOpen)}
-              className="border bg-neutral-900/60 border-white/10 rounded-[50px] flex items-center"
-            >
-              <div className="p-1">
-                <motion.button
-                  onClick={() => setIsSearchOpen(!isSearchOpen)}
-                  animate={searchButtonMotion.animate(isSearchOpen)}
-                  className={cn(
-                    "w-10 h-10 transition-colors duration-300 flex items-center justify-center  rounded-[50px]",
-                    isSearchOpen ? "bg-white/10" : "hover:bg-white/10"
-                  )}
-                >
-                  <SearchIcon className="w-4 h-4" />
-                </motion.button>
-              </div>
-              <AnimatePresence>
-                {isSearchOpen && (
-                  <motion.div
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    variants={searchInputVariants}
-                    transition={searchInputTransition}
-                    className="overflow-hidden"
+          <AnimatePresence mode="popLayout">
+            {!isOnSettingsPage && (
+              <motion.div
+                layout="position"
+                initial={hasMounted ? "initial" : false}
+                animate="animate"
+                exit="exit"
+                variants={searchContainerVariants}
+                transition={searchContainerTransition}
+                className="border bg-neutral-900/60 !backdrop-blur-lg border-white/10 rounded-[50px] flex items-center ml-2"
+              >
+                <div className="p-1">
+                  <motion.button
+                    onClick={() => setIsSearchOpen(!isSearchOpen)}
+                    animate={searchButtonMotion.animate(isSearchOpen)}
+                    transition={searchButtonMotion.transition}
+                    className={cn(
+                      "w-10 h-10 transition-colors duration-300 flex items-center justify-center  rounded-[50px]",
+                      isSearchOpen ? "bg-white/10" : "hover:bg-white/10"
+                    )}
                   >
-                    <div className="flex items-center p-1 w-full">
-                      <input
-                        type="text"
-                        className="flex-1 h-10 outline-none bg-transparent text-white"
-                        placeholder="Search..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        autoFocus
-                      />
-                      <button
-                        onClick={handleCloseSearch}
-                        className="w-10 h-10 transition-colors duration-300 flex items-center justify-center hover:bg-neutral-800/60 rounded-[50px]"
-                      >
-                        <XIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
-          <UserMenu />
+                    <SearchIcon className="w-4 h-4" />
+                  </motion.button>
+                </div>
+                <AnimatePresence>
+                  {isSearchOpen && (
+                    <motion.div
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      variants={searchInputVariants}
+                      transition={searchInputTransition}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex items-center p-1 w-full">
+                        <input
+                          type="text"
+                          className="flex-1 h-10 outline-none bg-transparent text-white"
+                          placeholder="Search..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          autoFocus
+                        />
+                        <button
+                          onClick={handleCloseSearch}
+                          className="w-10 h-10 transition-colors duration-300 flex items-center justify-center hover:bg-neutral-800/60 rounded-[50px]"
+                        >
+                          <XIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <motion.div
+            layout="position"
+            transition={{ layout: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } }}
+          >
+            <UserMenu />
+          </motion.div>
         </motion.div>
         <AnimatePresence>
           {isSearchOpen && !isOnSettingsPage && (
