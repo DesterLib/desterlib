@@ -74,14 +74,18 @@ const WatchHome = () => {
         >
           <ExpandableRow
             title="Movies"
-            items={moviesData.media.map((item: Media) => ({
-              id: item.id,
-              title: item.title,
-              year: item.releaseDate
-                ? new Date(item.releaseDate).getFullYear()
-                : 0,
-              image: item.posterUrl || item.backdropUrl || "",
-            }))}
+            items={
+              moviesData?.media
+                ?.filter((item: Media) => item.id && item.title)
+                .map((item: Media) => ({
+                  id: item.id!,
+                  title: item.title!,
+                  year: item.releaseDate
+                    ? new Date(item.releaseDate).getFullYear()
+                    : 0,
+                  image: item.posterUrl || item.backdropUrl || "",
+                })) || []
+            }
             onItemClick={handleItemClick}
           />
         </motion.div>
@@ -96,14 +100,18 @@ const WatchHome = () => {
         >
           <ExpandableRow
             title="TV Shows"
-            items={tvShowsData.media.map((item: Media) => ({
-              id: item.id,
-              title: item.title,
-              year: item.releaseDate
-                ? new Date(item.releaseDate).getFullYear()
-                : 0,
-              image: item.posterUrl || item.backdropUrl || "",
-            }))}
+            items={
+              tvShowsData?.media
+                ?.filter((item: Media) => item.id && item.title)
+                .map((item: Media) => ({
+                  id: item.id!,
+                  title: item.title!,
+                  year: item.releaseDate
+                    ? new Date(item.releaseDate).getFullYear()
+                    : 0,
+                  image: item.posterUrl || item.backdropUrl || "",
+                })) || []
+            }
             onItemClick={handleItemClick}
           />
         </motion.div>
