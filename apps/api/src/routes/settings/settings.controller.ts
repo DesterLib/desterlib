@@ -58,7 +58,8 @@ export class SettingsController {
   ): Promise<void> {
     try {
       const config = req.body;
-      const settings = await settingsService.completeSetup(config);
+      const userId = req.user?.id;
+      const settings = await settingsService.completeSetup(config, userId);
       res.jsonOk({ settings });
     } catch (error) {
       if (error instanceof AppError) {
@@ -80,7 +81,8 @@ export class SettingsController {
   ): Promise<void> {
     try {
       const config = req.body;
-      const settings = await settingsService.updateSettings(config);
+      const userId = req.user?.id;
+      const settings = await settingsService.updateSettings(config, userId);
       res.jsonOk({ settings });
     } catch (error) {
       if (error instanceof AppError) {

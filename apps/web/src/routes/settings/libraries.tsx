@@ -16,12 +16,14 @@ import { librariesSettingsConfig } from "@/config/libraries-settings-config";
 import type { Collection } from "@dester/api-client";
 import type { MediaType } from "@/lib/schemas/library.schema";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/settings/libraries")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const { user } = useAuth();
   const { data: libraries = [], isLoading } = useLibraries();
   const { data: settings } = useSettings();
   const deleteLibrary = useDeleteLibrary();
@@ -158,6 +160,8 @@ function RouteComponent() {
     onUpdateSetting: handleUpdateSetting,
     onConfigureTmdb: () => setTmdbDialogOpen(true),
     onCleanupOrphaned: handleCleanupOrphaned,
+    currentUserId: user?.id,
+    currentUserRole: user?.role,
   });
 
   if (isLoading) {

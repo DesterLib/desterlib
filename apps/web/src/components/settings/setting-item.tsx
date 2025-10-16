@@ -91,6 +91,7 @@ export function SettingItem({ item }: SettingItemProps) {
               className="h-8 w-8 rounded-full"
               onClick={action.onClick}
               title={action.label}
+              disabled={action.disabled}
             >
               {action.icon && <action.icon className="w-4 h-4" />}
             </Button>

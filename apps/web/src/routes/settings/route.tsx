@@ -9,7 +9,14 @@ import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
-  beforeLoad: ({ location }) => {
+  beforeLoad: ({ location, context }) => {
+    // Block guests from accessing settings
+    const user = (context as { auth?: { user?: { role?: string } } })?.auth
+      ?.user;
+    if (user?.role === "GUEST") {
+      throw redirect({ to: "/" });
+    }
+
     // If we're at the exact settings route, redirect to libraries
     if (location.pathname === "/settings") {
       throw redirect({ to: "/settings/libraries" });

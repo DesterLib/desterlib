@@ -59,7 +59,7 @@ export class SettingsService {
   /**
    * Complete initial setup with provided configuration
    */
-  async completeSetup(config: SetupConfig) {
+  async completeSetup(config: SetupConfig, userId?: string) {
     // First, delete any existing settings and their libraries
     const existingSettings = await prisma.settings.findUnique({
       where: { id: "default" },
@@ -95,6 +95,8 @@ export class SettingsService {
             isLibrary: true,
             libraryPath: lib.path,
             libraryType: lib.type,
+            createdById: userId,
+            visibility: "EVERYONE" as const,
           })),
         },
       },
@@ -113,7 +115,7 @@ export class SettingsService {
   /**
    * Update settings
    */
-  async updateSettings(config: Partial<SetupConfig>) {
+  async updateSettings(config: Partial<SetupConfig>, userId?: string) {
     // If libraries are provided, replace them all
     if (config.libraries) {
       // Get existing library collections
@@ -147,6 +149,8 @@ export class SettingsService {
               isLibrary: true,
               libraryPath: lib.path,
               libraryType: lib.type,
+              createdById: userId,
+              visibility: "EVERYONE" as const,
             })),
           },
         },

@@ -1,6 +1,10 @@
 import { Router } from "express";
 import type { Router as ExpressRouter } from "express";
 import { settingsController } from "./settings.controller.js";
+import {
+  requireAuth,
+  requireUserOrAdmin,
+} from "../../lib/auth/auth.middleware.js";
 
 const router: ExpressRouter = Router();
 
@@ -110,7 +114,7 @@ router.get("/setup-status", (req, res, next) =>
  *                         settings:
  *                           $ref: '#/components/schemas/Settings'
  */
-router.post("/complete-setup", (req, res, next) =>
+router.post("/complete-setup", requireAuth, (req, res, next) =>
   settingsController.completeSetup(req, res, next)
 );
 
@@ -156,7 +160,7 @@ router.post("/complete-setup", (req, res, next) =>
  *                         settings:
  *                           $ref: '#/components/schemas/Settings'
  */
-router.patch("/", (req, res, next) =>
+router.patch("/", requireAuth, requireUserOrAdmin, (req, res, next) =>
   settingsController.updateSettings(req, res, next)
 );
 

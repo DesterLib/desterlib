@@ -5,6 +5,7 @@ export interface SettingAction {
   icon?: LucideIcon;
   variant?: "default" | "ghost" | "menuItem" | "modification" | "danger";
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 export interface SliderConfig {

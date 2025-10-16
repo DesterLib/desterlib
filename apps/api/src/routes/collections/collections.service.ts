@@ -1,13 +1,77 @@
 import { prisma } from "../../lib/prisma.js";
-import { NotFoundError } from "../../lib/errors.js";
+import { NotFoundError, ForbiddenError } from "../../lib/errors.js";
 import { invalidateCache } from "../../lib/cacheMiddleware.js";
+import type { UserRole } from "../../generated/prisma/index.js";
 
 export class CollectionsService {
   /**
+   * Build access filter for collections based on user permissions
+   */
+  private buildAccessFilter(userId?: string, userRole?: UserRole) {
+    // Admin sees everything
+    if (userRole === "ADMIN") {
+      return {};
+    }
+
+    // Guest or unauthenticated users only see EVERYONE collections
+    if (!userId || userRole === "GUEST") {
+      return {
+        visibility: "EVERYONE" as const,
+      };
+    }
+
+    // Regular users see:
+    // 1. Collections with EVERYONE visibility
+    // 2. Collections they created
+    // 3. Collections with SELECTED_USERS visibility where they have access
+    return {
+      OR: [
+        { visibility: "EVERYONE" as const },
+        { createdById: userId },
+        {
+          AND: [
+            { visibility: "SELECTED_USERS" as const },
+            { accessUsers: { some: { userId } } },
+          ],
+        },
+      ],
+    };
+  }
+
+  /**
+   * Check if user can modify a collection
+   */
+  private async canModifyCollection(
+    collectionId: string,
+    userId?: string,
+    userRole?: UserRole
+  ): Promise<boolean> {
+    // Admin can modify anything
+    if (userRole === "ADMIN") {
+      return true;
+    }
+
+    // Guests cannot modify
+    if (!userId || userRole === "GUEST") {
+      return false;
+    }
+
+    // Check if user created this collection
+    const collection = await prisma.collection.findUnique({
+      where: { id: collectionId },
+      select: { createdById: true },
+    });
+
+    return collection?.createdById === userId;
+  }
+  /**
    * Get all collections with media count
    */
-  async getCollections() {
+  async getCollections(userId?: string, userRole?: UserRole) {
+    const accessFilter = this.buildAccessFilter(userId, userRole);
+
     const collections = await prisma.collection.findMany({
+      where: accessFilter,
       include: {
         media: {
           include: {
@@ -65,10 +129,16 @@ export class CollectionsService {
   /**
    * Get a single collection by slug or ID
    */
-  async getCollectionBySlugOrId(slugOrId: string) {
+  async getCollectionBySlugOrId(
+    slugOrId: string,
+    userId?: string,
+    userRole?: UserRole
+  ) {
+    const accessFilter = this.buildAccessFilter(userId, userRole);
+
     const collection = await prisma.collection.findFirst({
       where: {
-        OR: [{ slug: slugOrId }, { id: slugOrId }],
+        AND: [{ OR: [{ slug: slugOrId }, { id: slugOrId }] }, accessFilter],
       },
       include: {
         media: {
@@ -169,10 +239,12 @@ export class CollectionsService {
   /**
    * Get all libraries (collections with isLibrary=true)
    */
-  async getLibraries() {
+  async getLibraries(userId?: string, userRole?: UserRole) {
+    const accessFilter = this.buildAccessFilter(userId, userRole);
+
     const libraries = await prisma.collection.findMany({
       where: {
-        isLibrary: true,
+        AND: [{ isLibrary: true }, accessFilter],
       },
       include: {
         _count: {
@@ -218,7 +290,15 @@ export class CollectionsService {
    * Delete a collection by ID
    * If it's a library, also deletes all associated media content
    */
-  async deleteCollection(id: string) {
+  async deleteCollection(id: string, userId?: string, userRole?: UserRole) {
+    // Check if user can modify this collection
+    const canModify = await this.canModifyCollection(id, userId, userRole);
+    if (!canModify) {
+      throw new ForbiddenError(
+        "You do not have permission to delete this collection"
+      );
+    }
+
     const collection = await prisma.collection.findUnique({
       where: { id },
       include: {
@@ -268,8 +348,16 @@ export class CollectionsService {
   /**
    * Clean up orphaned media
    * Finds and deletes media items that are not associated with any collection
+   * Admin only operation
    */
-  async cleanupOrphanedMedia() {
+  async cleanupOrphanedMedia(_userId?: string, userRole?: UserRole) {
+    // Only admins can cleanup orphaned media
+    if (userRole !== "ADMIN") {
+      throw new ForbiddenError(
+        "Only administrators can clean up orphaned media"
+      );
+    }
+
     // Find all media that has no collection associations
     const orphanedMedia = await prisma.media.findMany({
       where: {

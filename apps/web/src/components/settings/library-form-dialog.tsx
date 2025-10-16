@@ -30,6 +30,7 @@ interface LibraryFormDialogProps {
     path: string;
     type: MediaType;
     description?: string;
+    visibility?: "PRIVATE" | "EVERYONE" | "SELECTED_USERS";
   }) => Promise<void>;
   library?: Collection;
   mode: "add" | "edit";
@@ -48,6 +49,11 @@ export function LibraryFormDialog({
       path: library?.libraryPath || "",
       type: (library?.libraryType || "MOVIE") as MediaType,
       description: library?.description || "",
+      visibility: ((library as Collection & { visibility?: string })
+        ?.visibility || "EVERYONE") as
+        | "PRIVATE"
+        | "EVERYONE"
+        | "SELECTED_USERS",
     },
     onSubmit: async ({ value }) => {
       await onSubmit(value);
@@ -244,6 +250,56 @@ export function LibraryFormDialog({
                   rows={3}
                   className="bg-white/5 border-white/10 focus:border-white/20 resize-none"
                 />
+                {field.state.meta.errors.length > 0 && (
+                  <p className="text-xs text-red-400">
+                    {field.state.meta.errors[0]}
+                  </p>
+                )}
+              </div>
+            )}
+          </form.Field>
+
+          {/* Visibility Field */}
+          <form.Field name="visibility">
+            {(field) => (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="visibility"
+                  className="text-sm font-medium text-white/90"
+                >
+                  Visibility
+                </Label>
+                <Select
+                  value={field.state.value}
+                  onValueChange={(value: string) =>
+                    field.handleChange(
+                      value as "PRIVATE" | "EVERYONE" | "SELECTED_USERS"
+                    )
+                  }
+                >
+                  <SelectTrigger
+                    id="visibility"
+                    className="bg-white/5 border-white/10 focus:border-white/20"
+                    onBlur={field.handleBlur}
+                  >
+                    <SelectValue placeholder="Select visibility" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EVERYONE">Everyone</SelectItem>
+                    <SelectItem value="PRIVATE">Private (Only Me)</SelectItem>
+                    <SelectItem value="SELECTED_USERS">
+                      Selected Users
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-white/50">
+                  {field.state.value === "EVERYONE" &&
+                    "All users can access this library"}
+                  {field.state.value === "PRIVATE" &&
+                    "Only you can access this library"}
+                  {field.state.value === "SELECTED_USERS" &&
+                    "Only selected users can access this library"}
+                </p>
                 {field.state.meta.errors.length > 0 && (
                   <p className="text-xs text-red-400">
                     {field.state.meta.errors[0]}

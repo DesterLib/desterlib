@@ -235,6 +235,12 @@ model MediaGenre {
 // ────────────────────────────
 // COLLECTIONS
 // ────────────────────────────
+enum CollectionVisibility {
+  PRIVATE          // Only creator can see
+  EVERYONE         // All users can see
+  SELECTED_USERS   // Only selected users can see
+}
+
 model Collection {
   id          String             @id @default(cuid())
   name        String
@@ -247,6 +253,12 @@ model Collection {
   isLibrary   Boolean            @default(false)
   libraryPath String?            // File system path for libraries
   libraryType MediaType?         // Type of media in this library
+  
+  // Ownership and access control
+  createdById String?            // User who created this collection/library
+  createdBy   User?              @relation("CreatedCollections", fields: [createdById], references: [id], onDelete: SetNull)
+  visibility  CollectionVisibility @default(EVERYONE)
+  accessUsers CollectionAccess[] // Users with access when visibility is SELECTED_USERS
   
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
@@ -266,6 +278,8 @@ model Collection {
   @@index([parentId])
   @@index([isLibrary])
   @@index([settingsId])
+  @@index([createdById])
+  @@index([visibility])
 }
 
 // ────────────────────────────
@@ -284,6 +298,24 @@ model MediaCollection {
   @@index([mediaId])
   @@index([collectionId])
   @@index([order])
+}
+
+// ────────────────────────────
+// JOIN TABLE (USER ↔ COLLECTION ACCESS)
+// ────────────────────────────
+model CollectionAccess {
+  id           String     @id @default(cuid())
+  userId       String
+  collectionId String
+  grantedAt    DateTime   @default(now())
+  grantedById  String?    // User who granted access
+  
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, collectionId])
+  @@index([userId])
+  @@index([collectionId])
 }
 
 // ────────────────────────────
@@ -358,6 +390,8 @@ model User {
   // Relations
   sessions        Session[]
   apiKeys         ApiKey[]
+  createdCollections Collection[] @relation("CreatedCollections")
+  collectionAccess   CollectionAccess[]
   
   @@index([username])
   @@index([email])

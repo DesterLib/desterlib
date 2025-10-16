@@ -6,8 +6,14 @@ export class CollectionsController {
    * GET /api/v1/collections
    * Get all collections
    */
-  async getCollections(_req: Request, res: Response): Promise<void> {
-    const collections = await collectionsService.getCollections();
+  async getCollections(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    const collections = await collectionsService.getCollections(
+      userId,
+      userRole
+    );
 
     res.jsonOk({
       message: `Found ${collections.length} collections`,
@@ -21,10 +27,14 @@ export class CollectionsController {
    */
   async getCollectionBySlugOrId(req: Request, res: Response): Promise<void> {
     const { slugOrId } = req.params;
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
 
     // Validated by middleware, safe to assert as string
     const collection = await collectionsService.getCollectionBySlugOrId(
-      slugOrId as string
+      slugOrId as string,
+      userId,
+      userRole
     );
 
     res.jsonOk({
@@ -50,8 +60,11 @@ export class CollectionsController {
    * GET /api/v1/collections/libraries
    * Get all libraries (collections with isLibrary=true)
    */
-  async getLibraries(_req: Request, res: Response): Promise<void> {
-    const libraries = await collectionsService.getLibraries();
+  async getLibraries(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    const libraries = await collectionsService.getLibraries(userId, userRole);
 
     res.jsonOk({
       message: `Found ${libraries.length} libraries`,
@@ -65,9 +78,15 @@ export class CollectionsController {
    */
   async deleteCollection(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
 
     // Validated by middleware, safe to assert as string
-    const deleted = await collectionsService.deleteCollection(id as string);
+    const deleted = await collectionsService.deleteCollection(
+      id as string,
+      userId,
+      userRole
+    );
 
     res.jsonOk({
       message: `Collection "${deleted.name}" deleted successfully`,
@@ -78,9 +97,16 @@ export class CollectionsController {
   /**
    * POST /api/v1/collections/cleanup-orphaned
    * Clean up orphaned media (media not associated with any collection)
+   * Admin only endpoint
    */
-  async cleanupOrphanedMedia(_req: Request, res: Response): Promise<void> {
-    const result = await collectionsService.cleanupOrphanedMedia();
+  async cleanupOrphanedMedia(req: Request, res: Response): Promise<void> {
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    const result = await collectionsService.cleanupOrphanedMedia(
+      userId,
+      userRole
+    );
 
     res.jsonOk({
       message:

@@ -19,6 +19,8 @@ interface LibrariesSettingsConfigParams {
   onUpdateSetting: (key: string, value: unknown) => void;
   onConfigureTmdb: () => void;
   onCleanupOrphaned: () => void;
+  currentUserId?: string;
+  currentUserRole?: string;
 }
 
 /**
@@ -33,7 +35,18 @@ export function librariesSettingsConfig({
   onScanLibrary,
   onConfigureTmdb,
   onCleanupOrphaned,
+  currentUserId,
+  currentUserRole,
 }: LibrariesSettingsConfigParams): SettingsPageConfig {
+  const isAdmin = currentUserRole === "ADMIN";
+
+  // Filter libraries for bulk operations - users only see their own, admins see all
+  const userLibraries = isAdmin
+    ? libraries
+    : libraries.filter((lib) => {
+        const libWithOwnership = lib as Collection & { createdById?: string };
+        return libWithOwnership.createdById === currentUserId;
+      });
   // Helper to get emoji and color based on media type
   const getLibraryIconInfo = (type?: string) => {
     switch (type) {
@@ -63,7 +76,7 @@ export function librariesSettingsConfig({
     title: "Libraries",
     description: "Manage your media libraries and collections",
     groups: [
-      ...(libraries.length > 0
+      ...(userLibraries.length > 0
         ? [
             {
               id: "bulk-operations",
@@ -71,8 +84,10 @@ export function librariesSettingsConfig({
               items: [
                 {
                   id: "scan-all-libraries",
-                  label: "Scan All Libraries",
-                  description: "Scan all libraries for new or modified files",
+                  label: isAdmin ? "Scan All Libraries" : "Scan My Libraries",
+                  description: isAdmin
+                    ? "Scan all libraries for new or modified files"
+                    : "Scan your libraries for new or modified files",
                   icon: "🔄",
                   iconBgColor: "bg-indigo-500/20",
                   actions: [
@@ -81,7 +96,7 @@ export function librariesSettingsConfig({
                       icon: FolderSync,
                       variant: "modification" as const,
                       onClick: () => {
-                        libraries.forEach((lib) => onScanLibrary(lib));
+                        userLibraries.forEach((lib) => onScanLibrary(lib));
                       },
                     },
                   ],
@@ -106,6 +121,13 @@ export function librariesSettingsConfig({
                   library.libraryType
                 );
 
+                // Check if user can modify this library
+                const libWithOwnership = library as Collection & {
+                  createdById?: string;
+                };
+                const canModify =
+                  isAdmin || libWithOwnership.createdById === currentUserId;
+
                 return {
                   id: `library-${library.id}`,
                   label: library.name || "Unnamed Library",
@@ -115,26 +137,35 @@ export function librariesSettingsConfig({
                   status: library.libraryType
                     ? formatMediaType(library.libraryType)
                     : undefined,
-                  actions: [
-                    {
-                      label: "Scan",
-                      icon: FolderSync,
-                      variant: "modification" as const,
-                      onClick: () => onScanLibrary(library),
-                    },
-                    {
-                      label: "Edit",
-                      icon: Pencil,
-                      variant: "modification" as const,
-                      onClick: () => onEditLibrary(library),
-                    },
-                    {
-                      label: "Remove",
-                      icon: Trash2,
-                      variant: "danger" as const,
-                      onClick: () => onDeleteLibrary(library),
-                    },
-                  ],
+                  actions: canModify
+                    ? [
+                        {
+                          label: "Scan",
+                          icon: FolderSync,
+                          variant: "modification" as const,
+                          onClick: () => onScanLibrary(library),
+                        },
+                        {
+                          label: "Edit",
+                          icon: Pencil,
+                          variant: "modification" as const,
+                          onClick: () => onEditLibrary(library),
+                        },
+                        {
+                          label: "Remove",
+                          icon: Trash2,
+                          variant: "danger" as const,
+                          onClick: () => onDeleteLibrary(library),
+                        },
+                      ]
+                    : [
+                        {
+                          label: "Scan",
+                          icon: FolderSync,
+                          variant: "modification" as const,
+                          onClick: () => onScanLibrary(library),
+                        },
+                      ],
                 };
               })
             : [
@@ -181,16 +212,18 @@ export function librariesSettingsConfig({
           {
             id: "cleanup-orphaned-media",
             label: "Clean Up Orphaned Media",
-            description:
-              "Remove media items that are no longer associated with any library",
+            description: isAdmin
+              ? "Remove media items that are no longer associated with any library"
+              : "Remove media items that are no longer associated with any library (Admin only)",
             icon: "🧹",
             iconBgColor: "bg-red-500/20",
             actions: [
               {
-                label: "Clean Up",
+                label: isAdmin ? "Clean Up" : "Clean Up (Admin Only)",
                 icon: Trash,
                 variant: "danger" as const,
-                onClick: onCleanupOrphaned,
+                onClick: isAdmin ? onCleanupOrphaned : () => {},
+                disabled: !isAdmin,
               },
             ],
           },

@@ -3,6 +3,7 @@ import { asyncHandler } from "../../lib/asyncHandler.js";
 import { validateRequest } from "../../lib/validation.js";
 import { collectionsController } from "./collections.controller.js";
 import { slugOrIdParamSchema, idParamSchema } from "./collections.schemas.js";
+import { optionalAuth, requireAuth } from "../../lib/auth/auth.middleware.js";
 
 const router: RouterType = Router();
 
@@ -20,6 +21,7 @@ const router: RouterType = Router();
  */
 router.get(
   "/",
+  optionalAuth,
   asyncHandler(collectionsController.getCollections.bind(collectionsController))
 );
 
@@ -70,6 +72,7 @@ router.get(
  */
 router.get(
   "/libraries",
+  optionalAuth,
   asyncHandler(collectionsController.getLibraries.bind(collectionsController))
 );
 
@@ -108,6 +111,7 @@ router.get(
  */
 router.post(
   "/cleanup-orphaned",
+  requireAuth,
   asyncHandler(
     collectionsController.cleanupOrphanedMedia.bind(collectionsController)
   )
@@ -135,6 +139,7 @@ router.post(
  */
 router.get(
   "/:slugOrId",
+  optionalAuth,
   validateRequest({ params: slugOrIdParamSchema }),
   asyncHandler(
     collectionsController.getCollectionBySlugOrId.bind(collectionsController)
@@ -163,6 +168,7 @@ router.get(
  */
 router.delete(
   "/:id",
+  requireAuth,
   validateRequest({ params: idParamSchema }),
   asyncHandler(
     collectionsController.deleteCollection.bind(collectionsController)

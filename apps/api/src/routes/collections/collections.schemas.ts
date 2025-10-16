@@ -3,7 +3,10 @@
  */
 
 import { z } from "zod";
-import { MediaType } from "../../generated/prisma/index.js";
+import {
+  MediaType,
+  CollectionVisibility,
+} from "../../generated/prisma/index.js";
 
 /**
  * Create collection request schema
@@ -25,6 +28,8 @@ export const createCollectionSchema = z.object({
   libraryPath: z.string().optional(),
   libraryType: z.nativeEnum(MediaType).optional(),
   parentId: z.string().optional(),
+  visibility: z.nativeEnum(CollectionVisibility).default("EVERYONE"),
+  accessUserIds: z.array(z.string()).optional(),
 });
 
 /**
