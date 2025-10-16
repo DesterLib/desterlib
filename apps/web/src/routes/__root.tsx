@@ -10,7 +10,7 @@ const RootLayout = () => {
   const isAuthPage = authPages.includes(location.pathname);
 
   return (
-    <main>
+    <main className="min-h-screen bg-background">
       {!isAuthPage && <Header />}
       <Outlet />
       <TanStackRouterDevtools />

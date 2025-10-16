@@ -10,9 +10,10 @@ export const tabsContainerTransition = {
 };
 
 export const searchContainerMotion = {
-  initial: { marginLeft: 8 },
+  initial: { marginLeft: 8, backdropFilter: "blur(0px)" },
   animate: (isSearchOpen: boolean) => ({
     marginLeft: isSearchOpen ? 0 : 8,
+    backdropFilter: isSearchOpen ? "blur(10px)" : "blur(0px)",
   }),
 };
 
@@ -46,6 +47,6 @@ export const filtersContainerTransition = {
 };
 
 export const filterButtonVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: { opacity: 1, scale: 1 },
+  hidden: { opacity: 0, scale: 0.9, backdropFilter: "blur(0px)" },
+  visible: { opacity: 1, scale: 1, backdropFilter: "blur(10px)" },
 };

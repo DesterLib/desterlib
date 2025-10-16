@@ -110,10 +110,22 @@ const Header = () => {
   return (
     <div className="w-full fixed top-0 left-0 right-0 z-50">
       <nav className="w-fit mx-auto space-y-4 p-4">
-        <div className="w-full flex justify-center items-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
+          className="w-full flex justify-center items-center"
+        >
           <motion.button
             onClick={() => setIsDialogOpen(true)}
-            className="border mr-2 h-12 w-12 bg-neutral-900/60 backdrop-blur-lg border-white/10 rounded-[50px] flex items-center justify-center"
+            initial={{ backdropFilter: "blur(0px)" }}
+            animate={{
+              backdropFilter: "blur(10px)",
+              transition: { delay: 0.2 },
+            }}
+            exit={{ backdropFilter: "blur(0px)" }}
+            className="border mr-2 h-12 w-12 bg-neutral-900/60 border-white/10 rounded-[50px] flex items-center justify-center"
           >
             <Logo className="w-8 h-8" />
           </motion.button>
@@ -126,7 +138,13 @@ const Header = () => {
                 variants={tabsContainerVariants}
                 transition={tabsContainerTransition}
               >
-                <div className="flex space-x-1 w-fit bg-neutral-900/60 backdrop-blur-lg p-1 rounded-[50px] border border-white/10">
+                <motion.div
+                  initial={{ backdropFilter: "blur(0px)" }}
+                  animate={{ backdropFilter: "blur(10px)" }}
+                  exit={{ backdropFilter: "blur(0px)" }}
+                  transition={{ delay: 0.2 }}
+                  className="flex space-x-1 w-fit bg-neutral-900/60 p-1 rounded-[50px] border border-white/10"
+                >
                   {tabs.map((tab) => (
                     <NavLink
                       key={tab.id}
@@ -136,14 +154,14 @@ const Header = () => {
                       showBubble={isOnHeaderTab}
                     />
                   ))}
-                </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
           <motion.div
             initial={searchContainerMotion.initial}
             animate={searchContainerMotion.animate(isSearchOpen)}
-            className="border bg-neutral-900/60 backdrop-blur-lg border-white/10 rounded-[50px] flex items-center"
+            className="border bg-neutral-900/60 border-white/10 rounded-[50px] flex items-center"
           >
             <div className="p-1">
               <motion.button
@@ -188,7 +206,7 @@ const Header = () => {
             </AnimatePresence>
           </motion.div>
           <UserMenu />
-        </div>
+        </motion.div>
         <AnimatePresence>
           {isSearchOpen && (
             <motion.div

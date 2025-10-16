@@ -37,10 +37,10 @@ function UserMenu() {
 
   return (
     <div className="relative ml-2">
-      <div className="border bg-neutral-900/60 rounded-[50px] p-1">
+      <div className="border bg-neutral-900/60 backdrop-blur-lg rounded-[50px] p-1">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="h-10 px-1 backdrop-blur-lg  rounded-[50px] flex items-center gap-2 justify-between hover:bg-white/10 transition-colors"
+          className="h-10 px-1  rounded-[50px] flex items-center gap-2 justify-between hover:bg-white/10 transition-colors"
         >
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
@@ -79,7 +79,7 @@ function UserMenu() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute right-0 mt-2 w-56 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden"
+              className="absolute right-0 mt-2 w-56 bg-neutral-900/60 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden"
             >
               {/* User Info */}
               <div className="px-4 py-3 border-b border-white/10">
