@@ -14,9 +14,14 @@ import {
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { requireAuth } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/media/$mediaId")({
   component: MediaDetails,
+  beforeLoad: async () => {
+    // Require authentication to view media details
+    await requireAuth();
+  },
 });
 
 function MediaDetails() {

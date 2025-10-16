@@ -11,11 +11,13 @@ import type {
   GetApiV1Users200UsersItem,
   PutApiV1UsersUserIdBody,
 } from "@dester/api-client";
+import { requireAdmin } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/settings/users")({
   component: RouteComponent,
-  beforeLoad: () => {
-    // Note: We can't access useAuth here, so we'll handle auth check in component
+  beforeLoad: async () => {
+    // Require admin role (ADMIN or SUPER_ADMIN) - redirects to login if not authenticated
+    await requireAdmin();
   },
 });
 

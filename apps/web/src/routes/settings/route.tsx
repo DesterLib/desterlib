@@ -19,10 +19,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { blockGuests } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
-  beforeLoad: ({ location }) => {
+  beforeLoad: async ({ location }) => {
+    // Require authenticated user (block guests) - redirects to login if not authenticated
+    await blockGuests();
+
     // If we're at the exact settings route, redirect to libraries
     if (location.pathname === "/settings") {
       throw redirect({ to: "/settings/libraries" });

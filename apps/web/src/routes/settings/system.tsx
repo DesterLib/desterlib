@@ -14,17 +14,19 @@ import {
 } from "@/lib/hooks/useSystem";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, CheckCircle, XCircle, ShieldAlert } from "lucide-react";
+import { requireAdmin } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/settings/system")({
   component: RouteComponent,
-  beforeLoad: () => {
-    // Note: We can't access useAuth here, so we'll handle auth check in component
+  beforeLoad: async () => {
+    // Require admin role (ADMIN or SUPER_ADMIN) - redirects to login if not authenticated
+    await requireAdmin();
   },
 });
 
 function RouteComponent() {
   const { user, isLoading: isAuthLoading } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
   const { data: healthData, refetch: refetchHealth } = useAdminHealthCheck();
   const { data: performanceData } = usePerformanceMetrics();
   const { data: alertData } = useActiveAlerts();

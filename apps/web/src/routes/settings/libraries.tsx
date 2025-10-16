@@ -4,6 +4,7 @@ import { SettingGroup } from "@/components/settings/setting-group";
 import { LibraryFormDialog } from "@/components/settings/library-form-dialog";
 import { LibraryDeleteDialog } from "@/components/settings/library-delete-dialog";
 import { TmdbApiKeyDialog } from "@/components/settings/tmdb-api-key-dialog";
+import { ScanProgressCard } from "@/components/settings/scan-progress-card";
 import {
   useLibraries,
   useDeleteLibrary,
@@ -17,9 +18,15 @@ import type { Collection } from "@dester/api-client";
 import type { MediaType } from "@/lib/schemas/library.schema";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useScanProgress } from "@/hooks/useScanProgress";
+import { blockGuests } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/settings/libraries")({
   component: RouteComponent,
+  beforeLoad: async () => {
+    // Require authenticated user (block guests) - redirects to login if not authenticated
+    await blockGuests();
+  },
 });
 
 function RouteComponent() {
@@ -31,6 +38,7 @@ function RouteComponent() {
   const scanLibrary = useScanLibrary();
   const updateSettings = useUpdateSettings();
   const cleanupOrphaned = useCleanupOrphanedMedia();
+  const { activeScan } = useScanProgress();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -39,7 +47,6 @@ function RouteComponent() {
   const [selectedLibrary, setSelectedLibrary] = useState<
     Collection | undefined
   >();
-  const [scanningLibrary, setScanningLibrary] = useState<string | null>(null);
   const [cleanupStatus, setCleanupStatus] = useState<string | null>(null);
 
   // Handle adding a new library
@@ -99,16 +106,10 @@ function RouteComponent() {
   const handleScanLibrary = async (library: Collection) => {
     if (!library.libraryPath || !library.libraryType) return;
 
-    setScanningLibrary(library.name || library.id || "Unknown Library");
-    try {
-      await scanLibrary.mutateAsync({
-        path: library.libraryPath,
-        mediaType: library.libraryType,
-      });
-    } finally {
-      // Keep the message visible for a moment before clearing
-      setTimeout(() => setScanningLibrary(null), 3000);
-    }
+    await scanLibrary.mutateAsync({
+      path: library.libraryPath,
+      mediaType: library.libraryType,
+    });
   };
 
   // Handle TMDB API key update
@@ -232,60 +233,12 @@ function RouteComponent() {
                   </div>
                 )}
 
-                {/* Show scan progress before the library manager group */}
-                {index === 0 &&
-                  (scanLibrary.isPending ||
-                    scanLibrary.isSuccess ||
-                    scanLibrary.isError) &&
-                  scanningLibrary && (
-                    <div className="mb-4 bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/10">
-                      <div className="flex items-center gap-3">
-                        {scanLibrary.isPending && (
-                          <>
-                            <Loader2 className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-white">
-                                Scanning library: {scanningLibrary}
-                              </p>
-                              <p className="text-xs text-white/60 mt-1">
-                                Scanning media files, fetching metadata from
-                                TMDB, and updating your collection...
-                              </p>
-                            </div>
-                          </>
-                        )}
-                        {scanLibrary.isSuccess && (
-                          <>
-                            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-white">
-                                Scan completed: {scanningLibrary}
-                              </p>
-                              <p className="text-xs text-white/60 mt-1">
-                                Library scan finished. All media has been
-                                updated with the latest metadata from TMDB.
-                              </p>
-                            </div>
-                          </>
-                        )}
-                        {scanLibrary.isError && (
-                          <>
-                            <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-white">
-                                Scan failed: {scanningLibrary}
-                              </p>
-                              <p className="text-xs text-white/60 mt-1">
-                                {scanLibrary.error instanceof Error
-                                  ? scanLibrary.error.message
-                                  : "An error occurred while scanning the library."}
-                              </p>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                {/* Show real-time scan progress */}
+                {index === 0 && activeScan && (
+                  <div className="mb-4">
+                    <ScanProgressCard progress={activeScan} />
+                  </div>
+                )}
                 <SettingGroup group={group} />
               </div>
             ))}

@@ -38,7 +38,8 @@ export function librariesSettingsConfig({
   currentUserId,
   currentUserRole,
 }: LibrariesSettingsConfigParams): SettingsPageConfig {
-  const isAdmin = currentUserRole === "ADMIN";
+  const isAdmin =
+    currentUserRole === "ADMIN" || currentUserRole === "SUPER_ADMIN";
 
   // Filter libraries for bulk operations - users only see their own, admins see all
   const userLibraries = isAdmin
