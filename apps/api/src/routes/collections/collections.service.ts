@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { NotFoundError } from "../../lib/errors.js";
+import { invalidateCache } from "../../lib/cacheMiddleware.js";
 
 export class CollectionsService {
   /**
@@ -215,21 +216,100 @@ export class CollectionsService {
 
   /**
    * Delete a collection by ID
+   * If it's a library, also deletes all associated media content
    */
   async deleteCollection(id: string) {
     const collection = await prisma.collection.findUnique({
       where: { id },
+      include: {
+        media: {
+          include: {
+            media: true,
+          },
+        },
+      },
     });
 
     if (!collection) {
       throw new NotFoundError(`Collection with ID "${id}" not found`);
     }
 
+    // If this is a library, delete all associated media
+    // Libraries are the source of truth for media content
+    if (collection.isLibrary) {
+      const mediaIds = collection.media.map((mc) => mc.mediaId);
+
+      if (mediaIds.length > 0) {
+        // Delete all media items that were in this library
+        // This will cascade to delete movies, TV shows, episodes, etc.
+        await prisma.media.deleteMany({
+          where: {
+            id: { in: mediaIds },
+          },
+        });
+      }
+    }
+
+    // Delete the collection itself
+    // (MediaCollection join table entries will cascade delete)
     await prisma.collection.delete({
       where: { id },
     });
 
+    // Invalidate relevant caches to ensure UI updates
+    await invalidateCache("cache:GET:/api/v1/collections*");
+    await invalidateCache("cache:GET:/api/v1/media*");
+    await invalidateCache("cache:GET:/api/v1/movies*");
+    await invalidateCache("cache:GET:/api/v1/tv-shows*");
+
     return { id, name: collection.name };
+  }
+
+  /**
+   * Clean up orphaned media
+   * Finds and deletes media items that are not associated with any collection
+   */
+  async cleanupOrphanedMedia() {
+    // Find all media that has no collection associations
+    const orphanedMedia = await prisma.media.findMany({
+      where: {
+        collections: {
+          none: {},
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+      },
+    });
+
+    if (orphanedMedia.length === 0) {
+      return {
+        deleted: 0,
+        media: [],
+      };
+    }
+
+    const mediaIds = orphanedMedia.map((m) => m.id);
+
+    // Delete all orphaned media
+    // This will cascade to delete movies, TV shows, episodes, etc.
+    await prisma.media.deleteMany({
+      where: {
+        id: { in: mediaIds },
+      },
+    });
+
+    // Invalidate caches
+    await invalidateCache("cache:GET:/api/v1/media*");
+    await invalidateCache("cache:GET:/api/v1/movies*");
+    await invalidateCache("cache:GET:/api/v1/tv-shows*");
+
+    return {
+      deleted: orphanedMedia.length,
+      media: orphanedMedia,
+    };
   }
 }
 

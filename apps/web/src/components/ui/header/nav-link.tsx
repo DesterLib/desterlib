@@ -1,15 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 
+interface NavLinkProps {
+  tab: { id: string; label: string; href: string };
+  activeTab: string;
+  setActiveTab: (id: string) => void;
+  showBubble?: boolean;
+}
+
 const NavLink = ({
   tab,
   activeTab,
   setActiveTab,
-}: {
-  tab: { id: string; label: string; href: string };
-  activeTab: string;
-  setActiveTab: (id: string) => void;
-}) => {
+  showBubble = true,
+}: NavLinkProps) => {
   return (
     <Link
       key={tab.id}
@@ -22,7 +26,7 @@ const NavLink = ({
       }}
       to={tab.href}
     >
-      {activeTab === tab.id && (
+      {activeTab === tab.id && showBubble && (
         <motion.span
           layoutId="bubble"
           className="absolute inset-0 z-10 bg-white mix-blend-difference"

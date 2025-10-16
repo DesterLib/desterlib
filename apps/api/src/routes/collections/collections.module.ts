@@ -75,6 +75,46 @@ router.get(
 
 /**
  * @openapi
+ * /api/v1/collections/cleanup-orphaned:
+ *   post:
+ *     summary: Clean up orphaned media
+ *     description: Delete all media items that are not associated with any collection
+ *     tags:
+ *       - Collections
+ *     responses:
+ *       200:
+ *         description: Successfully cleaned up orphaned media
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         message:
+ *                           type: string
+ *                         cleanup:
+ *                           type: object
+ *                           properties:
+ *                             deleted:
+ *                               type: number
+ *                             media:
+ *                               type: array
+ *                               items:
+ *                                 type: object
+ */
+router.post(
+  "/cleanup-orphaned",
+  asyncHandler(
+    collectionsController.cleanupOrphanedMedia.bind(collectionsController)
+  )
+);
+
+/**
+ * @openapi
  * /api/v1/collections/{slugOrId}:
  *   get:
  *     summary: Get a collection by slug or ID

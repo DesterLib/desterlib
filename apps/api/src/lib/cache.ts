@@ -29,22 +29,34 @@ class CacheService {
    */
   private connect(): void {
     try {
+      const redisOptions = {
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
+        lazyConnect: false,
+        // Limit reconnection attempts - Redis is optional
+        retryStrategy: (times: number) => {
+          if (times > 3) {
+            // Stop retrying after 3 attempts
+            logger.warn(
+              `Redis connection failed after ${times} attempts. Running without cache.`
+            );
+            return null; // Stop retrying
+          }
+          // Wait 1 second between retries
+          return 1000;
+        },
+      };
+
       // Use Redis URL if provided, otherwise use individual config
       if (env.REDIS_URL) {
-        this.client = new Redis(env.REDIS_URL, {
-          maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
-          lazyConnect: false,
-        });
+        this.client = new Redis(env.REDIS_URL, redisOptions);
       } else {
         this.client = new Redis({
           host: env.REDIS_HOST,
           port: env.REDIS_PORT,
           password: env.REDIS_PASSWORD,
           db: env.REDIS_DB,
-          maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
-          lazyConnect: false,
+          ...redisOptions,
         });
       }
 
@@ -52,19 +64,38 @@ class CacheService {
         logger.info(
           `✅ Redis cache connected to ${env.REDIS_HOST}:${env.REDIS_PORT}`
         );
+        this.enabled = true;
       });
 
       this.client.on("error", (error: Error) => {
-        logger.error("Redis cache error:", error);
+        // Only log first error, not every retry
+        if (this.enabled) {
+          logger.error("Redis cache error:", error);
+        }
         // Don't crash the app, just disable cache
         this.enabled = false;
       });
 
       this.client.on("close", () => {
-        logger.warn("Redis cache connection closed");
+        if (this.enabled) {
+          logger.warn("Redis cache connection closed");
+        }
+        this.enabled = false;
+      });
+
+      // Handle connection end (when retries are exhausted)
+      this.client.on("end", () => {
+        logger.info(
+          "⚠️  Running without Redis cache. Application functionality not affected."
+        );
+        this.enabled = false;
+        this.client = null;
       });
     } catch (error) {
       logger.error("Failed to initialize Redis cache:", error);
+      logger.info(
+        "⚠️  Running without Redis cache. Application functionality not affected."
+      );
       this.enabled = false;
       this.client = null;
     }
@@ -287,8 +318,15 @@ class CacheService {
    */
   async close(): Promise<void> {
     if (this.client) {
-      await this.client.quit();
-      logger.info("Redis cache connection closed gracefully");
+      try {
+        await this.client.quit();
+        logger.info("Redis cache connection closed gracefully");
+      } catch {
+        // Client might already be disconnected, that's okay
+        logger.debug("Redis client already disconnected");
+      }
+      this.client = null;
+      this.enabled = false;
     }
   }
 }

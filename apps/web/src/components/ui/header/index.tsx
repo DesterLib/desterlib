@@ -20,6 +20,7 @@ import ModeDialog from "../mode-dialog";
 import { useSearch } from "@/lib/hooks";
 import type { GetApiV1SearchParams } from "@dester/api-client";
 import SearchResults from "./search-results";
+import { useLocation } from "@tanstack/react-router";
 
 const tabs = [
   { id: "home", label: "Home", href: "/" },
@@ -28,6 +29,7 @@ const tabs = [
 ];
 
 const Header = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -36,6 +38,29 @@ const Header = () => {
   const [searchFilter, setSearchFilter] = useState<
     "all" | "movies" | "tvshows"
   >("all");
+
+  // Sync activeTab with current route
+  useEffect(() => {
+    const currentTab = tabs.find((tab) => {
+      // Exact match for home, startsWith for others to handle nested routes
+      if (tab.href === "/") {
+        return location.pathname === "/";
+      }
+      return location.pathname.startsWith(tab.href);
+    });
+    if (currentTab) {
+      setActiveTab(currentTab.id);
+    }
+  }, [location.pathname]);
+
+  // Check if current path matches any of the header tabs
+  const isOnHeaderTab = tabs.some((tab) => {
+    // Exact match for home, startsWith for others to handle nested routes
+    if (tab.href === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(tab.href);
+  });
 
   // Debounce search query
   useEffect(() => {
@@ -91,6 +116,7 @@ const Header = () => {
                       tab={tab}
                       activeTab={activeTab}
                       setActiveTab={setActiveTab}
+                      showBubble={isOnHeaderTab}
                     />
                   ))}
                 </div>

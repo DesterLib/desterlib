@@ -246,36 +246,57 @@ app.use(errorHandler);
 // Server Startup
 // ────────────────────────────────────────────────────────────────────────────
 
-const server = app.listen(env.PORT, () => {
-  logger.info(`🚀 Server started successfully`);
-  logger.info(`   Environment: ${env.NODE_ENV}`);
-  logger.info(`   Port: ${env.PORT}`);
-  logger.info(`   API: http://localhost:${env.PORT}/api/v1`);
-  logger.info(`   Docs: http://localhost:${env.PORT}/api-docs`);
-  logger.info(`   Health: http://localhost:${env.PORT}/health`);
-  logger.info(`   Metrics: http://localhost:${env.PORT}/metrics`);
-  logger.info(`   WebSocket: ws://localhost:${env.PORT}/ws`);
-  logger.info(`   CSRF Protection: Enabled`);
-});
+import { verifyDatabaseConnection } from "./lib/prisma.js";
 
-// Initialize WebSocket server
-webSocketService.initialize(server);
+async function startServer() {
+  try {
+    // Verify database connection before starting server
+    logger.info("Verifying database connection...");
+    await verifyDatabaseConnection();
 
-// Schedule automatic backups
-scheduleBackups();
+    // Start the HTTP server
+    const server = app.listen(env.PORT, () => {
+      logger.info(`🚀 Server started successfully`);
+      logger.info(`   Environment: ${env.NODE_ENV}`);
+      logger.info(`   Port: ${env.PORT}`);
+      logger.info(`   API: http://localhost:${env.PORT}/api/v1`);
+      logger.info(`   Docs: http://localhost:${env.PORT}/api-docs`);
+      logger.info(`   Health: http://localhost:${env.PORT}/health`);
+      logger.info(`   Metrics: http://localhost:${env.PORT}/metrics`);
+      logger.info(`   WebSocket: ws://localhost:${env.PORT}/ws`);
+      logger.info(`   CSRF Protection: Enabled`);
+    });
 
-// Warm up cache with frequently accessed data
-warmupCache().catch((error) => {
-  logger.error("Cache warmup failed:", error);
-});
+    // Initialize WebSocket server
+    webSocketService.initialize(server);
 
-// Start health monitoring and alerting
-alertingService.startMonitoring(60000); // Check every minute
-logger.info("Health monitoring and alerting started");
+    // Schedule automatic backups
+    scheduleBackups();
 
-// Start performance monitoring
-performanceMonitor.startPeriodicChecks(60000); // Check every minute
-logger.info("Performance monitoring started");
+    // Warm up cache with frequently accessed data
+    warmupCache().catch((error) => {
+      logger.error("Cache warmup failed:", error);
+    });
 
-// Setup graceful shutdown handlers
-setupGracefulShutdown(server);
+    // Start health monitoring and alerting
+    alertingService.startMonitoring(60000); // Check every minute
+    logger.info("Health monitoring and alerting started");
+
+    // Start performance monitoring
+    performanceMonitor.startPeriodicChecks(60000); // Check every minute
+    logger.info("Performance monitoring started");
+
+    // Setup graceful shutdown handlers
+    setupGracefulShutdown(server);
+  } catch (error) {
+    logger.error("Failed to start server:", error);
+    logger.error(
+      "\n⛔ Server startup aborted due to database connection failure."
+    );
+    logger.error("   Please resolve the database issue and try again.\n");
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();

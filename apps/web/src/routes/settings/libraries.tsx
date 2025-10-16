@@ -9,6 +9,7 @@ import {
   useDeleteLibrary,
   useUpdateLibraries,
   useScanLibrary,
+  useCleanupOrphanedMedia,
 } from "@/lib/hooks/useLibraries";
 import { useSettings, useUpdateSettings } from "@/lib/hooks/useSettings";
 import { librariesSettingsConfig } from "@/config/libraries-settings-config";
@@ -27,6 +28,7 @@ function RouteComponent() {
   const updateLibraries = useUpdateLibraries();
   const scanLibrary = useScanLibrary();
   const updateSettings = useUpdateSettings();
+  const cleanupOrphaned = useCleanupOrphanedMedia();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -36,6 +38,7 @@ function RouteComponent() {
     Collection | undefined
   >();
   const [scanningLibrary, setScanningLibrary] = useState<string | null>(null);
+  const [cleanupStatus, setCleanupStatus] = useState<string | null>(null);
 
   // Handle adding a new library
   const handleAddLibrary = async (values: {
@@ -118,6 +121,26 @@ function RouteComponent() {
     >[0]);
   };
 
+  // Handle cleanup orphaned media
+  const handleCleanupOrphaned = async () => {
+    setCleanupStatus("cleaning");
+    try {
+      const result = await cleanupOrphaned.mutateAsync();
+      const deletedCount = result?.deleted ?? 0;
+      if (deletedCount > 0) {
+        setCleanupStatus(
+          `Cleaned up ${deletedCount} orphaned media item${deletedCount === 1 ? "" : "s"}`
+        );
+      } else {
+        setCleanupStatus("No orphaned media found");
+      }
+    } catch {
+      setCleanupStatus("Failed to clean up orphaned media");
+    } finally {
+      setTimeout(() => setCleanupStatus(null), 5000);
+    }
+  };
+
   // Generate the config dynamically with real data
   const config = librariesSettingsConfig({
     libraries,
@@ -134,6 +157,7 @@ function RouteComponent() {
     onScanLibrary: handleScanLibrary,
     onUpdateSetting: handleUpdateSetting,
     onConfigureTmdb: () => setTmdbDialogOpen(true),
+    onCleanupOrphaned: handleCleanupOrphaned,
   });
 
   if (isLoading) {
@@ -170,6 +194,40 @@ function RouteComponent() {
           >
             {config.groups.map((group, index) => (
               <div key={group.id}>
+                {/* Show cleanup status */}
+                {index === 0 && cleanupStatus && (
+                  <div className="mb-4 bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/10">
+                    <div className="flex items-center gap-3">
+                      {cleanupStatus === "cleaning" && (
+                        <>
+                          <Loader2 className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-white">
+                              Cleaning up orphaned media...
+                            </p>
+                            <p className="text-xs text-white/60 mt-1">
+                              Removing media items not associated with any
+                              library
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      {cleanupStatus !== "cleaning" && (
+                        <>
+                          {cleanupStatus.includes("Failed") ? (
+                            <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                          ) : (
+                            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                          )}
+                          <p className="text-sm font-medium text-white">
+                            {cleanupStatus}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Show scan progress before the library manager group */}
                 {index === 0 &&
                   (scanLibrary.isPending ||

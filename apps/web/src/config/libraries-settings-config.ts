@@ -6,6 +6,7 @@ import {
   Trash2,
   FolderSync,
   Settings as SettingsIcon,
+  Trash,
 } from "lucide-react";
 
 interface LibrariesSettingsConfigParams {
@@ -17,6 +18,7 @@ interface LibrariesSettingsConfigParams {
   onScanLibrary: (library: Collection) => void;
   onUpdateSetting: (key: string, value: unknown) => void;
   onConfigureTmdb: () => void;
+  onCleanupOrphaned: () => void;
 }
 
 /**
@@ -30,6 +32,7 @@ export function librariesSettingsConfig({
   onDeleteLibrary,
   onScanLibrary,
   onConfigureTmdb,
+  onCleanupOrphaned,
 }: LibrariesSettingsConfigParams): SettingsPageConfig {
   // Helper to get emoji and color based on media type
   const getLibraryIconInfo = (type?: string) => {
@@ -60,6 +63,33 @@ export function librariesSettingsConfig({
     title: "Libraries",
     description: "Manage your media libraries and collections",
     groups: [
+      ...(libraries.length > 0
+        ? [
+            {
+              id: "bulk-operations",
+              title: "Bulk Operations",
+              items: [
+                {
+                  id: "scan-all-libraries",
+                  label: "Scan All Libraries",
+                  description: "Scan all libraries for new or modified files",
+                  icon: "🔄",
+                  iconBgColor: "bg-indigo-500/20",
+                  actions: [
+                    {
+                      label: "Scan All",
+                      icon: FolderSync,
+                      variant: "modification" as const,
+                      onClick: () => {
+                        libraries.forEach((lib) => onScanLibrary(lib));
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ]
+        : []),
       {
         id: "library-management",
         title: "Library Management",
@@ -78,7 +108,7 @@ export function librariesSettingsConfig({
 
                 return {
                   id: `library-${library.id}`,
-                  label: library.name,
+                  label: library.name || "Unnamed Library",
                   description: library.libraryPath || "No path configured",
                   icon,
                   iconBgColor: bgColor,
@@ -145,21 +175,22 @@ export function librariesSettingsConfig({
         ],
       },
       {
-        id: "scanning-organization",
-        title: "Scanning & Organization",
+        id: "maintenance",
+        title: "Maintenance",
         items: [
           {
-            id: "scan-all-libraries",
-            label: "Scan All Libraries",
-            description: "Scan all libraries for new or modified files",
+            id: "cleanup-orphaned-media",
+            label: "Clean Up Orphaned Media",
+            description:
+              "Remove media items that are no longer associated with any library",
+            icon: "🧹",
+            iconBgColor: "bg-red-500/20",
             actions: [
               {
-                label: "Scan All",
-                icon: FolderSync,
-                variant: "modification" as const,
-                onClick: () => {
-                  libraries.forEach((lib) => onScanLibrary(lib));
-                },
+                label: "Clean Up",
+                icon: Trash,
+                variant: "danger" as const,
+                onClick: onCleanupOrphaned,
               },
             ],
           },

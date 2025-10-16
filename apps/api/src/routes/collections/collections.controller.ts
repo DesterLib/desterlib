@@ -74,6 +74,22 @@ export class CollectionsController {
       collection: deleted,
     });
   }
+
+  /**
+   * POST /api/v1/collections/cleanup-orphaned
+   * Clean up orphaned media (media not associated with any collection)
+   */
+  async cleanupOrphanedMedia(_req: Request, res: Response): Promise<void> {
+    const result = await collectionsService.cleanupOrphanedMedia();
+
+    res.jsonOk({
+      message:
+        result.deleted === 0
+          ? "No orphaned media found"
+          : `Cleaned up ${result.deleted} orphaned media item${result.deleted === 1 ? "" : "s"}`,
+      cleanup: result,
+    });
+  }
 }
 
 // Export singleton instance

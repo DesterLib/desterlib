@@ -10,10 +10,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type MediaType } from "@/lib/schemas/library.schema";
 import type { Collection } from "@dester/api-client";
+import { FolderOpen } from "lucide-react";
 
 interface LibraryFormDialogProps {
   open: boolean;
@@ -47,6 +54,49 @@ export function LibraryFormDialog({
       onOpenChange(false);
     },
   });
+
+  // Handle directory picker
+  const handleBrowseClick = async () => {
+    // Check if we're in Flutter WebView (webview_flutter)
+    if (window.pickDirectory) {
+      // Set up callback for Flutter to call back with the path
+      window.flutter_directory_callback = (path: string) => {
+        if (path) {
+          form.setFieldValue("path", path);
+        }
+      };
+
+      // Call Flutter's JavaScript channel
+      try {
+        window.pickDirectory.postMessage("");
+      } catch (error) {
+        console.error("Failed to call pickDirectory:", error);
+        alert("Please enter the path manually");
+      }
+    } else {
+      // For modern browsers: use File System Access API
+      if ("showDirectoryPicker" in window) {
+        try {
+          // @ts-expect-error - showDirectoryPicker is not in TypeScript types yet
+          const dirHandle = await window.showDirectoryPicker();
+          // Note: We can't get the full absolute path in browsers for security reasons
+          // But we can get the directory name which might be useful
+          form.setFieldValue("path", dirHandle.name);
+          alert(
+            "Note: Browsers don't provide full paths for security. Please enter the full path manually (e.g., /media/movies)"
+          );
+        } catch (error) {
+          // User cancelled or error occurred
+          console.log("Directory picker cancelled or error:", error);
+        }
+      } else {
+        // Fallback: inform user to enter path manually
+        alert(
+          "Directory picker not supported in this browser. Please enter the full path manually (e.g., /media/movies or C:\\Media\\Movies)"
+        );
+      }
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,18 +158,24 @@ export function LibraryFormDialog({
                   Library Type *
                 </Label>
                 <Select
-                  id="type"
                   value={field.state.value}
-                  onChange={(e) =>
-                    field.handleChange(e.target.value as MediaType)
+                  onValueChange={(value: string) =>
+                    field.handleChange(value as MediaType)
                   }
-                  onBlur={field.handleBlur}
-                  className="bg-white/5 border-white/10 focus:border-white/20"
                 >
-                  <option value="MOVIE">Movies</option>
-                  <option value="TV_SHOW">TV Shows</option>
-                  <option value="MUSIC">Music</option>
-                  <option value="COMIC">Comics</option>
+                  <SelectTrigger
+                    id="type"
+                    className="bg-white/5 border-white/10 focus:border-white/20"
+                    onBlur={field.handleBlur}
+                  >
+                    <SelectValue placeholder="Select a type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MOVIE">Movies</SelectItem>
+                    <SelectItem value="TV_SHOW">TV Shows</SelectItem>
+                    <SelectItem value="MUSIC">Music</SelectItem>
+                    <SelectItem value="COMIC">Comics</SelectItem>
+                  </SelectContent>
                 </Select>
                 {field.state.meta.errors.length > 0 && (
                   <p className="text-xs text-red-400">
@@ -140,14 +196,26 @@ export function LibraryFormDialog({
                 >
                   Library Path *
                 </Label>
-                <Input
-                  id="path"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  placeholder="/path/to/media/folder"
-                  className="bg-white/5 border-white/10 focus:border-white/20 font-mono text-sm"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="path"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    placeholder="/path/to/media/folder"
+                    className="flex-1 bg-white/5 border-white/10 focus:border-white/20 font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleBrowseClick}
+                    className="flex-shrink-0 hover:bg-white/10"
+                    title="Browse for folder"
+                  >
+                    <FolderOpen className="w-4 h-4" />
+                  </Button>
+                </div>
                 {field.state.meta.errors.length > 0 && (
                   <p className="text-xs text-red-400">
                     {field.state.meta.errors[0]}

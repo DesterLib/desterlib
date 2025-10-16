@@ -5,6 +5,7 @@ import {
   deleteApiV1CollectionsId,
   patchApiV1Settings,
   postApiV1Scan,
+  postApiV1CollectionsCleanupOrphaned,
   type MediaType,
 } from "@dester/api-client";
 import "@/lib/api-client"; // Import to ensure client is configured
@@ -107,6 +108,29 @@ export function useScanLibrary() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       queryClient.invalidateQueries({ queryKey: ["media"] });
+    },
+  });
+}
+
+/**
+ * Hook to clean up orphaned media
+ */
+export function useCleanupOrphanedMedia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await postApiV1CollectionsCleanupOrphaned();
+      if (response.status === 200) {
+        return response.data.data?.cleanup ?? null;
+      }
+      return null;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      queryClient.invalidateQueries({ queryKey: ["media"] });
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+      queryClient.invalidateQueries({ queryKey: ["tv-shows"] });
     },
   });
 }

@@ -369,6 +369,27 @@ export type GetApiV1CollectionsLibraries200AllOf = {
 export type GetApiV1CollectionsLibraries200 = SuccessResponse &
   GetApiV1CollectionsLibraries200AllOf;
 
+export type PostApiV1CollectionsCleanupOrphaned200AllOfDataCleanupMediaItem = {
+  [key: string]: unknown;
+};
+
+export type PostApiV1CollectionsCleanupOrphaned200AllOfDataCleanup = {
+  deleted?: number;
+  media?: PostApiV1CollectionsCleanupOrphaned200AllOfDataCleanupMediaItem[];
+};
+
+export type PostApiV1CollectionsCleanupOrphaned200AllOfData = {
+  message?: string;
+  cleanup?: PostApiV1CollectionsCleanupOrphaned200AllOfDataCleanup;
+};
+
+export type PostApiV1CollectionsCleanupOrphaned200AllOf = {
+  data?: PostApiV1CollectionsCleanupOrphaned200AllOfData;
+};
+
+export type PostApiV1CollectionsCleanupOrphaned200 = SuccessResponse &
+  PostApiV1CollectionsCleanupOrphaned200AllOf;
+
 export type GetApiV1ComicsParams = {
   /**
    * Search in title and description
@@ -2152,6 +2173,38 @@ export const getApiV1CollectionsLibraries = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+/**
+ * Delete all media items that are not associated with any collection
+ * @summary Clean up orphaned media
+ */
+export type postApiV1CollectionsCleanupOrphanedResponse200 = {
+  data: PostApiV1CollectionsCleanupOrphaned200;
+  status: 200;
+};
+
+export type postApiV1CollectionsCleanupOrphanedResponseSuccess =
+  postApiV1CollectionsCleanupOrphanedResponse200 & {
+    headers: Headers;
+  };
+export type postApiV1CollectionsCleanupOrphanedResponse =
+  postApiV1CollectionsCleanupOrphanedResponseSuccess;
+
+export const getPostApiV1CollectionsCleanupOrphanedUrl = () => {
+  return `/api/v1/collections/cleanup-orphaned`;
+};
+
+export const postApiV1CollectionsCleanupOrphaned = async (
+  options?: RequestInit,
+): Promise<postApiV1CollectionsCleanupOrphanedResponse> => {
+  return customFetcher<postApiV1CollectionsCleanupOrphanedResponse>(
+    getPostApiV1CollectionsCleanupOrphanedUrl(),
+    {
+      ...options,
+      method: "POST",
     },
   );
 };

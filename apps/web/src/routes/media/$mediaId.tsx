@@ -285,131 +285,139 @@ function MediaDetails() {
           >
             <h2 className="text-2xl font-semibold text-white">Seasons</h2>
             <div className="space-y-3">
-              {data.tvShow.seasons.map(
-                (season: {
-                  id?: string;
-                  number?: number;
-                  episodes?: Array<{
+              {data.tvShow.seasons
+                .sort(
+                  (a: { number?: number }, b: { number?: number }) =>
+                    (a.number ?? 0) - (b.number ?? 0)
+                )
+                .map(
+                  (season: {
                     id?: string;
-                    title?: string;
                     number?: number;
-                    duration?: number | null;
-                    filePath?: string;
-                  }>;
-                }) => {
-                  const isExpanded = expandedSeasonId === season.id;
-                  const episodes = season.episodes || [];
+                    episodes?: Array<{
+                      id?: string;
+                      title?: string;
+                      number?: number;
+                      duration?: number | null;
+                      filePath?: string;
+                    }>;
+                  }) => {
+                    const isExpanded = expandedSeasonId === season.id;
+                    // Sort episodes by episode number
+                    const episodes = (season.episodes || []).sort(
+                      (a, b) => (a.number ?? 0) - (b.number ?? 0)
+                    );
 
-                  return (
-                    <div
-                      key={season.id}
-                      className="bg-neutral-900/40 backdrop-blur-lg border border-neutral-800/40 rounded-2xl overflow-hidden"
-                    >
-                      {/* Season Header */}
-                      <button
-                        onClick={() =>
-                          setExpandedSeasonId(
-                            isExpanded ? null : (season.id ?? null)
-                          )
-                        }
-                        className="w-full p-6 flex items-center justify-between hover:bg-neutral-900/60 transition-colors"
+                    return (
+                      <div
+                        key={season.id}
+                        className="bg-neutral-900/40 backdrop-blur-lg border border-neutral-800/40 rounded-2xl overflow-hidden"
                       >
-                        <div className="flex items-center gap-4">
-                          <h3 className="text-lg font-semibold text-white">
-                            Season {season.number}
-                          </h3>
-                          <span className="text-sm text-white/60">
-                            {episodes.length}{" "}
-                            {episodes.length === 1 ? "episode" : "episodes"}
-                          </span>
-                        </div>
-                        <motion.div
-                          animate={{ rotate: isExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
+                        {/* Season Header */}
+                        <button
+                          onClick={() =>
+                            setExpandedSeasonId(
+                              isExpanded ? null : (season.id ?? null)
+                            )
+                          }
+                          className="w-full p-6 flex items-center justify-between hover:bg-neutral-900/60 transition-colors"
                         >
-                          <ChevronDownIcon className="w-5 h-5 text-white/60" />
-                        </motion.div>
-                      </button>
-
-                      {/* Episodes List */}
-                      <AnimatePresence>
-                        {isExpanded && (
+                          <div className="flex items-center gap-4">
+                            <h3 className="text-lg font-semibold text-white">
+                              Season {season.number}
+                            </h3>
+                            <span className="text-sm text-white/60">
+                              {episodes.length}{" "}
+                              {episodes.length === 1 ? "episode" : "episodes"}
+                            </span>
+                          </div>
                           <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                            className="overflow-hidden"
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
                           >
-                            <div className="border-t border-neutral-800/40">
-                              {episodes.length > 0 ? (
-                                <div className="divide-y divide-neutral-800/40">
-                                  {episodes.map(
-                                    (episode: {
-                                      id?: string;
-                                      title?: string;
-                                      number?: number;
-                                      duration?: number | null;
-                                      filePath?: string;
-                                    }) => (
-                                      <div
-                                        key={episode.id}
-                                        className="p-6 hover:bg-neutral-900/30 transition-colors"
-                                      >
-                                        <div className="flex items-center gap-4">
-                                          <div className="flex-shrink-0 w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
-                                            <span className="text-white/60 font-semibold">
-                                              {episode.number}
-                                            </span>
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <h4 className="text-white font-medium">
-                                              {episode.title ||
-                                                `Episode ${episode.number}`}
-                                            </h4>
-                                            {episode.duration && (
-                                              <div className="flex items-center gap-1 mt-1 text-xs text-white/40">
-                                                <ClockIcon className="w-3 h-3" />
-                                                <span>
-                                                  {episode.duration} min
-                                                </span>
-                                              </div>
-                                            )}
-                                          </div>
-                                          {episode.filePath &&
-                                            season.number !== undefined &&
-                                            episode.number !== undefined && (
-                                              <button
-                                                onClick={() =>
-                                                  playEpisode(
-                                                    season.number!,
-                                                    episode.number!,
-                                                    episode.title
-                                                  )
-                                                }
-                                                className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-                                              >
-                                                <PlayIcon className="w-5 h-5 fill-current text-white" />
-                                              </button>
-                                            )}
-                                        </div>
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="p-6 text-center text-white/40">
-                                  No episodes available
-                                </div>
-                              )}
-                            </div>
+                            <ChevronDownIcon className="w-5 h-5 text-white/60" />
                           </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                }
-              )}
+                        </button>
+
+                        {/* Episodes List */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3, ease: "easeInOut" }}
+                              className="overflow-hidden"
+                            >
+                              <div className="border-t border-neutral-800/40">
+                                {episodes.length > 0 ? (
+                                  <div className="divide-y divide-neutral-800/40">
+                                    {episodes.map(
+                                      (episode: {
+                                        id?: string;
+                                        title?: string;
+                                        number?: number;
+                                        duration?: number | null;
+                                        filePath?: string;
+                                      }) => (
+                                        <div
+                                          key={episode.id}
+                                          className="p-6 hover:bg-neutral-900/30 transition-colors"
+                                        >
+                                          <div className="flex items-center gap-4">
+                                            <div className="flex-shrink-0 w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
+                                              <span className="text-white/60 font-semibold">
+                                                {episode.number}
+                                              </span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <h4 className="text-white font-medium">
+                                                {episode.title ||
+                                                  `Episode ${episode.number}`}
+                                              </h4>
+                                              {episode.duration && (
+                                                <div className="flex items-center gap-1 mt-1 text-xs text-white/40">
+                                                  <ClockIcon className="w-3 h-3" />
+                                                  <span>
+                                                    {episode.duration} min
+                                                  </span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            {episode.filePath &&
+                                              season.number !== undefined &&
+                                              episode.number !== undefined && (
+                                                <button
+                                                  onClick={() =>
+                                                    playEpisode(
+                                                      season.number!,
+                                                      episode.number!,
+                                                      episode.title
+                                                    )
+                                                  }
+                                                  className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+                                                >
+                                                  <PlayIcon className="w-5 h-5 fill-current text-white" />
+                                                </button>
+                                              )}
+                                          </div>
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="p-6 text-center text-white/40">
+                                    No episodes available
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  }
+                )}
             </div>
           </motion.section>
         )}
