@@ -1,7 +1,7 @@
 export const tabsContainerVariants = {
-  initial: { width: 0, opacity: 0 },
-  animate: { width: "auto", opacity: 1 },
-  exit: { width: 0, opacity: 0 },
+  initial: { width: 0, opacity: 0, x: 0 },
+  animate: { width: "auto", opacity: 1, x: 0 },
+  exit: { width: 0, opacity: 0, x: 0 },
 };
 
 export const tabsContainerTransition = {
@@ -14,9 +14,9 @@ export const tabsContainerTransition = {
 };
 
 export const searchContainerVariants = {
-  initial: { scale: 0, opacity: 0, originX: 0 },
-  animate: { scale: 1, opacity: 1 },
-  exit: { scale: 0, opacity: 0, originX: 0 },
+  initial: { width: 0, opacity: 0 },
+  animate: { width: "auto", opacity: 1 },
+  exit: { width: 0, opacity: 0 },
 };
 
 export const searchContainerTransition = {

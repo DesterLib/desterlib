@@ -123,7 +123,7 @@ const Header = () => {
     <div className="w-full fixed top-0 left-0 right-0 z-50">
       <nav className="w-fit mx-auto space-y-4 p-4">
         <motion.div
-          layout="preserve-aspect"
+          layout="position"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
@@ -150,15 +150,17 @@ const Header = () => {
               <Logo className="w-8 h-8" />
             </motion.button>
           </motion.div>
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {!isSearchOpen && (
               <motion.div
-                layout="position"
+                key="tabs"
+                layout
                 initial={hasMounted ? "initial" : false}
                 animate="animate"
                 exit="exit"
                 variants={tabsContainerVariants}
                 transition={tabsContainerTransition}
+                style={{ overflow: "hidden" }}
               >
                 <motion.div
                   initial={{ backdropFilter: "blur(0px)" }}
@@ -180,15 +182,17 @@ const Header = () => {
               </motion.div>
             )}
           </AnimatePresence>
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {!isOnSettingsPage && (
               <motion.div
-                layout="position"
+                key="search"
+                layout
                 initial={hasMounted ? "initial" : false}
                 animate="animate"
                 exit="exit"
                 variants={searchContainerVariants}
                 transition={searchContainerTransition}
+                style={{ transformOrigin: "left center" }}
                 className="border bg-neutral-900/60 !backdrop-blur-lg border-white/10 rounded-[50px] flex items-center ml-2"
               >
                 <div className="p-1">
@@ -237,7 +241,7 @@ const Header = () => {
             )}
           </AnimatePresence>
           <motion.div
-            layout="position"
+            layout
             transition={{ layout: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } }}
           >
             <UserMenu />
