@@ -36,6 +36,7 @@ import {
 import healthRouter from "./routes/health/health.module.js";
 import authRouter from "./routes/auth/auth.module.js";
 import scanRouter from "./routes/scan/scan.module.js";
+import { authHandler } from "./lib/auth.js";
 import mediaRouter from "./routes/media/media.module.js";
 import moviesRouter from "./routes/movies/movies.module.js";
 import tvShowsRouter from "./routes/tv-shows/tv-shows.module.js";
@@ -97,7 +98,14 @@ app.use(
     origin: env.CORS_ORIGIN.split(",").map((origin) => origin.trim()),
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-csrf-token",
+      "cookie",
+      "set-cookie",
+    ],
+    exposedHeaders: ["set-cookie"],
   })
 );
 
@@ -217,7 +225,10 @@ app.use("/health", healthRouter);
 
 const API_V1 = "/api/v1";
 
-// Authentication routes (public and protected) - Strict rate limiting
+// Better-auth routes - handles all /api/auth/* endpoints
+app.all("/api/auth/*", authHandler);
+
+// Legacy authentication routes (can be removed after migrating)
 app.use(`${API_V1}/auth`, rateLimiters.auth, authRouter);
 
 // Admin routes (requires admin role)

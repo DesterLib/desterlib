@@ -30,25 +30,26 @@ export function useCurrentUser() {
     queryKey: ["auth", "me"],
     queryFn: async () => {
       const token = getAccessToken();
-      if (!token) return null;
+      if (!token) {
+        return null;
+      }
 
       try {
-        const response = await getApiV1AuthMe({
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await getApiV1AuthMe();
         return (
           (response.data as unknown as { data: { user: User } })?.data?.user ??
           null
         );
-      } catch {
+      } catch (error) {
+        console.error("Failed to fetch current user:", error);
         clearTokens();
         return null;
       }
     },
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: true, // Always refetch on mount
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 }
 
@@ -72,6 +73,7 @@ export function useLogin() {
       return data.user;
     },
     onSuccess: (user) => {
+      // Set the user data in the cache - this will immediately update useCurrentUser
       queryClient.setQueryData(["auth", "me"], user);
     },
   });
@@ -97,6 +99,7 @@ export function useRegister() {
       return responseData.user;
     },
     onSuccess: (user) => {
+      // Set the user data in the cache - this will immediately update useCurrentUser
       queryClient.setQueryData(["auth", "me"], user);
     },
   });
@@ -108,18 +111,10 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      const token = getAccessToken();
       const refreshToken = getRefreshToken();
-      if (token && refreshToken) {
+      if (refreshToken) {
         try {
-          await postApiV1AuthLogout(
-            { refreshToken },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          await postApiV1AuthLogout({ refreshToken });
         } catch {
           // Ignore errors, we're logging out anyway
         }

@@ -35,6 +35,7 @@ const envSchema = z.object({
   // CORS
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
   WEB_URL: z.string().optional(),
+  APP_URL: z.string().default("http://localhost:3000"),
 
   // External API Keys (Legacy - prefer configuring via Settings UI)
   TMDB_API_KEY: z.string().optional(),

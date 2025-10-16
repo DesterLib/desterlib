@@ -22,7 +22,7 @@ enum MediaType {
 }
 
 model Media {
-  id          String     @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   type        MediaType
   description String?
@@ -30,14 +30,14 @@ model Media {
   backdropUrl String?
   releaseDate DateTime?
   rating      Float?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   // Relations - subtypes point to Media, not the other way around
-  movie       Movie?
-  tvShow      TVShow?
-  music       Music?
-  comic       Comic?
+  movie  Movie?
+  tvShow TVShow?
+  music  Music?
+  comic  Comic?
 
   people      MediaPerson[]
   genres      MediaGenre[]
@@ -53,59 +53,59 @@ model Media {
 // ────────────────────────────
 // MOVIES
 // ────────────────────────────
+
 model Movie {
-  id              String   @id @default(cuid())
-  duration        Int?     // in minutes
-  director        String?
-  trailerUrl      String?
-  filePath        String?  @unique // File path on disk
-  fileSize        BigInt?  // File size in bytes
-  fileModifiedAt  DateTime? // Last modified time of file
-  
+  id             String    @id @default(cuid())
+  duration       Int? // in minutes
+  director       String?
+  trailerUrl     String?
+  filePath       String?   @unique // File path on disk
+  fileSize       BigInt? // File size in bytes
+  fileModifiedAt DateTime? // Last modified time of file
   // Required relationship to Media
-  mediaId         String   @unique
-  media           Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  
+  mediaId        String    @unique
+  media          Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
   @@index([filePath])
 }
 
 // ────────────────────────────
 // TV SHOWS
 // ────────────────────────────
+
 model TVShow {
-  id        String     @id @default(cuid())
-  seasons   Season[]
-  creator   String?
-  network   String?
-  
+  id      String   @id @default(cuid())
+  seasons Season[]
+  creator String?
+  network String?
   // Required relationship to Media
-  mediaId   String     @unique
-  media     Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId String   @unique
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 }
 
 model Season {
-  id        String     @id @default(cuid())
-  number    Int
-  episodes  Episode[]
-  tvShowId  String
-  tvShow    TVShow     @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
-  
+  id       String    @id @default(cuid())
+  number   Int
+  episodes Episode[]
+  tvShowId String
+  tvShow   TVShow    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+
   @@unique([tvShowId, number])
   @@index([tvShowId])
 }
 
 model Episode {
-  id              String   @id @default(cuid())
-  title           String
-  number          Int
-  duration        Int?
-  airDate         DateTime?
-  filePath        String?  @unique // File path on disk
-  fileSize        BigInt?  // File size in bytes
-  fileModifiedAt  DateTime? // Last modified time of file
-  seasonId        String
-  season          Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  
+  id             String    @id @default(cuid())
+  title          String
+  number         Int
+  duration       Int?
+  airDate        DateTime?
+  filePath       String?   @unique // File path on disk
+  fileSize       BigInt? // File size in bytes
+  fileModifiedAt DateTime? // Last modified time of file
+  seasonId       String
+  season         Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
   @@unique([seasonId, number])
   @@index([seasonId])
   @@index([filePath])
@@ -114,20 +114,20 @@ model Episode {
 // ────────────────────────────
 // MUSIC
 // ────────────────────────────
+
 model Music {
-  id              String   @id @default(cuid())
-  artist          String
-  album           String?
-  genre           String?
-  duration        Int?
-  filePath        String?  @unique // File path on disk
-  fileSize        BigInt?  // File size in bytes
-  fileModifiedAt  DateTime? // Last modified time of file
-  
+  id             String    @id @default(cuid())
+  artist         String
+  album          String?
+  genre          String?
+  duration       Int?
+  filePath       String?   @unique // File path on disk
+  fileSize       BigInt? // File size in bytes
+  fileModifiedAt DateTime? // Last modified time of file
   // Required relationship to Media
-  mediaId         String   @unique
-  media           Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  
+  mediaId        String    @unique
+  media          Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
   @@index([artist])
   @@index([genre])
   @@index([filePath])
@@ -136,20 +136,20 @@ model Music {
 // ────────────────────────────
 // COMICS
 // ────────────────────────────
+
 model Comic {
-  id              String   @id @default(cuid())
-  issue           Int?
-  volume          String?
-  publisher       String?
-  pages           Int?
-  filePath        String?  @unique // File path on disk
-  fileSize        BigInt?  // File size in bytes
-  fileModifiedAt  DateTime? // Last modified time of file
-  
+  id             String    @id @default(cuid())
+  issue          Int?
+  volume         String?
+  publisher      String?
+  pages          Int?
+  filePath       String?   @unique // File path on disk
+  fileSize       BigInt? // File size in bytes
+  fileModifiedAt DateTime? // Last modified time of file
   // Required relationship to Media
-  mediaId         String   @unique
-  media           Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  
+  mediaId        String    @unique
+  media          Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
   @@index([publisher])
   @@index([filePath])
 }
@@ -157,6 +157,7 @@ model Comic {
 // ────────────────────────────
 // PERSON
 // ────────────────────────────
+
 enum RoleType {
   ACTOR
   DIRECTOR
@@ -168,33 +169,34 @@ enum RoleType {
 }
 
 model Person {
-  id         String         @id @default(cuid())
+  id         String    @id @default(cuid())
   name       String
   bio        String?
   birthDate  DateTime?
   profileUrl String?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Media relationships
-  media      MediaPerson[]
-  
+  media MediaPerson[]
+
   @@index([name])
 }
 
 // ────────────────────────────
 // JOIN TABLE (MEDIA ↔ PERSON)
 // ────────────────────────────
+
 model MediaPerson {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   role      RoleType
   mediaId   String
   personId  String
-  character String?   // e.g., "Bruce Wayne"
+  character String? // e.g., "Bruce Wayne"
 
-  media     Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  person    Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
-  
+  media  Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
   @@unique([mediaId, personId, role])
   @@index([mediaId])
   @@index([personId])
@@ -203,15 +205,16 @@ model MediaPerson {
 // ────────────────────────────
 // GENRES
 // ────────────────────────────
-model Genre {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  slug        String       @unique
-  description String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
 
-  media       MediaGenre[]
+model Genre {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  media MediaGenre[]
 
   @@index([slug])
 }
@@ -219,13 +222,14 @@ model Genre {
 // ────────────────────────────
 // JOIN TABLE (MEDIA ↔ GENRE)
 // ────────────────────────────
-model MediaGenre {
-  id       String  @id @default(cuid())
-  mediaId  String
-  genreId  String
 
-  media    Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  genre    Genre   @relation(fields: [genreId], references: [id], onDelete: Cascade)
+model MediaGenre {
+  id      String @id @default(cuid())
+  mediaId String
+  genreId String
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
 
   @@unique([mediaId, genreId])
   @@index([mediaId])
@@ -235,44 +239,41 @@ model MediaGenre {
 // ────────────────────────────
 // COLLECTIONS
 // ────────────────────────────
+
 enum CollectionVisibility {
-  PRIVATE          // Only creator can see
-  EVERYONE         // All users can see
-  SELECTED_USERS   // Only selected users can see
+  PRIVATE // Only creator can see
+  EVERYONE // All users can see
+  SELECTED_USERS // Only selected users can see
 }
 
 model Collection {
-  id          String             @id @default(cuid())
+  id          String               @id @default(cuid())
   name        String
-  slug        String             @unique
+  slug        String               @unique
   description String?
   posterUrl   String?
   backdropUrl String?
-  
   // Library-specific fields
-  isLibrary   Boolean            @default(false)
-  libraryPath String?            // File system path for libraries
-  libraryType MediaType?         // Type of media in this library
-  
+  isLibrary   Boolean              @default(false)
+  libraryPath String? // File system path for libraries
+  libraryType MediaType? // Type of media in this library
   // Ownership and access control
-  createdById String?            // User who created this collection/library
-  createdBy   User?              @relation("CreatedCollections", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String? // User who created this collection/library
+  createdBy   User?                @relation("CreatedCollections", fields: [createdById], references: [id], onDelete: SetNull)
   visibility  CollectionVisibility @default(EVERYONE)
   accessUsers CollectionAccess[] // Users with access when visibility is SELECTED_USERS
-  
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
   // Self-referential for nested collections (e.g., MCU > Phase 1)
-  parentId    String?
-  parent      Collection?        @relation("CollectionHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children    Collection[]       @relation("CollectionHierarchy")
+  parentId String?
+  parent   Collection?  @relation("CollectionHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Collection[] @relation("CollectionHierarchy")
 
-  media       MediaCollection[]
-  
+  media      MediaCollection[]
   // Settings relationship for libraries
-  settingsId  String?
-  settings    Settings?          @relation(fields: [settingsId], references: [id], onDelete: SetNull)
+  settingsId String?
+  settings   Settings?         @relation(fields: [settingsId], references: [id], onDelete: SetNull)
 
   @@index([slug])
   @@index([parentId])
@@ -285,14 +286,15 @@ model Collection {
 // ────────────────────────────
 // JOIN TABLE (MEDIA ↔ COLLECTION)
 // ────────────────────────────
+
 model MediaCollection {
-  id           String     @id @default(cuid())
+  id           String @id @default(cuid())
   mediaId      String
   collectionId String
-  order        Int?       // For ordering media within a collection
+  order        Int? // For ordering media within a collection
 
-  media        Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  media      Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@unique([mediaId, collectionId])
   @@index([mediaId])
@@ -303,16 +305,16 @@ model MediaCollection {
 // ────────────────────────────
 // JOIN TABLE (USER ↔ COLLECTION ACCESS)
 // ────────────────────────────
+
 model CollectionAccess {
   id           String     @id @default(cuid())
   userId       String
   collectionId String
   grantedAt    DateTime   @default(now())
-  grantedById  String?    // User who granted access
-  
+  grantedById  String? // User who granted access
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, collectionId])
   @@index([userId])
   @@index([collectionId])
@@ -321,6 +323,7 @@ model CollectionAccess {
 // ────────────────────────────
 // EXTERNAL IDS (TMDB, IMDB, etc.)
 // ────────────────────────────
+
 enum ExternalIdSource {
   TMDB
   IMDB
@@ -334,14 +337,14 @@ enum ExternalIdSource {
 }
 
 model ExternalId {
-  id        String           @id @default(cuid())
-  source    ExternalIdSource
+  id         String           @id @default(cuid())
+  source     ExternalIdSource
   externalId String
-  mediaId   String
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  mediaId    String
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
-  media     Media            @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
   @@unique([source, externalId])
   @@unique([source, mediaId])
@@ -352,6 +355,7 @@ model ExternalId {
 // ────────────────────────────
 // AUTHENTICATION & USERS
 // ────────────────────────────
+
 enum UserRole {
   ADMIN
   USER
@@ -365,78 +369,76 @@ enum AuthMethod {
 }
 
 model User {
-  id              String      @id @default(cuid())
-  username        String      @unique
-  email           String?     @unique
-  displayName     String?
-  avatar          String?
-  role            UserRole    @default(USER)
-  
+  id                  String             @id @default(cuid())
+  username            String             @unique
+  email               String?            @unique
+  displayName         String?
+  avatar              String?
+  role                UserRole           @default(USER)
   // Authentication methods (can have multiple)
-  passwordHash    String?     // bcrypt hash for password auth
-  pinHash         String?     // bcrypt hash for PIN auth
-  isPasswordless  Boolean     @default(false) // Allow login without credentials
-  
+  passwordHash        String? // bcrypt hash for password auth
+  pinHash             String? // bcrypt hash for PIN auth
+  isPasswordless      Boolean            @default(false) // Allow login without credentials
   // Account status
-  isActive        Boolean     @default(true)
-  isLocked        Boolean     @default(false)
-  failedLoginAttempts Int     @default(0)
-  lastLoginAt     DateTime?
-  
+  isActive            Boolean            @default(true)
+  isLocked            Boolean            @default(false)
+  failedLoginAttempts Int                @default(0)
+  lastLoginAt         DateTime?
   // Metadata
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
   // Relations
-  sessions        Session[]
-  apiKeys         ApiKey[]
-  createdCollections Collection[] @relation("CreatedCollections")
-  collectionAccess   CollectionAccess[]
-  
+  sessions            Session[]
+  apiKeys             ApiKey[]
+  createdCollections  Collection[]       @relation("CreatedCollections")
+  collectionAccess    CollectionAccess[]
+  name                String
+  emailVerified       Boolean            @default(false)
+  image               String?
+  accounts            Account[]
+
   @@index([username])
   @@index([email])
   @@index([role])
   @@index([isActive])
+  @@map("user")
 }
 
 model Session {
-  id          String   @id @default(cuid())
-  userId      String
-  token       String   @unique // JWT or session token
-  ipAddress   String?
-  userAgent   String?
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique // JWT or session token
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
   lastActiveAt DateTime @default(now())
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt    DateTime @updatedAt
+
   @@index([userId])
   @@index([token])
   @@index([expiresAt])
+  @@map("session")
 }
 
 model ApiKey {
-  id          String   @id @default(cuid())
-  userId      String
-  name        String   // Name/description of the key
-  keyHash     String   @unique // bcrypt hash of the API key
-  keyPrefix   String   // First 8 chars for identification (e.g., "dester_abc123...")
-  
+  id         String    @id @default(cuid())
+  userId     String
+  name       String // Name/description of the key
+  keyHash    String    @unique // bcrypt hash of the API key
+  keyPrefix  String // First 8 chars for identification (e.g., "dester_abc123...")
   // Permissions
-  scopes      String   @default("*") // JSON array of allowed scopes
-  
+  scopes     String    @default("*") // JSON array of allowed scopes
   // Status
-  isActive    Boolean  @default(true)
-  lastUsedAt  DateTime?
-  expiresAt   DateTime? // Optional expiration
-  
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime?
+  expiresAt  DateTime? // Optional expiration
   // Metadata
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([keyPrefix])
   @@index([isActive])
@@ -445,17 +447,46 @@ model ApiKey {
 // ────────────────────────────
 // SETTINGS & CONFIGURATION
 // ────────────────────────────
+
 model Settings {
   id                String       @id @default("default")
   isSetupComplete   Boolean      @default(false)
   tmdbApiKey        String?
-  
   // Authentication settings
   requireAuth       Boolean      @default(true)
   allowRegistration Boolean      @default(false)
   sessionDuration   Int          @default(604800) // 7 days in seconds
-  
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   libraries         Collection[] // Libraries are just special collections
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
 }

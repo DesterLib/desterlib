@@ -23,13 +23,15 @@ export default function UserMenu() {
 
   if (!isAuthenticated) {
     return (
-      <button
-        onClick={() => navigate({ to: "/login" })}
-        className="ml-2 h-12 px-4 bg-neutral-900/60 backdrop-blur-lg border border-white/10 rounded-[50px] flex items-center gap-2 hover:bg-white/10 transition-colors [will-change:backdrop-filter]"
-      >
-        <LogIn className="w-4 h-4" />
-        <span className="text-sm font-medium text-white">Sign In</span>
-      </button>
+      <div className="border bg-neutral-900/60 rounded-[50px] p-1 ml-2">
+        <button
+          onClick={() => navigate({ to: "/login" })}
+          className="h-10 px-4 backdrop-blur-lg rounded-[50px] flex items-center gap-2 hover:bg-white/10 transition-colors [will-change:backdrop-filter]"
+        >
+          <LogIn className="w-4 h-4" />
+          <span className="text-sm font-medium text-white">Sign In</span>
+        </button>
+      </div>
     );
   }
 

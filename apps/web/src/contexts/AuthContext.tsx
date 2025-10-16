@@ -1,10 +1,5 @@
 import { createContext, type ReactNode } from "react";
-import {
-  useCurrentUser,
-  useLogin,
-  useLogout,
-  useRegister,
-} from "@/lib/hooks/useAuth";
+import { useSession, signIn, signUp, signOut } from "@/lib/auth-client";
 import type {
   AuthContextType,
   LoginCredentials,
@@ -14,31 +9,79 @@ import type {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: user, isLoading } = useCurrentUser();
-  const loginMutation = useLogin();
-  const registerMutation = useRegister();
-  const logoutMutation = useLogout();
+  const { data: session, isPending } = useSession();
 
   const login = async (credentials: LoginCredentials) => {
-    await loginMutation.mutateAsync(credentials);
+    const result = await signIn.email({
+      email: credentials.username,
+      password: credentials.password || credentials.pin || "",
+      fetchOptions: {
+        onSuccess: () => {
+          // Session established successfully
+        },
+        onError: (ctx) => {
+          throw new Error(ctx.error.message || "Login failed");
+        },
+      },
+    });
+
+    if (result.error) {
+      throw new Error(result.error.message || "Login failed");
+    }
   };
 
   const register = async (data: RegisterData) => {
-    await registerMutation.mutateAsync(data);
+    const result = await signUp.email({
+      email: data.email || `${data.username}@dester.local`,
+      password: data.password || data.pin || "",
+      name: data.username,
+      fetchOptions: {
+        body: {
+          username: data.username,
+        },
+        onSuccess: () => {
+          // Registration successful
+        },
+        onError: (ctx) => {
+          throw new Error(ctx.error.message || "Registration failed");
+        },
+      },
+    });
+
+    if (result.error) {
+      throw new Error(result.error.message || "Registration failed");
+    }
   };
 
   const logout = async () => {
-    await logoutMutation.mutateAsync();
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/login";
+        },
+      },
+    });
   };
 
   const refreshAuth = async () => {
-    // Handled by React Query refetch
+    // Better-auth handles this automatically
   };
 
   const value: AuthContextType = {
-    user: user ?? null,
-    isLoading,
-    isAuthenticated: !!user,
+    user: session?.user
+      ? {
+          id: session.user.id,
+          username: session.user.name || session.user.email || "",
+          email: session.user.email || "",
+          role: "USER", // Better-auth uses different role system
+          createdAt:
+            session.user.createdAt?.toString() || new Date().toISOString(),
+          updatedAt:
+            session.user.updatedAt?.toString() || new Date().toISOString(),
+        }
+      : null,
+    isLoading: isPending,
+    isAuthenticated: !!session?.user,
     login,
     register,
     logout,
