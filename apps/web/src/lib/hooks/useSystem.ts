@@ -3,16 +3,16 @@ import {
   getHealth,
   getHealthReady,
   getHealthLive,
-  getAdminHealthCheck,
-  getAdminPerformance,
-  postAdminPerformanceReset,
-  getAdminAlerts,
-  getAdminAlertsHistory,
-  getAdminBackups,
-  postAdminBackups,
-  postAdminBackupsFilenameRestore,
-  deleteAdminBackupsFilename,
-  postAdminMetricsUpdate,
+  getApiV1AdminHealthCheck,
+  getApiV1AdminPerformance,
+  postApiV1AdminPerformanceReset,
+  getApiV1AdminAlerts,
+  getApiV1AdminAlertsHistory,
+  getApiV1AdminBackups,
+  postApiV1AdminBackups,
+  postApiV1AdminBackupsFilenameRestore,
+  deleteApiV1AdminBackupsFilename,
+  postApiV1AdminMetricsUpdate,
 } from "@dester/api-client";
 import "@/lib/api-client"; // Import to ensure client is configured
 import type {
@@ -81,7 +81,7 @@ export function useAdminHealthCheck() {
   return useQuery<AdminHealthCheckResponse | null>({
     queryKey: ["admin", "health"],
     queryFn: async () => {
-      const response = await getAdminHealthCheck();
+      const response = await getApiV1AdminHealthCheck();
       return (
         (response.data as unknown as { data: AdminHealthCheckResponse })
           ?.data ?? null
@@ -99,7 +99,7 @@ export function usePerformanceMetrics() {
   return useQuery<PerformanceMetricsResponse | null>({
     queryKey: ["admin", "performance"],
     queryFn: async () => {
-      const response = await getAdminPerformance();
+      const response = await getApiV1AdminPerformance();
       return (
         (response.data as unknown as { data: PerformanceMetricsResponse })
           ?.data ?? null
@@ -114,7 +114,7 @@ export function useResetPerformanceMetrics() {
 
   return useMutation<ResetPerformanceResponse | null>({
     mutationFn: async () => {
-      const response = await postAdminPerformanceReset();
+      const response = await postApiV1AdminPerformanceReset();
       return (
         (response.data as unknown as { data: ResetPerformanceResponse })
           ?.data ?? null
@@ -134,7 +134,7 @@ export function useActiveAlerts() {
   return useQuery<ActiveAlertsResponse | null>({
     queryKey: ["admin", "alerts"],
     queryFn: async () => {
-      const response = await getAdminAlerts();
+      const response = await getApiV1AdminAlerts();
       return (
         (response.data as unknown as { data: ActiveAlertsResponse })?.data ??
         null
@@ -148,7 +148,7 @@ export function useAlertHistory() {
   return useQuery<AlertHistoryResponse | null>({
     queryKey: ["admin", "alerts", "history"],
     queryFn: async () => {
-      const response = await getAdminAlertsHistory();
+      const response = await getApiV1AdminAlertsHistory();
       return (
         (response.data as unknown as { data: AlertHistoryResponse })?.data ??
         null
@@ -165,7 +165,7 @@ export function useBackups() {
   return useQuery<BackupsResponse | null>({
     queryKey: ["admin", "backups"],
     queryFn: async () => {
-      const response = await getAdminBackups();
+      const response = await getApiV1AdminBackups();
       return (
         (response.data as unknown as { data: BackupsResponse })?.data ?? null
       );
@@ -178,7 +178,7 @@ export function useCreateBackup() {
 
   return useMutation<CreateBackupResponse | null>({
     mutationFn: async () => {
-      const response = await postAdminBackups();
+      const response = await postApiV1AdminBackups();
       return (
         (response.data as unknown as { data: CreateBackupResponse })?.data ??
         null
@@ -195,7 +195,7 @@ export function useRestoreBackup() {
 
   return useMutation<RestoreBackupResponse | null, Error, string>({
     mutationFn: async (filename: string) => {
-      const response = await postAdminBackupsFilenameRestore(filename);
+      const response = await postApiV1AdminBackupsFilenameRestore(filename);
       return (
         (response.data as unknown as { data: RestoreBackupResponse })?.data ??
         null
@@ -212,7 +212,7 @@ export function useDeleteBackup() {
 
   return useMutation<DeleteBackupResponse | null, Error, string>({
     mutationFn: async (filename: string) => {
-      const response = await deleteAdminBackupsFilename(filename);
+      const response = await deleteApiV1AdminBackupsFilename(filename);
       return (
         (response.data as unknown as { data: DeleteBackupResponse })?.data ??
         null
@@ -231,7 +231,7 @@ export function useDeleteBackup() {
 export function useUpdateMetrics() {
   return useMutation<UpdateMetricsResponse | null>({
     mutationFn: async () => {
-      const response = await postAdminMetricsUpdate();
+      const response = await postApiV1AdminMetricsUpdate();
       return (
         (response.data as unknown as { data: UpdateMetricsResponse })?.data ??
         null

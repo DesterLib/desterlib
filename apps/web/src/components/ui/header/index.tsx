@@ -17,6 +17,7 @@ import {
 } from "./variants";
 import Logo from "../logo";
 import ModeDialog from "../mode-dialog";
+import UserMenu from "./user-menu";
 import { useSearch } from "@/lib/hooks";
 import type { GetApiV1SearchParams } from "@dester/api-client";
 import SearchResults from "./search-results";
@@ -222,6 +223,7 @@ const Header = () => {
           isDialogOpen={isDialogOpen}
           setIsDialogOpen={setIsDialogOpen}
         />
+        <UserMenu />
       </nav>
     </div>
   );

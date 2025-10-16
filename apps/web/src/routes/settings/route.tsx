@@ -5,6 +5,7 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { CogIcon, LibraryIcon, VideoIcon, ActivityIcon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
@@ -17,6 +18,9 @@ export const Route = createFileRoute("/settings")({
 });
 
 function RouteComponent() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+
   return (
     <div className="pt-[138px] px-4 max-w-7xl mx-auto flex gap-4 h-[calc(100vh-138px)]">
       <nav className="max-w-sm w-full bg-white/10 backdrop-blur-lg rounded-xl p-2 space-y-2">
@@ -42,15 +46,19 @@ function RouteComponent() {
           </div>
           <span>Video Player</span>
         </Link>
-        <Link
-          className="flex items-center gap-2 hover:bg-white/10 rounded-xl px-4 h-12 text-sm text-white transition focus-visible:outline-2"
-          to="/settings/system"
-        >
-          <div className="h-8 w-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center">
-            <ActivityIcon className="size-4" />
-          </div>
-          <span>System & Monitoring</span>
-        </Link>
+
+        {/* Admin-only settings */}
+        {isAdmin && (
+          <Link
+            className="flex items-center gap-2 hover:bg-white/10 rounded-xl px-4 h-12 text-sm text-white transition focus-visible:outline-2"
+            to="/settings/system"
+          >
+            <div className="h-8 w-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center">
+              <ActivityIcon className="size-4" />
+            </div>
+            <span>System & Monitoring</span>
+          </Link>
+        )}
       </nav>
       <div className="flex-1 w-full px-16 2xl:p-16">
         <Outlet />

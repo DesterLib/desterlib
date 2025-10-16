@@ -319,41 +319,41 @@ export type GetApiV1AdminAlertsHistoryParams = {
   limit?: number;
 };
 
-export type PostAuthRegisterBodyRole =
-  (typeof PostAuthRegisterBodyRole)[keyof typeof PostAuthRegisterBodyRole];
+export type PostApiV1AuthRegisterBodyRole =
+  (typeof PostApiV1AuthRegisterBodyRole)[keyof typeof PostApiV1AuthRegisterBodyRole];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const PostAuthRegisterBodyRole = {
+export const PostApiV1AuthRegisterBodyRole = {
   ADMIN: "ADMIN",
   USER: "USER",
   GUEST: "GUEST",
 } as const;
 
-export type PostAuthRegisterBody = {
+export type PostApiV1AuthRegisterBody = {
   username: string;
   email?: string;
   displayName?: string;
   password?: string;
   pin?: string;
   isPasswordless?: boolean;
-  role?: PostAuthRegisterBodyRole;
+  role?: PostApiV1AuthRegisterBodyRole;
 };
 
-export type PostAuthLoginBody = {
+export type PostApiV1AuthLoginBody = {
   username: string;
   password?: string;
   pin?: string;
 };
 
-export type PostAuthLoginPasswordlessBody = {
+export type PostApiV1AuthLoginPasswordlessBody = {
   username: string;
 };
 
-export type PostAuthRefreshBody = {
+export type PostApiV1AuthRefreshBody = {
   refreshToken: string;
 };
 
-export type PostAuthLogoutBody = {
+export type PostApiV1AuthLogoutBody = {
   refreshToken: string;
 };
 
@@ -480,16 +480,16 @@ export type GetApiV1Comics200AllOf = {
 
 export type GetApiV1Comics200 = SuccessResponse & GetApiV1Comics200AllOf;
 
-export type GetApiComicsId200AllOfData = {
+export type GetApiV1ComicsId200AllOfData = {
   message?: string;
   media?: Media;
 };
 
-export type GetApiComicsId200AllOf = {
-  data?: GetApiComicsId200AllOfData;
+export type GetApiV1ComicsId200AllOf = {
+  data?: GetApiV1ComicsId200AllOfData;
 };
 
-export type GetApiComicsId200 = SuccessResponse & GetApiComicsId200AllOf;
+export type GetApiV1ComicsId200 = SuccessResponse & GetApiV1ComicsId200AllOf;
 
 export type GetApiV1MediaParams = {
   /**
@@ -1471,91 +1471,97 @@ export const postApiV1AdminPerformanceReset = async (
 /**
  * @summary Register a new user
  */
-export type postAuthRegisterResponse201 = {
+export type postApiV1AuthRegisterResponse201 = {
   data: void;
   status: 201;
 };
 
-export type postAuthRegisterResponseSuccess = postAuthRegisterResponse201 & {
-  headers: Headers;
-};
-export type postAuthRegisterResponse = postAuthRegisterResponseSuccess;
+export type postApiV1AuthRegisterResponseSuccess =
+  postApiV1AuthRegisterResponse201 & {
+    headers: Headers;
+  };
+export type postApiV1AuthRegisterResponse =
+  postApiV1AuthRegisterResponseSuccess;
 
-export const getPostAuthRegisterUrl = () => {
-  return `/auth/register`;
+export const getPostApiV1AuthRegisterUrl = () => {
+  return `/api/v1/auth/register`;
 };
 
-export const postAuthRegister = async (
-  postAuthRegisterBody: PostAuthRegisterBody,
+export const postApiV1AuthRegister = async (
+  postApiV1AuthRegisterBody: PostApiV1AuthRegisterBody,
   options?: RequestInit,
-): Promise<postAuthRegisterResponse> => {
-  return customFetcher<postAuthRegisterResponse>(getPostAuthRegisterUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postAuthRegisterBody),
-  });
+): Promise<postApiV1AuthRegisterResponse> => {
+  return customFetcher<postApiV1AuthRegisterResponse>(
+    getPostApiV1AuthRegisterUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postApiV1AuthRegisterBody),
+    },
+  );
 };
 
 /**
  * @summary Login with username and password or PIN
  */
-export type postAuthLoginResponse200 = {
+export type postApiV1AuthLoginResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAuthLoginResponseSuccess = postAuthLoginResponse200 & {
-  headers: Headers;
-};
-export type postAuthLoginResponse = postAuthLoginResponseSuccess;
+export type postApiV1AuthLoginResponseSuccess =
+  postApiV1AuthLoginResponse200 & {
+    headers: Headers;
+  };
+export type postApiV1AuthLoginResponse = postApiV1AuthLoginResponseSuccess;
 
-export const getPostAuthLoginUrl = () => {
-  return `/auth/login`;
+export const getPostApiV1AuthLoginUrl = () => {
+  return `/api/v1/auth/login`;
 };
 
-export const postAuthLogin = async (
-  postAuthLoginBody: PostAuthLoginBody,
+export const postApiV1AuthLogin = async (
+  postApiV1AuthLoginBody: PostApiV1AuthLoginBody,
   options?: RequestInit,
-): Promise<postAuthLoginResponse> => {
-  return customFetcher<postAuthLoginResponse>(getPostAuthLoginUrl(), {
+): Promise<postApiV1AuthLoginResponse> => {
+  return customFetcher<postApiV1AuthLoginResponse>(getPostApiV1AuthLoginUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postAuthLoginBody),
+    body: JSON.stringify(postApiV1AuthLoginBody),
   });
 };
 
 /**
  * @summary Login without password (passwordless accounts only)
  */
-export type postAuthLoginPasswordlessResponse200 = {
+export type postApiV1AuthLoginPasswordlessResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAuthLoginPasswordlessResponseSuccess =
-  postAuthLoginPasswordlessResponse200 & {
+export type postApiV1AuthLoginPasswordlessResponseSuccess =
+  postApiV1AuthLoginPasswordlessResponse200 & {
     headers: Headers;
   };
-export type postAuthLoginPasswordlessResponse =
-  postAuthLoginPasswordlessResponseSuccess;
+export type postApiV1AuthLoginPasswordlessResponse =
+  postApiV1AuthLoginPasswordlessResponseSuccess;
 
-export const getPostAuthLoginPasswordlessUrl = () => {
-  return `/auth/login/passwordless`;
+export const getPostApiV1AuthLoginPasswordlessUrl = () => {
+  return `/api/v1/auth/login/passwordless`;
 };
 
-export const postAuthLoginPasswordless = async (
-  postAuthLoginPasswordlessBody: PostAuthLoginPasswordlessBody,
+export const postApiV1AuthLoginPasswordless = async (
+  postApiV1AuthLoginPasswordlessBody: PostApiV1AuthLoginPasswordlessBody,
   options?: RequestInit,
-): Promise<postAuthLoginPasswordlessResponse> => {
-  return customFetcher<postAuthLoginPasswordlessResponse>(
-    getPostAuthLoginPasswordlessUrl(),
+): Promise<postApiV1AuthLoginPasswordlessResponse> => {
+  return customFetcher<postApiV1AuthLoginPasswordlessResponse>(
+    getPostApiV1AuthLoginPasswordlessUrl(),
     {
       ...options,
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(postAuthLoginPasswordlessBody),
+      body: JSON.stringify(postApiV1AuthLoginPasswordlessBody),
     },
   );
 };
@@ -1563,108 +1569,121 @@ export const postAuthLoginPasswordless = async (
 /**
  * @summary Refresh access token
  */
-export type postAuthRefreshResponse200 = {
+export type postApiV1AuthRefreshResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAuthRefreshResponseSuccess = postAuthRefreshResponse200 & {
-  headers: Headers;
-};
-export type postAuthRefreshResponse = postAuthRefreshResponseSuccess;
+export type postApiV1AuthRefreshResponseSuccess =
+  postApiV1AuthRefreshResponse200 & {
+    headers: Headers;
+  };
+export type postApiV1AuthRefreshResponse = postApiV1AuthRefreshResponseSuccess;
 
-export const getPostAuthRefreshUrl = () => {
-  return `/auth/refresh`;
+export const getPostApiV1AuthRefreshUrl = () => {
+  return `/api/v1/auth/refresh`;
 };
 
-export const postAuthRefresh = async (
-  postAuthRefreshBody: PostAuthRefreshBody,
+export const postApiV1AuthRefresh = async (
+  postApiV1AuthRefreshBody: PostApiV1AuthRefreshBody,
   options?: RequestInit,
-): Promise<postAuthRefreshResponse> => {
-  return customFetcher<postAuthRefreshResponse>(getPostAuthRefreshUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postAuthRefreshBody),
-  });
+): Promise<postApiV1AuthRefreshResponse> => {
+  return customFetcher<postApiV1AuthRefreshResponse>(
+    getPostApiV1AuthRefreshUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postApiV1AuthRefreshBody),
+    },
+  );
 };
 
 /**
  * @summary Logout current session
  */
-export type postAuthLogoutResponse200 = {
+export type postApiV1AuthLogoutResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAuthLogoutResponseSuccess = postAuthLogoutResponse200 & {
-  headers: Headers;
-};
-export type postAuthLogoutResponse = postAuthLogoutResponseSuccess;
+export type postApiV1AuthLogoutResponseSuccess =
+  postApiV1AuthLogoutResponse200 & {
+    headers: Headers;
+  };
+export type postApiV1AuthLogoutResponse = postApiV1AuthLogoutResponseSuccess;
 
-export const getPostAuthLogoutUrl = () => {
-  return `/auth/logout`;
+export const getPostApiV1AuthLogoutUrl = () => {
+  return `/api/v1/auth/logout`;
 };
 
-export const postAuthLogout = async (
-  postAuthLogoutBody: PostAuthLogoutBody,
+export const postApiV1AuthLogout = async (
+  postApiV1AuthLogoutBody: PostApiV1AuthLogoutBody,
   options?: RequestInit,
-): Promise<postAuthLogoutResponse> => {
-  return customFetcher<postAuthLogoutResponse>(getPostAuthLogoutUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(postAuthLogoutBody),
-  });
+): Promise<postApiV1AuthLogoutResponse> => {
+  return customFetcher<postApiV1AuthLogoutResponse>(
+    getPostApiV1AuthLogoutUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postApiV1AuthLogoutBody),
+    },
+  );
 };
 
 /**
  * @summary Logout all sessions
  */
-export type postAuthLogoutAllResponse200 = {
+export type postApiV1AuthLogoutAllResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAuthLogoutAllResponseSuccess = postAuthLogoutAllResponse200 & {
-  headers: Headers;
-};
-export type postAuthLogoutAllResponse = postAuthLogoutAllResponseSuccess;
+export type postApiV1AuthLogoutAllResponseSuccess =
+  postApiV1AuthLogoutAllResponse200 & {
+    headers: Headers;
+  };
+export type postApiV1AuthLogoutAllResponse =
+  postApiV1AuthLogoutAllResponseSuccess;
 
-export const getPostAuthLogoutAllUrl = () => {
-  return `/auth/logout-all`;
+export const getPostApiV1AuthLogoutAllUrl = () => {
+  return `/api/v1/auth/logout-all`;
 };
 
-export const postAuthLogoutAll = async (
+export const postApiV1AuthLogoutAll = async (
   options?: RequestInit,
-): Promise<postAuthLogoutAllResponse> => {
-  return customFetcher<postAuthLogoutAllResponse>(getPostAuthLogoutAllUrl(), {
-    ...options,
-    method: "POST",
-  });
+): Promise<postApiV1AuthLogoutAllResponse> => {
+  return customFetcher<postApiV1AuthLogoutAllResponse>(
+    getPostApiV1AuthLogoutAllUrl(),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
 };
 
 /**
  * @summary Get current user information
  */
-export type getAuthMeResponse200 = {
+export type getApiV1AuthMeResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getAuthMeResponseSuccess = getAuthMeResponse200 & {
+export type getApiV1AuthMeResponseSuccess = getApiV1AuthMeResponse200 & {
   headers: Headers;
 };
-export type getAuthMeResponse = getAuthMeResponseSuccess;
+export type getApiV1AuthMeResponse = getApiV1AuthMeResponseSuccess;
 
-export const getGetAuthMeUrl = () => {
-  return `/auth/me`;
+export const getGetApiV1AuthMeUrl = () => {
+  return `/api/v1/auth/me`;
 };
 
-export const getAuthMe = async (
+export const getApiV1AuthMe = async (
   options?: RequestInit,
-): Promise<getAuthMeResponse> => {
-  return customFetcher<getAuthMeResponse>(getGetAuthMeUrl(), {
+): Promise<getApiV1AuthMeResponse> => {
+  return customFetcher<getApiV1AuthMeResponse>(getGetApiV1AuthMeUrl(), {
     ...options,
     method: "GET",
   });
@@ -1673,24 +1692,24 @@ export const getAuthMe = async (
 /**
  * @summary Update current user
  */
-export type putAuthMeResponse200 = {
+export type putApiV1AuthMeResponse200 = {
   data: void;
   status: 200;
 };
 
-export type putAuthMeResponseSuccess = putAuthMeResponse200 & {
+export type putApiV1AuthMeResponseSuccess = putApiV1AuthMeResponse200 & {
   headers: Headers;
 };
-export type putAuthMeResponse = putAuthMeResponseSuccess;
+export type putApiV1AuthMeResponse = putApiV1AuthMeResponseSuccess;
 
-export const getPutAuthMeUrl = () => {
-  return `/auth/me`;
+export const getPutApiV1AuthMeUrl = () => {
+  return `/api/v1/auth/me`;
 };
 
-export const putAuthMe = async (
+export const putApiV1AuthMe = async (
   options?: RequestInit,
-): Promise<putAuthMeResponse> => {
-  return customFetcher<putAuthMeResponse>(getPutAuthMeUrl(), {
+): Promise<putApiV1AuthMeResponse> => {
+  return customFetcher<putApiV1AuthMeResponse>(getPutApiV1AuthMeUrl(), {
     ...options,
     method: "PUT",
   });
@@ -1699,27 +1718,27 @@ export const putAuthMe = async (
 /**
  * @summary Change password
  */
-export type postAuthChangePasswordResponse200 = {
+export type postApiV1AuthChangePasswordResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAuthChangePasswordResponseSuccess =
-  postAuthChangePasswordResponse200 & {
+export type postApiV1AuthChangePasswordResponseSuccess =
+  postApiV1AuthChangePasswordResponse200 & {
     headers: Headers;
   };
-export type postAuthChangePasswordResponse =
-  postAuthChangePasswordResponseSuccess;
+export type postApiV1AuthChangePasswordResponse =
+  postApiV1AuthChangePasswordResponseSuccess;
 
-export const getPostAuthChangePasswordUrl = () => {
-  return `/auth/change-password`;
+export const getPostApiV1AuthChangePasswordUrl = () => {
+  return `/api/v1/auth/change-password`;
 };
 
-export const postAuthChangePassword = async (
+export const postApiV1AuthChangePassword = async (
   options?: RequestInit,
-): Promise<postAuthChangePasswordResponse> => {
-  return customFetcher<postAuthChangePasswordResponse>(
-    getPostAuthChangePasswordUrl(),
+): Promise<postApiV1AuthChangePasswordResponse> => {
+  return customFetcher<postApiV1AuthChangePasswordResponse>(
+    getPostApiV1AuthChangePasswordUrl(),
     {
       ...options,
       method: "POST",
@@ -1730,80 +1749,89 @@ export const postAuthChangePassword = async (
 /**
  * @summary Change PIN
  */
-export type postAuthChangePinResponse200 = {
+export type postApiV1AuthChangePinResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAuthChangePinResponseSuccess = postAuthChangePinResponse200 & {
-  headers: Headers;
-};
-export type postAuthChangePinResponse = postAuthChangePinResponseSuccess;
+export type postApiV1AuthChangePinResponseSuccess =
+  postApiV1AuthChangePinResponse200 & {
+    headers: Headers;
+  };
+export type postApiV1AuthChangePinResponse =
+  postApiV1AuthChangePinResponseSuccess;
 
-export const getPostAuthChangePinUrl = () => {
-  return `/auth/change-pin`;
+export const getPostApiV1AuthChangePinUrl = () => {
+  return `/api/v1/auth/change-pin`;
 };
 
-export const postAuthChangePin = async (
+export const postApiV1AuthChangePin = async (
   options?: RequestInit,
-): Promise<postAuthChangePinResponse> => {
-  return customFetcher<postAuthChangePinResponse>(getPostAuthChangePinUrl(), {
-    ...options,
-    method: "POST",
-  });
+): Promise<postApiV1AuthChangePinResponse> => {
+  return customFetcher<postApiV1AuthChangePinResponse>(
+    getPostApiV1AuthChangePinUrl(),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
 };
 
 /**
  * @summary Get all active sessions
  */
-export type getAuthSessionsResponse200 = {
+export type getApiV1AuthSessionsResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getAuthSessionsResponseSuccess = getAuthSessionsResponse200 & {
-  headers: Headers;
-};
-export type getAuthSessionsResponse = getAuthSessionsResponseSuccess;
+export type getApiV1AuthSessionsResponseSuccess =
+  getApiV1AuthSessionsResponse200 & {
+    headers: Headers;
+  };
+export type getApiV1AuthSessionsResponse = getApiV1AuthSessionsResponseSuccess;
 
-export const getGetAuthSessionsUrl = () => {
-  return `/auth/sessions`;
+export const getGetApiV1AuthSessionsUrl = () => {
+  return `/api/v1/auth/sessions`;
 };
 
-export const getAuthSessions = async (
+export const getApiV1AuthSessions = async (
   options?: RequestInit,
-): Promise<getAuthSessionsResponse> => {
-  return customFetcher<getAuthSessionsResponse>(getGetAuthSessionsUrl(), {
-    ...options,
-    method: "GET",
-  });
+): Promise<getApiV1AuthSessionsResponse> => {
+  return customFetcher<getApiV1AuthSessionsResponse>(
+    getGetApiV1AuthSessionsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**
  * @summary Revoke a specific session
  */
-export type deleteAuthSessionsSessionIdResponse200 = {
+export type deleteApiV1AuthSessionsSessionIdResponse200 = {
   data: void;
   status: 200;
 };
 
-export type deleteAuthSessionsSessionIdResponseSuccess =
-  deleteAuthSessionsSessionIdResponse200 & {
+export type deleteApiV1AuthSessionsSessionIdResponseSuccess =
+  deleteApiV1AuthSessionsSessionIdResponse200 & {
     headers: Headers;
   };
-export type deleteAuthSessionsSessionIdResponse =
-  deleteAuthSessionsSessionIdResponseSuccess;
+export type deleteApiV1AuthSessionsSessionIdResponse =
+  deleteApiV1AuthSessionsSessionIdResponseSuccess;
 
-export const getDeleteAuthSessionsSessionIdUrl = (sessionId: string) => {
-  return `/auth/sessions/${sessionId}`;
+export const getDeleteApiV1AuthSessionsSessionIdUrl = (sessionId: string) => {
+  return `/api/v1/auth/sessions/${sessionId}`;
 };
 
-export const deleteAuthSessionsSessionId = async (
+export const deleteApiV1AuthSessionsSessionId = async (
   sessionId: string,
   options?: RequestInit,
-): Promise<deleteAuthSessionsSessionIdResponse> => {
-  return customFetcher<deleteAuthSessionsSessionIdResponse>(
-    getDeleteAuthSessionsSessionIdUrl(sessionId),
+): Promise<deleteApiV1AuthSessionsSessionIdResponse> => {
+  return customFetcher<deleteApiV1AuthSessionsSessionIdResponse>(
+    getDeleteApiV1AuthSessionsSessionIdUrl(sessionId),
     {
       ...options,
       method: "DELETE",
@@ -1814,79 +1842,88 @@ export const deleteAuthSessionsSessionId = async (
 /**
  * @summary List all API keys
  */
-export type getAuthApiKeysResponse200 = {
+export type getApiV1AuthApiKeysResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getAuthApiKeysResponseSuccess = getAuthApiKeysResponse200 & {
-  headers: Headers;
-};
-export type getAuthApiKeysResponse = getAuthApiKeysResponseSuccess;
+export type getApiV1AuthApiKeysResponseSuccess =
+  getApiV1AuthApiKeysResponse200 & {
+    headers: Headers;
+  };
+export type getApiV1AuthApiKeysResponse = getApiV1AuthApiKeysResponseSuccess;
 
-export const getGetAuthApiKeysUrl = () => {
-  return `/auth/api-keys`;
+export const getGetApiV1AuthApiKeysUrl = () => {
+  return `/api/v1/auth/api-keys`;
 };
 
-export const getAuthApiKeys = async (
+export const getApiV1AuthApiKeys = async (
   options?: RequestInit,
-): Promise<getAuthApiKeysResponse> => {
-  return customFetcher<getAuthApiKeysResponse>(getGetAuthApiKeysUrl(), {
-    ...options,
-    method: "GET",
-  });
+): Promise<getApiV1AuthApiKeysResponse> => {
+  return customFetcher<getApiV1AuthApiKeysResponse>(
+    getGetApiV1AuthApiKeysUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**
  * @summary Create a new API key
  */
-export type postAuthApiKeysResponse201 = {
+export type postApiV1AuthApiKeysResponse201 = {
   data: void;
   status: 201;
 };
 
-export type postAuthApiKeysResponseSuccess = postAuthApiKeysResponse201 & {
-  headers: Headers;
-};
-export type postAuthApiKeysResponse = postAuthApiKeysResponseSuccess;
+export type postApiV1AuthApiKeysResponseSuccess =
+  postApiV1AuthApiKeysResponse201 & {
+    headers: Headers;
+  };
+export type postApiV1AuthApiKeysResponse = postApiV1AuthApiKeysResponseSuccess;
 
-export const getPostAuthApiKeysUrl = () => {
-  return `/auth/api-keys`;
+export const getPostApiV1AuthApiKeysUrl = () => {
+  return `/api/v1/auth/api-keys`;
 };
 
-export const postAuthApiKeys = async (
+export const postApiV1AuthApiKeys = async (
   options?: RequestInit,
-): Promise<postAuthApiKeysResponse> => {
-  return customFetcher<postAuthApiKeysResponse>(getPostAuthApiKeysUrl(), {
-    ...options,
-    method: "POST",
-  });
+): Promise<postApiV1AuthApiKeysResponse> => {
+  return customFetcher<postApiV1AuthApiKeysResponse>(
+    getPostApiV1AuthApiKeysUrl(),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
 };
 
 /**
  * @summary Get a specific API key
  */
-export type getAuthApiKeysKeyIdResponse200 = {
+export type getApiV1AuthApiKeysKeyIdResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getAuthApiKeysKeyIdResponseSuccess =
-  getAuthApiKeysKeyIdResponse200 & {
+export type getApiV1AuthApiKeysKeyIdResponseSuccess =
+  getApiV1AuthApiKeysKeyIdResponse200 & {
     headers: Headers;
   };
-export type getAuthApiKeysKeyIdResponse = getAuthApiKeysKeyIdResponseSuccess;
+export type getApiV1AuthApiKeysKeyIdResponse =
+  getApiV1AuthApiKeysKeyIdResponseSuccess;
 
-export const getGetAuthApiKeysKeyIdUrl = (keyId: string) => {
-  return `/auth/api-keys/${keyId}`;
+export const getGetApiV1AuthApiKeysKeyIdUrl = (keyId: string) => {
+  return `/api/v1/auth/api-keys/${keyId}`;
 };
 
-export const getAuthApiKeysKeyId = async (
+export const getApiV1AuthApiKeysKeyId = async (
   keyId: string,
   options?: RequestInit,
-): Promise<getAuthApiKeysKeyIdResponse> => {
-  return customFetcher<getAuthApiKeysKeyIdResponse>(
-    getGetAuthApiKeysKeyIdUrl(keyId),
+): Promise<getApiV1AuthApiKeysKeyIdResponse> => {
+  return customFetcher<getApiV1AuthApiKeysKeyIdResponse>(
+    getGetApiV1AuthApiKeysKeyIdUrl(keyId),
     {
       ...options,
       method: "GET",
@@ -1897,27 +1934,28 @@ export const getAuthApiKeysKeyId = async (
 /**
  * @summary Update an API key
  */
-export type putAuthApiKeysKeyIdResponse200 = {
+export type putApiV1AuthApiKeysKeyIdResponse200 = {
   data: void;
   status: 200;
 };
 
-export type putAuthApiKeysKeyIdResponseSuccess =
-  putAuthApiKeysKeyIdResponse200 & {
+export type putApiV1AuthApiKeysKeyIdResponseSuccess =
+  putApiV1AuthApiKeysKeyIdResponse200 & {
     headers: Headers;
   };
-export type putAuthApiKeysKeyIdResponse = putAuthApiKeysKeyIdResponseSuccess;
+export type putApiV1AuthApiKeysKeyIdResponse =
+  putApiV1AuthApiKeysKeyIdResponseSuccess;
 
-export const getPutAuthApiKeysKeyIdUrl = (keyId: string) => {
-  return `/auth/api-keys/${keyId}`;
+export const getPutApiV1AuthApiKeysKeyIdUrl = (keyId: string) => {
+  return `/api/v1/auth/api-keys/${keyId}`;
 };
 
-export const putAuthApiKeysKeyId = async (
+export const putApiV1AuthApiKeysKeyId = async (
   keyId: string,
   options?: RequestInit,
-): Promise<putAuthApiKeysKeyIdResponse> => {
-  return customFetcher<putAuthApiKeysKeyIdResponse>(
-    getPutAuthApiKeysKeyIdUrl(keyId),
+): Promise<putApiV1AuthApiKeysKeyIdResponse> => {
+  return customFetcher<putApiV1AuthApiKeysKeyIdResponse>(
+    getPutApiV1AuthApiKeysKeyIdUrl(keyId),
     {
       ...options,
       method: "PUT",
@@ -1928,28 +1966,28 @@ export const putAuthApiKeysKeyId = async (
 /**
  * @summary Delete an API key
  */
-export type deleteAuthApiKeysKeyIdResponse200 = {
+export type deleteApiV1AuthApiKeysKeyIdResponse200 = {
   data: void;
   status: 200;
 };
 
-export type deleteAuthApiKeysKeyIdResponseSuccess =
-  deleteAuthApiKeysKeyIdResponse200 & {
+export type deleteApiV1AuthApiKeysKeyIdResponseSuccess =
+  deleteApiV1AuthApiKeysKeyIdResponse200 & {
     headers: Headers;
   };
-export type deleteAuthApiKeysKeyIdResponse =
-  deleteAuthApiKeysKeyIdResponseSuccess;
+export type deleteApiV1AuthApiKeysKeyIdResponse =
+  deleteApiV1AuthApiKeysKeyIdResponseSuccess;
 
-export const getDeleteAuthApiKeysKeyIdUrl = (keyId: string) => {
-  return `/auth/api-keys/${keyId}`;
+export const getDeleteApiV1AuthApiKeysKeyIdUrl = (keyId: string) => {
+  return `/api/v1/auth/api-keys/${keyId}`;
 };
 
-export const deleteAuthApiKeysKeyId = async (
+export const deleteApiV1AuthApiKeysKeyId = async (
   keyId: string,
   options?: RequestInit,
-): Promise<deleteAuthApiKeysKeyIdResponse> => {
-  return customFetcher<deleteAuthApiKeysKeyIdResponse>(
-    getDeleteAuthApiKeysKeyIdUrl(keyId),
+): Promise<deleteApiV1AuthApiKeysKeyIdResponse> => {
+  return customFetcher<deleteApiV1AuthApiKeysKeyIdResponse>(
+    getDeleteApiV1AuthApiKeysKeyIdUrl(keyId),
     {
       ...options,
       method: "DELETE",
@@ -1960,28 +1998,28 @@ export const deleteAuthApiKeysKeyId = async (
 /**
  * @summary Revoke an API key
  */
-export type postAuthApiKeysKeyIdRevokeResponse200 = {
+export type postApiV1AuthApiKeysKeyIdRevokeResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAuthApiKeysKeyIdRevokeResponseSuccess =
-  postAuthApiKeysKeyIdRevokeResponse200 & {
+export type postApiV1AuthApiKeysKeyIdRevokeResponseSuccess =
+  postApiV1AuthApiKeysKeyIdRevokeResponse200 & {
     headers: Headers;
   };
-export type postAuthApiKeysKeyIdRevokeResponse =
-  postAuthApiKeysKeyIdRevokeResponseSuccess;
+export type postApiV1AuthApiKeysKeyIdRevokeResponse =
+  postApiV1AuthApiKeysKeyIdRevokeResponseSuccess;
 
-export const getPostAuthApiKeysKeyIdRevokeUrl = (keyId: string) => {
-  return `/auth/api-keys/${keyId}/revoke`;
+export const getPostApiV1AuthApiKeysKeyIdRevokeUrl = (keyId: string) => {
+  return `/api/v1/auth/api-keys/${keyId}/revoke`;
 };
 
-export const postAuthApiKeysKeyIdRevoke = async (
+export const postApiV1AuthApiKeysKeyIdRevoke = async (
   keyId: string,
   options?: RequestInit,
-): Promise<postAuthApiKeysKeyIdRevokeResponse> => {
-  return customFetcher<postAuthApiKeysKeyIdRevokeResponse>(
-    getPostAuthApiKeysKeyIdRevokeUrl(keyId),
+): Promise<postApiV1AuthApiKeysKeyIdRevokeResponse> => {
+  return customFetcher<postApiV1AuthApiKeysKeyIdRevokeResponse>(
+    getPostApiV1AuthApiKeysKeyIdRevokeUrl(keyId),
     {
       ...options,
       method: "POST",
@@ -1992,24 +2030,24 @@ export const postAuthApiKeysKeyIdRevoke = async (
 /**
  * @summary List all users (admin only)
  */
-export type getUsersResponse200 = {
+export type getApiV1UsersResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getUsersResponseSuccess = getUsersResponse200 & {
+export type getApiV1UsersResponseSuccess = getApiV1UsersResponse200 & {
   headers: Headers;
 };
-export type getUsersResponse = getUsersResponseSuccess;
+export type getApiV1UsersResponse = getApiV1UsersResponseSuccess;
 
-export const getGetUsersUrl = () => {
-  return `/users`;
+export const getGetApiV1UsersUrl = () => {
+  return `/api/v1/users`;
 };
 
-export const getUsers = async (
+export const getApiV1Users = async (
   options?: RequestInit,
-): Promise<getUsersResponse> => {
-  return customFetcher<getUsersResponse>(getGetUsersUrl(), {
+): Promise<getApiV1UsersResponse> => {
+  return customFetcher<getApiV1UsersResponse>(getGetApiV1UsersUrl(), {
     ...options,
     method: "GET",
   });
@@ -2018,80 +2056,90 @@ export const getUsers = async (
 /**
  * @summary Get user by ID (admin only)
  */
-export type getUsersUserIdResponse200 = {
+export type getApiV1UsersUserIdResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getUsersUserIdResponseSuccess = getUsersUserIdResponse200 & {
-  headers: Headers;
-};
-export type getUsersUserIdResponse = getUsersUserIdResponseSuccess;
+export type getApiV1UsersUserIdResponseSuccess =
+  getApiV1UsersUserIdResponse200 & {
+    headers: Headers;
+  };
+export type getApiV1UsersUserIdResponse = getApiV1UsersUserIdResponseSuccess;
 
-export const getGetUsersUserIdUrl = (userId: string) => {
-  return `/users/${userId}`;
+export const getGetApiV1UsersUserIdUrl = (userId: string) => {
+  return `/api/v1/users/${userId}`;
 };
 
-export const getUsersUserId = async (
+export const getApiV1UsersUserId = async (
   userId: string,
   options?: RequestInit,
-): Promise<getUsersUserIdResponse> => {
-  return customFetcher<getUsersUserIdResponse>(getGetUsersUserIdUrl(userId), {
-    ...options,
-    method: "GET",
-  });
+): Promise<getApiV1UsersUserIdResponse> => {
+  return customFetcher<getApiV1UsersUserIdResponse>(
+    getGetApiV1UsersUserIdUrl(userId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**
  * @summary Update user (admin only)
  */
-export type putUsersUserIdResponse200 = {
+export type putApiV1UsersUserIdResponse200 = {
   data: void;
   status: 200;
 };
 
-export type putUsersUserIdResponseSuccess = putUsersUserIdResponse200 & {
-  headers: Headers;
-};
-export type putUsersUserIdResponse = putUsersUserIdResponseSuccess;
+export type putApiV1UsersUserIdResponseSuccess =
+  putApiV1UsersUserIdResponse200 & {
+    headers: Headers;
+  };
+export type putApiV1UsersUserIdResponse = putApiV1UsersUserIdResponseSuccess;
 
-export const getPutUsersUserIdUrl = (userId: string) => {
-  return `/users/${userId}`;
+export const getPutApiV1UsersUserIdUrl = (userId: string) => {
+  return `/api/v1/users/${userId}`;
 };
 
-export const putUsersUserId = async (
+export const putApiV1UsersUserId = async (
   userId: string,
   options?: RequestInit,
-): Promise<putUsersUserIdResponse> => {
-  return customFetcher<putUsersUserIdResponse>(getPutUsersUserIdUrl(userId), {
-    ...options,
-    method: "PUT",
-  });
+): Promise<putApiV1UsersUserIdResponse> => {
+  return customFetcher<putApiV1UsersUserIdResponse>(
+    getPutApiV1UsersUserIdUrl(userId),
+    {
+      ...options,
+      method: "PUT",
+    },
+  );
 };
 
 /**
  * @summary Delete user (admin only)
  */
-export type deleteUsersUserIdResponse200 = {
+export type deleteApiV1UsersUserIdResponse200 = {
   data: void;
   status: 200;
 };
 
-export type deleteUsersUserIdResponseSuccess = deleteUsersUserIdResponse200 & {
-  headers: Headers;
-};
-export type deleteUsersUserIdResponse = deleteUsersUserIdResponseSuccess;
+export type deleteApiV1UsersUserIdResponseSuccess =
+  deleteApiV1UsersUserIdResponse200 & {
+    headers: Headers;
+  };
+export type deleteApiV1UsersUserIdResponse =
+  deleteApiV1UsersUserIdResponseSuccess;
 
-export const getDeleteUsersUserIdUrl = (userId: string) => {
-  return `/users/${userId}`;
+export const getDeleteApiV1UsersUserIdUrl = (userId: string) => {
+  return `/api/v1/users/${userId}`;
 };
 
-export const deleteUsersUserId = async (
+export const deleteApiV1UsersUserId = async (
   userId: string,
   options?: RequestInit,
-): Promise<deleteUsersUserIdResponse> => {
-  return customFetcher<deleteUsersUserIdResponse>(
-    getDeleteUsersUserIdUrl(userId),
+): Promise<deleteApiV1UsersUserIdResponse> => {
+  return customFetcher<deleteApiV1UsersUserIdResponse>(
+    getDeleteApiV1UsersUserIdUrl(userId),
     {
       ...options,
       method: "DELETE",
@@ -2369,44 +2417,44 @@ export const getApiV1Comics = async (
  * Retrieve a specific comic by its ID
  * @summary Get comic by ID
  */
-export type getApiComicsIdResponse200 = {
-  data: GetApiComicsId200;
+export type getApiV1ComicsIdResponse200 = {
+  data: GetApiV1ComicsId200;
   status: 200;
 };
 
-export type getApiComicsIdResponse400 = {
+export type getApiV1ComicsIdResponse400 = {
   data: ErrorResponse;
   status: 400;
 };
 
-export type getApiComicsIdResponse404 = {
+export type getApiV1ComicsIdResponse404 = {
   data: ErrorResponse;
   status: 404;
 };
 
-export type getApiComicsIdResponseSuccess = getApiComicsIdResponse200 & {
+export type getApiV1ComicsIdResponseSuccess = getApiV1ComicsIdResponse200 & {
   headers: Headers;
 };
-export type getApiComicsIdResponseError = (
-  | getApiComicsIdResponse400
-  | getApiComicsIdResponse404
+export type getApiV1ComicsIdResponseError = (
+  | getApiV1ComicsIdResponse400
+  | getApiV1ComicsIdResponse404
 ) & {
   headers: Headers;
 };
 
-export type getApiComicsIdResponse =
-  | getApiComicsIdResponseSuccess
-  | getApiComicsIdResponseError;
+export type getApiV1ComicsIdResponse =
+  | getApiV1ComicsIdResponseSuccess
+  | getApiV1ComicsIdResponseError;
 
-export const getGetApiComicsIdUrl = (id: string) => {
-  return `/api/comics/${id}`;
+export const getGetApiV1ComicsIdUrl = (id: string) => {
+  return `/api/v1/comics/${id}`;
 };
 
-export const getApiComicsId = async (
+export const getApiV1ComicsId = async (
   id: string,
   options?: RequestInit,
-): Promise<getApiComicsIdResponse> => {
-  return customFetcher<getApiComicsIdResponse>(getGetApiComicsIdUrl(id), {
+): Promise<getApiV1ComicsIdResponse> => {
+  return customFetcher<getApiV1ComicsIdResponse>(getGetApiV1ComicsIdUrl(id), {
     ...options,
     method: "GET",
   });

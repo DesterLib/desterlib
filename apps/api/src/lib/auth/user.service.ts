@@ -108,6 +108,10 @@ export class UserService {
       );
     }
 
+    // Check if this is the first user - make them admin
+    const userCount = await prisma.user.count();
+    const finalRole = userCount === 0 ? "ADMIN" : role;
+
     // Validate authentication method
     if (!isPasswordless && !password && !pin) {
       throw new BadRequestError(
@@ -143,12 +147,14 @@ export class UserService {
         passwordHash,
         pinHash,
         isPasswordless,
-        role,
+        role: finalRole,
         lastLoginAt: new Date(),
       },
     });
 
-    logger.info(`User created: ${user.username} (${user.id})`);
+    logger.info(
+      `User created: ${user.username} (${user.id}) - Role: ${finalRole}`
+    );
 
     // Generate tokens
     const accessToken = generateAccessToken({

@@ -121,7 +121,7 @@ router.get("/", (req, res, next) => {
 
 /**
  * @openapi
- * /api/comics/{id}:
+ * /api/v1/comics/{id}:
  *   get:
  *     summary: Get comic by ID
  *     description: Retrieve a specific comic by its ID

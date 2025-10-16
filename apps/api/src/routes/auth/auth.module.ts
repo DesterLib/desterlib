@@ -33,7 +33,7 @@ const router: Router = Router();
 
 /**
  * @swagger
- * /auth/register:
+ * /api/v1/auth/register:
  *   post:
  *     tags: [Authentication]
  *     summary: Register a new user
@@ -80,7 +80,7 @@ router.post(
 
 /**
  * @swagger
- * /auth/login:
+ * /api/v1/auth/login:
  *   post:
  *     tags: [Authentication]
  *     summary: Login with username and password or PIN
@@ -111,7 +111,7 @@ router.post(
 
 /**
  * @swagger
- * /auth/login/passwordless:
+ * /api/v1/auth/login/passwordless:
  *   post:
  *     tags: [Authentication]
  *     summary: Login without password (passwordless accounts only)
@@ -138,7 +138,7 @@ router.post(
 
 /**
  * @swagger
- * /auth/refresh:
+ * /api/v1/auth/refresh:
  *   post:
  *     tags: [Authentication]
  *     summary: Refresh access token
@@ -169,7 +169,7 @@ router.post(
 
 /**
  * @swagger
- * /auth/logout:
+ * /api/v1/auth/logout:
  *   post:
  *     tags: [Authentication]
  *     summary: Logout current session
@@ -199,7 +199,7 @@ router.post(
 
 /**
  * @swagger
- * /auth/logout-all:
+ * /api/v1/auth/logout-all:
  *   post:
  *     tags: [Authentication]
  *     summary: Logout all sessions
@@ -218,7 +218,7 @@ router.post(
 
 /**
  * @swagger
- * /auth/me:
+ * /api/v1/auth/me:
  *   get:
  *     tags: [Authentication]
  *     summary: Get current user information
@@ -237,7 +237,7 @@ router.get(
 
 /**
  * @swagger
- * /auth/me:
+ * /api/v1/auth/me:
  *   put:
  *     tags: [Authentication]
  *     summary: Update current user
@@ -257,7 +257,7 @@ router.put(
 
 /**
  * @swagger
- * /auth/change-password:
+ * /api/v1/auth/change-password:
  *   post:
  *     tags: [Authentication]
  *     summary: Change password
@@ -277,7 +277,7 @@ router.post(
 
 /**
  * @swagger
- * /auth/change-pin:
+ * /api/v1/auth/change-pin:
  *   post:
  *     tags: [Authentication]
  *     summary: Change PIN
@@ -301,7 +301,7 @@ router.post(
 
 /**
  * @swagger
- * /auth/sessions:
+ * /api/v1/auth/sessions:
  *   get:
  *     tags: [Authentication]
  *     summary: Get all active sessions
@@ -320,7 +320,7 @@ router.get(
 
 /**
  * @swagger
- * /auth/sessions/{sessionId}:
+ * /api/v1/auth/sessions/{sessionId}:
  *   delete:
  *     tags: [Authentication]
  *     summary: Revoke a specific session
@@ -349,7 +349,7 @@ router.delete(
 
 /**
  * @swagger
- * /auth/api-keys:
+ * /api/v1/auth/api-keys:
  *   get:
  *     tags: [API Keys]
  *     summary: List all API keys
@@ -367,7 +367,7 @@ router.get(
 
 /**
  * @swagger
- * /auth/api-keys:
+ * /api/v1/auth/api-keys:
  *   post:
  *     tags: [API Keys]
  *     summary: Create a new API key
@@ -386,7 +386,7 @@ router.post(
 
 /**
  * @swagger
- * /auth/api-keys/{keyId}:
+ * /api/v1/auth/api-keys/{keyId}:
  *   get:
  *     tags: [API Keys]
  *     summary: Get a specific API key
@@ -410,7 +410,7 @@ router.get(
 
 /**
  * @swagger
- * /auth/api-keys/{keyId}:
+ * /api/v1/auth/api-keys/{keyId}:
  *   put:
  *     tags: [API Keys]
  *     summary: Update an API key
@@ -435,7 +435,7 @@ router.put(
 
 /**
  * @swagger
- * /auth/api-keys/{keyId}:
+ * /api/v1/auth/api-keys/{keyId}:
  *   delete:
  *     tags: [API Keys]
  *     summary: Delete an API key
@@ -459,7 +459,7 @@ router.delete(
 
 /**
  * @swagger
- * /auth/api-keys/{keyId}/revoke:
+ * /api/v1/auth/api-keys/{keyId}/revoke:
  *   post:
  *     tags: [API Keys]
  *     summary: Revoke an API key
@@ -487,7 +487,7 @@ router.post(
 
 /**
  * @swagger
- * /users:
+ * /api/v1/users:
  *   get:
  *     tags: [Users]
  *     summary: List all users (admin only)
@@ -507,7 +507,7 @@ router.get(
 
 /**
  * @swagger
- * /users/{userId}:
+ * /api/v1/users/{userId}:
  *   get:
  *     tags: [Users]
  *     summary: Get user by ID (admin only)
@@ -533,7 +533,7 @@ router.get(
 
 /**
  * @swagger
- * /users/{userId}:
+ * /api/v1/users/{userId}:
  *   put:
  *     tags: [Users]
  *     summary: Update user (admin only)
@@ -560,7 +560,7 @@ router.put(
 
 /**
  * @swagger
- * /users/{userId}:
+ * /api/v1/users/{userId}:
  *   delete:
  *     tags: [Users]
  *     summary: Delete user (admin only)

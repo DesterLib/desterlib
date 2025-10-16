@@ -37,6 +37,14 @@ function getCsrfToken(): string | null {
 }
 
 /**
+ * Get auth token from localStorage
+ */
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("dester_access_token");
+}
+
+/**
  * Custom fetcher function used by Orval-generated client
  */
 export async function customFetcher<T>(
@@ -47,11 +55,18 @@ export async function customFetcher<T>(
 
   // Get CSRF token for state-changing requests
   const csrfToken = getCsrfToken();
+  const authToken = getAuthToken();
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...config.headers,
     ...(options?.headers as Record<string, string>),
   };
+
+  // Add auth token if available
+  if (authToken) {
+    headers["Authorization"] = `Bearer ${authToken}`;
+  }
 
   // Add CSRF token for POST, PUT, PATCH, DELETE
   if (

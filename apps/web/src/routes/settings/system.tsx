@@ -12,13 +12,19 @@ import {
   useUpdateMetrics,
   useAdminHealthCheck,
 } from "@/lib/hooks/useSystem";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2, CheckCircle, XCircle, ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/settings/system")({
   component: RouteComponent,
+  beforeLoad: () => {
+    // Note: We can't access useAuth here, so we'll handle auth check in component
+  },
 });
 
 function RouteComponent() {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const { data: healthData, refetch: refetchHealth } = useAdminHealthCheck();
   const { data: performanceData } = usePerformanceMetrics();
   const { data: alertData } = useActiveAlerts();
@@ -153,6 +159,35 @@ function RouteComponent() {
     onDeleteBackup: handleDeleteBackup,
     onUpdateMetrics: handleUpdateMetrics,
   });
+
+  // Show loading state while checking auth
+  if (isAuthLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-white/60" />
+      </div>
+    );
+  }
+
+  // Show access denied for non-admin users
+  if (!isAdmin) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
+            <ShieldAlert className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-white">
+            Admin Access Required
+          </h2>
+          <p className="text-white/60">
+            This page is only accessible to administrators. Please contact your
+            system administrator if you need access.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col p-4 rounded-xl">
