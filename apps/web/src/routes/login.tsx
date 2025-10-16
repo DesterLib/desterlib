@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Film, Loader2 } from "lucide-react";
+import { Film, Loader2, ArrowLeft } from "lucide-react";
 import { loginSchema } from "@/lib/schemas/auth.schema";
 
 export const Route = createFileRoute("/login")({
@@ -79,6 +79,15 @@ function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900/20 via-background to-blue-900/20 p-4">
       <div className="w-full max-w-md">
+        {/* Back to Home Button */}
+        <button
+          onClick={() => navigate({ to: "/" })}
+          className="mb-6 flex items-center gap-2 text-white/60 hover:text-white transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm">Back to Home</span>
+        </button>
+
         {/* Logo and Title */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 mb-4">

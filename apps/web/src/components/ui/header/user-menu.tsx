@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "../button";
 import {
   User,
   Settings,
@@ -24,23 +23,21 @@ export default function UserMenu() {
 
   if (!isAuthenticated) {
     return (
-      <Button
+      <button
         onClick={() => navigate({ to: "/login" })}
-        variant="ghost"
-        className="flex items-center gap-2"
+        className="ml-2 h-12 px-4 bg-neutral-900/60 backdrop-blur-lg border border-white/10 rounded-[50px] flex items-center gap-2 hover:bg-white/10 transition-colors [will-change:backdrop-filter]"
       >
         <LogIn className="w-4 h-4" />
-        <span>Sign In</span>
-      </Button>
+        <span className="text-sm font-medium text-white">Sign In</span>
+      </button>
     );
   }
 
   return (
-    <div className="relative">
-      <Button
+    <div className="relative ml-2">
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        variant="ghost"
-        className="flex items-center gap-2 min-w-[120px] justify-between"
+        className="h-12 px-4 bg-neutral-900/60 backdrop-blur-lg border border-white/10 rounded-[50px] flex items-center gap-2 justify-between hover:bg-white/10 transition-colors [will-change:backdrop-filter]"
       >
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
@@ -50,12 +47,14 @@ export default function UserMenu() {
               <User className="w-4 h-4 text-white" />
             )}
           </div>
-          <span className="text-sm font-medium">{user?.username}</span>
+          <span className="text-sm font-medium text-white">
+            {user?.username}
+          </span>
         </div>
         <ChevronDown
           className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
-      </Button>
+      </button>
 
       <AnimatePresence>
         {isOpen && (

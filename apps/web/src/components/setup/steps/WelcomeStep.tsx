@@ -1,12 +1,23 @@
 import { useSetupStore } from "@/lib/stores/setup";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, ArrowLeft } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 export function WelcomeStep() {
   const { nextStep, totalSteps } = useSetupStore();
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-8">
+      {/* Back to Home Button */}
+      <button
+        onClick={() => navigate({ to: "/" })}
+        className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors group"
+      >
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        <span className="text-sm">Back to Home</span>
+      </button>
+
       {/* Step indicator */}
       <div className="text-sm text-gray-500">Step 1 of {totalSteps}</div>
 

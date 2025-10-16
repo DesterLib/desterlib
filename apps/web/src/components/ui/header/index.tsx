@@ -181,6 +181,7 @@ const Header = () => {
               )}
             </AnimatePresence>
           </motion.div>
+          <UserMenu />
         </div>
         <AnimatePresence>
           {isSearchOpen && (
@@ -233,7 +234,6 @@ const Header = () => {
           isDialogOpen={isDialogOpen}
           setIsDialogOpen={setIsDialogOpen}
         />
-        <UserMenu />
       </nav>
     </div>
   );
