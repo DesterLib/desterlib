@@ -5,7 +5,7 @@ import type {
   ActiveAlertsResponse,
   BackupsResponse,
 } from "@/types/system";
-import { Download, RefreshCw, Trash2, TrendingUp } from "lucide-react";
+import { Download, RefreshCw, Trash2, Database } from "lucide-react";
 
 interface SystemSettingsConfigParams {
   healthData?: AdminHealthCheckResponse | null;
@@ -130,8 +130,9 @@ export function systemSettingsConfig({
             ? [
                 {
                   id: "request-count",
-                  label: "Total Requests",
-                  description: "Number of API requests processed",
+                  label: "API Requests",
+                  description:
+                    "Total number of requests processed since last restart",
                   icon: "📊",
                   iconBgColor: "bg-blue-500/20",
                   value: performanceData.requests.total.toLocaleString(),
@@ -139,11 +140,11 @@ export function systemSettingsConfig({
                 },
                 {
                   id: "avg-response-time",
-                  label: "Average Response Time",
-                  description: "Mean API response time",
+                  label: "Response Time (Avg)",
+                  description: "Average time to process API requests",
                   icon: "⏱️",
                   iconBgColor: "bg-purple-500/20",
-                  value: `${performanceData.requests.avgResponseTime.toFixed(2)}ms`,
+                  value: `${performanceData.requests.avgResponseTime.toFixed(0)} ms`,
                   type: "display" as const,
                 },
               ]
@@ -153,10 +154,10 @@ export function systemSettingsConfig({
                 {
                   id: "memory-usage",
                   label: "Memory Usage",
-                  description: `Heap: ${formatBytes(performanceData.memory.heapUsed)} / ${formatBytes(performanceData.memory.heapTotal)}`,
+                  description: `JS Heap: ${performanceData.memory.heapUsed} MB / ${performanceData.memory.heapTotal} MB • Total includes heap + code + native memory`,
                   icon: "🧠",
                   iconBgColor: "bg-orange-500/20",
-                  value: `${formatBytes(performanceData.memory.rss)} RSS`,
+                  value: `${performanceData.memory.rss} MB Total`,
                   type: "display" as const,
                 },
               ]
@@ -264,26 +265,26 @@ export function systemSettingsConfig({
         ],
       },
 
-      // Metrics
+      // Library Statistics
       {
-        id: "metrics",
-        title: "Business Metrics",
-        description: "Update and manage business metrics",
+        id: "library-stats",
+        title: "Library Statistics",
+        description: "Media library and user counts for monitoring",
+        headerAction: {
+          label: "Refresh Stats",
+          icon: Database,
+          variant: "modification",
+          onClick: onUpdateMetrics,
+        },
         items: [
           {
-            id: "update-metrics",
-            label: "Update Business Metrics",
-            description: "Manually trigger business metrics calculation",
-            icon: "📈",
+            id: "stats-info",
+            label: "Statistics Auto-Update",
+            description:
+              "Library counts (movies, TV shows, users) update automatically every 60 seconds. Use 'Refresh Stats' to force an immediate update.",
+            icon: "📊",
             iconBgColor: "bg-green-500/20",
-            actions: [
-              {
-                label: "Update Now",
-                icon: TrendingUp,
-                variant: "modification" as const,
-                onClick: onUpdateMetrics,
-              },
-            ],
+            type: "display" as const,
           },
         ],
       },

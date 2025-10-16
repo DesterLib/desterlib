@@ -291,7 +291,14 @@ router.get(
   "/health/check",
   asyncHandler(async (_req: Request, res: Response) => {
     const healthStatus = await alertingService.checkHealth();
-    res.jsonOk(healthStatus);
+
+    // Transform to match frontend expectations
+    res.jsonOk({
+      status: healthStatus.healthy ? "healthy" : "unhealthy",
+      database: healthStatus.checks.database,
+      cache: healthStatus.checks.cache,
+      alerts: healthStatus.alerts,
+    });
   })
 );
 

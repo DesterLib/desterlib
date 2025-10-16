@@ -8,6 +8,8 @@
 import logger from "../config/logger.js";
 import { checkDatabaseHealth } from "./prisma.js";
 import { cacheService } from "./cache.js";
+import { webSocketService, WS_EVENTS } from "./websocket.js";
+import { totalmem } from "os";
 import type { Registry } from "prom-client";
 
 /**
@@ -76,6 +78,10 @@ class AlertingService {
   private healthCheckFailures: Map<string, number> = new Map();
   private lastAlertTime: Map<string, Date> = new Map();
   private alertCooldown = 5 * 60 * 1000; // 5 minutes
+  private lastHealthStatus: {
+    healthy: boolean;
+    checks: Record<string, boolean>;
+  } | null = null;
 
   constructor() {
     // Register default logger handler
@@ -202,33 +208,62 @@ class AlertingService {
       logger.error("Database health check error:", error);
     }
 
-    // Check cache health
+    // Check cache health (optional - doesn't affect overall health)
     try {
-      checks.cache = cacheService.isEnabled()
-        ? await cacheService.exists("health_check")
-        : true;
-      if (checks.cache) {
-        this.healthCheckFailures.set("cache", 0);
-        await this.resolveAlert("cache_connection_failed");
-      } else {
-        const failures = (this.healthCheckFailures.get("cache") || 0) + 1;
-        this.healthCheckFailures.set("cache", failures);
+      if (cacheService.isEnabled()) {
+        // If cache is enabled, ping it to check connection
+        checks.cache = await cacheService.ping();
+        if (checks.cache) {
+          this.healthCheckFailures.set("cache", 0);
+          await this.resolveAlert("cache_connection_failed");
+        } else {
+          const failures = (this.healthCheckFailures.get("cache") || 0) + 1;
+          this.healthCheckFailures.set("cache", failures);
 
-        if (failures >= ALERT_THRESHOLDS.CACHE_HEALTH_CHECK_FAILURES) {
-          await this.triggerAlert(
-            "cache_connection_failed",
-            AlertSeverity.WARNING,
-            "Cache Connection Issues",
-            `Cache health check has failed ${failures} times consecutively`
-          );
+          if (failures >= ALERT_THRESHOLDS.CACHE_HEALTH_CHECK_FAILURES) {
+            await this.triggerAlert(
+              "cache_connection_failed",
+              AlertSeverity.WARNING,
+              "Cache Connection Issues",
+              `Cache health check has failed ${failures} times consecutively`
+            );
+          }
         }
+      } else {
+        // Cache is disabled - show as inactive (but don't affect overall health)
+        checks.cache = false;
       }
     } catch (error) {
       checks.cache = false;
       logger.error("Cache health check error:", error);
     }
 
-    const healthy = Object.values(checks).every((check) => check);
+    // Overall health is determined only by critical services (database)
+    // Cache is optional and won't fail the overall health check
+    const healthy = checks.database;
+
+    // Broadcast health status changes via WebSocket
+    const hasStatusChanged =
+      !this.lastHealthStatus ||
+      this.lastHealthStatus.healthy !== healthy ||
+      JSON.stringify(this.lastHealthStatus.checks) !== JSON.stringify(checks);
+
+    if (hasStatusChanged && webSocketService.isInitialized()) {
+      const healthStatus = {
+        status: healthy ? "healthy" : "unhealthy",
+        database: checks.database,
+        cache: checks.cache,
+        timestamp: new Date().toISOString(),
+      };
+
+      webSocketService.broadcast(WS_EVENTS.HEALTH_STATUS_CHANGED, healthStatus);
+      logger.info(
+        `Health status changed: ${healthy ? "healthy" : "unhealthy"}`,
+        checks
+      );
+    }
+
+    this.lastHealthStatus = { healthy, checks };
 
     return {
       healthy,
@@ -267,30 +302,34 @@ class AlertingService {
   async checkSystemResources(): Promise<void> {
     try {
       const memoryUsage = process.memoryUsage();
-      const heapUsedPercent =
-        (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
 
-      if (heapUsedPercent > ALERT_THRESHOLDS.MEMORY_USAGE_CRITICAL) {
+      // Calculate RSS (Resident Set Size) memory usage percentage
+      // RSS is the total memory allocated to the process, including heap, code, and stack
+      // This gives a more accurate picture of actual memory usage
+      const totalSystemMemory = totalmem();
+      const memoryUsedPercent = (memoryUsage.rss / totalSystemMemory) * 100;
+
+      if (memoryUsedPercent > ALERT_THRESHOLDS.MEMORY_USAGE_CRITICAL) {
         await this.triggerAlert(
           "memory_usage_critical",
           AlertSeverity.CRITICAL,
           "Critical Memory Usage",
-          `Memory usage is at ${heapUsedPercent.toFixed(1)}%`,
+          `Memory usage is at ${memoryUsedPercent.toFixed(1)}% (${(memoryUsage.rss / 1024 / 1024 / 1024).toFixed(2)}GB / ${(totalSystemMemory / 1024 / 1024 / 1024).toFixed(2)}GB)`,
           {
             metric: "memory_usage_percent",
-            value: heapUsedPercent.toFixed(1),
+            value: memoryUsedPercent.toFixed(1),
             threshold: ALERT_THRESHOLDS.MEMORY_USAGE_CRITICAL,
           }
         );
-      } else if (heapUsedPercent > ALERT_THRESHOLDS.MEMORY_USAGE_WARNING) {
+      } else if (memoryUsedPercent > ALERT_THRESHOLDS.MEMORY_USAGE_WARNING) {
         await this.triggerAlert(
           "memory_usage_warning",
           AlertSeverity.WARNING,
           "High Memory Usage",
-          `Memory usage is at ${heapUsedPercent.toFixed(1)}%`,
+          `Memory usage is at ${memoryUsedPercent.toFixed(1)}% (${(memoryUsage.rss / 1024 / 1024 / 1024).toFixed(2)}GB / ${(totalSystemMemory / 1024 / 1024 / 1024).toFixed(2)}GB)`,
           {
             metric: "memory_usage_percent",
-            value: heapUsedPercent.toFixed(1),
+            value: memoryUsedPercent.toFixed(1),
             threshold: ALERT_THRESHOLDS.MEMORY_USAGE_WARNING,
           }
         );

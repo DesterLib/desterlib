@@ -207,4 +207,11 @@ export const WS_EVENTS = {
   // System events
   SYSTEM_STATUS: "system:status",
   CACHE_CLEARED: "cache:cleared",
+
+  // Settings events
+  SETTINGS_UPDATED: "settings:updated",
+  SETTINGS_SETUP_COMPLETED: "settings:setup_completed",
+
+  // Health events
+  HEALTH_STATUS_CHANGED: "health:status_changed",
 } as const;

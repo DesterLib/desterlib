@@ -60,6 +60,8 @@ RUN pnpm prisma generate
 
 # Set environment
 ENV NODE_ENV=production
+# Set Node.js heap size to 512MB (adjust based on your needs)
+ENV NODE_OPTIONS="--max-old-space-size=512"
 
 EXPOSE 3000
 

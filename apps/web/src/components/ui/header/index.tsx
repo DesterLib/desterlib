@@ -79,6 +79,9 @@ const Header = () => {
     return location.pathname.startsWith(tab.href);
   });
 
+  // Check if we're on the settings page
+  const isOnSettingsPage = location.pathname.startsWith("/settings");
+
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -158,57 +161,59 @@ const Header = () => {
               </motion.div>
             )}
           </AnimatePresence>
-          <motion.div
-            initial={searchContainerMotion.initial}
-            animate={searchContainerMotion.animate(isSearchOpen)}
-            className="border bg-neutral-900/60 border-white/10 rounded-[50px] flex items-center"
-          >
-            <div className="p-1">
-              <motion.button
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                animate={searchButtonMotion.animate(isSearchOpen)}
-                className={cn(
-                  "w-10 h-10 transition-colors duration-300 flex items-center justify-center  rounded-[50px]",
-                  isSearchOpen ? "bg-white/10" : "hover:bg-white/10"
-                )}
-              >
-                <SearchIcon className="w-4 h-4" />
-              </motion.button>
-            </div>
-            <AnimatePresence>
-              {isSearchOpen && (
-                <motion.div
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  variants={searchInputVariants}
-                  transition={searchInputTransition}
-                  className="overflow-hidden"
+          {!isOnSettingsPage && (
+            <motion.div
+              initial={searchContainerMotion.initial}
+              animate={searchContainerMotion.animate(isSearchOpen)}
+              className="border bg-neutral-900/60 border-white/10 rounded-[50px] flex items-center"
+            >
+              <div className="p-1">
+                <motion.button
+                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+                  animate={searchButtonMotion.animate(isSearchOpen)}
+                  className={cn(
+                    "w-10 h-10 transition-colors duration-300 flex items-center justify-center  rounded-[50px]",
+                    isSearchOpen ? "bg-white/10" : "hover:bg-white/10"
+                  )}
                 >
-                  <div className="flex items-center p-1 w-full">
-                    <input
-                      type="text"
-                      className="flex-1 h-10 outline-none bg-transparent text-white"
-                      placeholder="Search..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleCloseSearch}
-                      className="w-10 h-10 transition-colors duration-300 flex items-center justify-center hover:bg-neutral-800/60 rounded-[50px]"
-                    >
-                      <XIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+                  <SearchIcon className="w-4 h-4" />
+                </motion.button>
+              </div>
+              <AnimatePresence>
+                {isSearchOpen && (
+                  <motion.div
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    variants={searchInputVariants}
+                    transition={searchInputTransition}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex items-center p-1 w-full">
+                      <input
+                        type="text"
+                        className="flex-1 h-10 outline-none bg-transparent text-white"
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleCloseSearch}
+                        className="w-10 h-10 transition-colors duration-300 flex items-center justify-center hover:bg-neutral-800/60 rounded-[50px]"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
           <UserMenu />
         </motion.div>
         <AnimatePresence>
-          {isSearchOpen && (
+          {isSearchOpen && !isOnSettingsPage && (
             <motion.div
               initial="hidden"
               animate="visible"

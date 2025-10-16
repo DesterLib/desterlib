@@ -215,23 +215,27 @@ class PerformanceMonitor {
           });
       }
 
-      // Check memory usage
+      // Check Node.js heap usage
       if (stats.memory.heapUsedPercent > 85) {
         alertingService
           .triggerAlert(
-            "high_memory_usage",
+            "high_heap_usage",
             AlertSeverity.WARNING,
-            "High Memory Usage",
-            `Memory usage is at ${stats.memory.heapUsedPercent}%`,
+            "High Node.js Heap Usage",
+            `Node.js heap is at ${stats.memory.heapUsedPercent}% (${stats.memory.heapUsed}MB / ${stats.memory.heapTotal}MB). This is heap memory for JavaScript objects, not total RAM.`,
             {
-              metric: "memory_usage_percent",
+              metric: "heap_usage_percent",
               value: stats.memory.heapUsedPercent,
               threshold: 85,
             }
           )
           .catch((error) => {
-            logger.error("Failed to trigger memory alert:", error);
+            logger.error("Failed to trigger heap usage alert:", error);
           });
+      } else {
+        // Resolve alerts when heap usage is back to normal
+        alertingService.resolveAlert("high_heap_usage").catch(() => {});
+        alertingService.resolveAlert("high_memory_usage").catch(() => {}); // Old alert ID
       }
     }, intervalMs);
   }

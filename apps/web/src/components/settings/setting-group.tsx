@@ -29,7 +29,7 @@ export function SettingGroup({ group }: SettingGroupProps) {
           </Button>
         )}
       </div>
-      <ul className="bg-white/10 backdrop-blur-lg rounded-xl divide-y divide-white/10 overflow-hidden">
+      <ul className="bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-2xl divide-y divide-white/10 overflow-hidden">
         {group.items.map((item) => (
           <SettingItem key={item.id} item={item} />
         ))}

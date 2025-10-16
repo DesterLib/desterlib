@@ -243,6 +243,23 @@ class CacheService {
   }
 
   /**
+   * Ping the cache to check connection health
+   */
+  async ping(): Promise<boolean> {
+    if (!this.isEnabled() || !this.client) {
+      return false;
+    }
+
+    try {
+      const result = await this.client.ping();
+      return result === "PONG";
+    } catch (error) {
+      logger.error("Cache ping error:", error);
+      return false;
+    }
+  }
+
+  /**
    * Get TTL for a key in seconds
    */
   async ttl(key: string): Promise<number> {

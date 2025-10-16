@@ -1,5 +1,7 @@
 import { MediaType } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
+import { webSocketService, WS_EVENTS } from "../../lib/websocket.js";
+import logger from "../../config/logger.js";
 
 export interface LibraryInput {
   name: string;
@@ -109,6 +111,15 @@ export class SettingsService {
       },
     });
 
+    // Broadcast setup completion via WebSocket
+    if (webSocketService.isInitialized()) {
+      webSocketService.broadcast(WS_EVENTS.SETTINGS_SETUP_COMPLETED, {
+        settings,
+        timestamp: new Date().toISOString(),
+      });
+      logger.info("Setup completed - broadcasted via WebSocket");
+    }
+
     return settings;
   }
 
@@ -163,6 +174,15 @@ export class SettingsService {
         },
       });
 
+      // Broadcast settings update via WebSocket
+      if (webSocketService.isInitialized()) {
+        webSocketService.broadcast(WS_EVENTS.SETTINGS_UPDATED, {
+          settings,
+          timestamp: new Date().toISOString(),
+        });
+        logger.info("Settings updated - broadcasted via WebSocket");
+      }
+
       return settings;
     } else {
       // Just update tmdbApiKey
@@ -179,6 +199,15 @@ export class SettingsService {
           },
         },
       });
+
+      // Broadcast settings update via WebSocket
+      if (webSocketService.isInitialized()) {
+        webSocketService.broadcast(WS_EVENTS.SETTINGS_UPDATED, {
+          settings,
+          timestamp: new Date().toISOString(),
+        });
+        logger.info("Settings updated - broadcasted via WebSocket");
+      }
 
       return settings;
     }
