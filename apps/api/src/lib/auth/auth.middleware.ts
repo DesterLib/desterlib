@@ -392,14 +392,14 @@ export function requireRole(...roles: UserRole[]) {
 }
 
 /**
- * Require admin role
+ * Require admin role (includes SUPER_ADMIN)
  */
-export const requireAdmin = requireRole("ADMIN");
+export const requireAdmin = requireRole("SUPER_ADMIN", "ADMIN");
 
 /**
- * Require user or admin role
+ * Require user or admin role (includes SUPER_ADMIN)
  */
-export const requireUserOrAdmin = requireRole("USER", "ADMIN");
+export const requireUserOrAdmin = requireRole("SUPER_ADMIN", "ADMIN", "USER");
 
 // ────────────────────────────────────────────────────────────────────────────
 // Scope-Based Access Control (for API keys)

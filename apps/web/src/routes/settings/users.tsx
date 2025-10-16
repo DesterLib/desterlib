@@ -21,7 +21,8 @@ export const Route = createFileRoute("/settings/users")({
 
 function RouteComponent() {
   const { user: currentUser, isLoading: isAuthLoading } = useAuth();
-  const isAdmin = currentUser?.role === "ADMIN";
+  const isAdmin =
+    currentUser?.role === "ADMIN" || currentUser?.role === "SUPER_ADMIN";
   const {
     data: usersData,
     isLoading: isLoadingUsers,

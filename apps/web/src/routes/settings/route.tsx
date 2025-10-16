@@ -12,10 +12,13 @@ import {
   Edit,
   Menu,
   Users,
+  Star,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
@@ -30,7 +33,7 @@ export const Route = createFileRoute("/settings")({
 function RouteComponent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
   // Redirect unauthenticated users or guests
   useEffect(() => {
@@ -65,9 +68,37 @@ function RouteComponent() {
               </Button>
             </div>
           </div>
-          <p className="text-sm text-white/60">
-            {user?.role} • {user?.email}
-          </p>
+          <div className="flex items-center gap-2 mb-2">
+            <Badge
+              variant={
+                user?.role === "SUPER_ADMIN"
+                  ? "default"
+                  : user?.role === "ADMIN"
+                    ? "secondary"
+                    : "outline"
+              }
+              className={`inline-flex items-center gap-1 ${
+                user?.role === "SUPER_ADMIN"
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                  : user?.role === "ADMIN"
+                    ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                    : "bg-blue-500/20 text-blue-300 border-blue-500/30"
+              }`}
+            >
+              {user?.role === "SUPER_ADMIN" && (
+                <Star className="w-3 h-3 fill-amber-300" />
+              )}
+              {user?.role === "ADMIN" && <Shield className="w-3 h-3" />}
+              {user?.role === "SUPER_ADMIN"
+                ? "Super Admin"
+                : user?.role === "ADMIN"
+                  ? "Admin"
+                  : user?.role === "GUEST"
+                    ? "Guest"
+                    : "User"}
+            </Badge>
+          </div>
+          <p className="text-sm text-white/60">{user?.email}</p>
         </div>
 
         {/* Settings Section */}

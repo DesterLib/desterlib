@@ -8,8 +8,10 @@ import {
   ChevronDown,
   Shield,
   LogIn,
+  Star,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { Badge } from "@/components/ui/badge";
 
 function UserMenu() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -43,8 +45,18 @@ function UserMenu() {
           className="h-10 px-1  rounded-[50px] flex items-center gap-2 justify-between hover:bg-white/10 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-              {user?.role === "ADMIN" ? (
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                user?.role === "SUPER_ADMIN"
+                  ? "bg-gradient-to-br from-amber-500 to-yellow-500"
+                  : user?.role === "ADMIN"
+                    ? "bg-gradient-to-br from-purple-500 to-blue-500"
+                    : "bg-gradient-to-br from-blue-500 to-cyan-500"
+              }`}
+            >
+              {user?.role === "SUPER_ADMIN" ? (
+                <Star className="w-4 h-4 text-white fill-white" />
+              ) : user?.role === "ADMIN" ? (
                 <Shield className="w-4 h-4 text-white" />
               ) : (
                 <User className="w-4 h-4 text-white" />
@@ -90,16 +102,34 @@ function UserMenu() {
                   <p className="text-xs text-white/60 mt-0.5">{user.email}</p>
                 )}
                 <div className="mt-2">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                      user?.role === "ADMIN"
-                        ? "bg-purple-500/20 text-purple-300"
-                        : "bg-blue-500/20 text-blue-300"
+                  <Badge
+                    variant={
+                      user?.role === "SUPER_ADMIN"
+                        ? "default"
+                        : user?.role === "ADMIN"
+                          ? "secondary"
+                          : "outline"
+                    }
+                    className={`inline-flex items-center gap-1 ${
+                      user?.role === "SUPER_ADMIN"
+                        ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                        : user?.role === "ADMIN"
+                          ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                          : "bg-blue-500/20 text-blue-300 border-blue-500/30"
                     }`}
                   >
+                    {user?.role === "SUPER_ADMIN" && (
+                      <Star className="w-3 h-3 fill-amber-300" />
+                    )}
                     {user?.role === "ADMIN" && <Shield className="w-3 h-3" />}
-                    {user?.role === "ADMIN" ? "Admin" : "User"}
-                  </span>
+                    {user?.role === "SUPER_ADMIN"
+                      ? "Super Admin"
+                      : user?.role === "ADMIN"
+                        ? "Admin"
+                        : user?.role === "GUEST"
+                          ? "Guest"
+                          : "User"}
+                  </Badge>
                 </div>
               </div>
 
