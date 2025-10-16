@@ -193,40 +193,42 @@ const Header = () => {
               transition={filtersContainerTransition}
               className="w-full"
             >
-              <div className="flex items-center w-full gap-2 pl-14">
-                <motion.div variants={filterButtonVariants}>
-                  <Button
-                    onClick={() => setSearchFilter("all")}
-                    variant={searchFilter === "all" ? "default" : "ghost"}
-                  >
-                    All
-                  </Button>
-                </motion.div>
-                <motion.div variants={filterButtonVariants}>
-                  <Button
-                    onClick={() => setSearchFilter("movies")}
-                    variant={searchFilter === "movies" ? "default" : "ghost"}
-                  >
-                    Movies
-                  </Button>
-                </motion.div>
-                <motion.div variants={filterButtonVariants}>
-                  <Button
-                    onClick={() => setSearchFilter("tvshows")}
-                    variant={searchFilter === "tvshows" ? "default" : "ghost"}
-                  >
-                    TV Shows
-                  </Button>
-                </motion.div>
+              <div className="relative pl-14">
+                <div className="flex items-center w-full gap-2">
+                  <motion.div variants={filterButtonVariants}>
+                    <Button
+                      onClick={() => setSearchFilter("all")}
+                      variant={searchFilter === "all" ? "default" : "ghost"}
+                    >
+                      All
+                    </Button>
+                  </motion.div>
+                  <motion.div variants={filterButtonVariants}>
+                    <Button
+                      onClick={() => setSearchFilter("movies")}
+                      variant={searchFilter === "movies" ? "default" : "ghost"}
+                    >
+                      Movies
+                    </Button>
+                  </motion.div>
+                  <motion.div variants={filterButtonVariants}>
+                    <Button
+                      onClick={() => setSearchFilter("tvshows")}
+                      variant={searchFilter === "tvshows" ? "default" : "ghost"}
+                    >
+                      TV Shows
+                    </Button>
+                  </motion.div>
+                </div>
+                {isSearchOpen && debouncedQuery && (
+                  <SearchResults
+                    results={searchResults}
+                    isLoading={isLoading}
+                    query={debouncedQuery}
+                    filter={searchFilter}
+                  />
+                )}
               </div>
-              {isSearchOpen && debouncedQuery && (
-                <SearchResults
-                  results={searchResults}
-                  isLoading={isLoading}
-                  query={debouncedQuery}
-                  filter={searchFilter}
-                />
-              )}
             </motion.div>
           )}
         </AnimatePresence>

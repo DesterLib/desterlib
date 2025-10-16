@@ -38,7 +38,7 @@ const SearchResults = ({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="absolute top-full w-[calc(100%-32px)] left-0 right-0 mx-auto bg-neutral-900/95 backdrop-blur-lg border border-white/10rounded-3xl p-2 shadow-2xl max-h-[70vh] overflow-y-auto"
+      className="absolute top-full mt-4 left-0 right-0 bg-neutral-900/95 backdrop-blur-lg border border-white/10 rounded-3xl p-2 shadow-2xl max-h-[70vh] overflow-y-auto"
     >
       {isLoading && (
         <div className="flex items-center justify-center py-8">
@@ -74,12 +74,14 @@ const SearchResults = ({
                 {filteredMedia.map((item) => (
                   <div
                     key={item.id}
-                    onClick={() =>
-                      navigate({
-                        to: "/media/$mediaId",
-                        params: { mediaId: item.id },
-                      })
-                    }
+                    onClick={() => {
+                      if (item.id) {
+                        navigate({
+                          to: "/media/$mediaId",
+                          params: { mediaId: item.id },
+                        });
+                      }
+                    }}
                     className="group cursor-pointer rounded-2xl overflow-hidden hover:bg-white/5 transition-colors duration-200"
                   >
                     <div className="flex gap-3 p-2">
@@ -146,9 +148,11 @@ const SearchResults = ({
                         <h2 className="text-sm font-semibold text-[#f5f5f7] m-0 leading-tight tracking-tight">
                           {collection.name}
                         </h2>
-                        <p className="text-xs text-[#86868b] m-0 mt-0.5">
-                          {collection.type}
-                        </p>
+                        {collection.description && (
+                          <p className="text-xs text-[#86868b] m-0 mt-0.5 line-clamp-1">
+                            {collection.description}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}

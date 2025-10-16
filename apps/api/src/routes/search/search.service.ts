@@ -14,9 +14,9 @@ export class SearchService {
 
     const searchTerm = `%${query.trim().toLowerCase()}%`;
 
-    // Use raw SQL for case-insensitive search in SQLite
+    // Use raw SQL for case-insensitive search
     const mediaIds = await prisma.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM Media 
+      SELECT id FROM "Media" 
       WHERE LOWER(title) LIKE ${searchTerm}
       ORDER BY title ASC
       LIMIT 20
@@ -75,9 +75,9 @@ export class SearchService {
 
     const searchTerm = `%${query.trim().toLowerCase()}%`;
 
-    // Use raw SQL for case-insensitive search in SQLite
+    // Use raw SQL for case-insensitive search
     const collectionIds = await prisma.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM Collection 
+      SELECT id FROM "Collection" 
       WHERE LOWER(name) LIKE ${searchTerm} 
          OR LOWER(description) LIKE ${searchTerm}
       ORDER BY name ASC
