@@ -35,7 +35,7 @@ router.use(requireAdmin);
 
 /**
  * @swagger
- * /admin/backups:
+ * /api/v1/admin/backups:
  *   get:
  *     tags: [Admin]
  *     summary: List all database backups
@@ -60,7 +60,7 @@ router.get(
 
 /**
  * @swagger
- * /admin/backups:
+ * /api/v1/admin/backups:
  *   post:
  *     tags: [Admin]
  *     summary: Create a new database backup
@@ -98,7 +98,7 @@ router.post(
 
 /**
  * @swagger
- * /admin/backups/{filename}/restore:
+ * /api/v1/admin/backups/{filename}/restore:
  *   post:
  *     tags: [Admin]
  *     summary: Restore database from backup
@@ -148,7 +148,7 @@ router.post(
 
 /**
  * @swagger
- * /admin/backups/{filename}:
+ * /api/v1/admin/backups/{filename}:
  *   delete:
  *     tags: [Admin]
  *     summary: Delete a backup file
@@ -198,7 +198,7 @@ router.delete(
 
 /**
  * @swagger
- * /admin/metrics/update:
+ * /api/v1/admin/metrics/update:
  *   post:
  *     tags: [Admin]
  *     summary: Manually update business metrics
@@ -224,7 +224,7 @@ router.post(
 
 /**
  * @swagger
- * /admin/alerts:
+ * /api/v1/admin/alerts:
  *   get:
  *     tags: [Admin]
  *     summary: Get active alerts
@@ -247,7 +247,7 @@ router.get(
 
 /**
  * @swagger
- * /admin/alerts/history:
+ * /api/v1/admin/alerts/history:
  *   get:
  *     tags: [Admin]
  *     summary: Get alert history
@@ -277,7 +277,7 @@ router.get(
 
 /**
  * @swagger
- * /admin/health/check:
+ * /api/v1/admin/health/check:
  *   get:
  *     tags: [Admin]
  *     summary: Perform comprehensive health check
@@ -301,7 +301,7 @@ router.get(
 
 /**
  * @swagger
- * /admin/performance:
+ * /api/v1/admin/performance:
  *   get:
  *     tags: [Admin]
  *     summary: Get performance statistics
@@ -321,7 +321,7 @@ router.get(
 
 /**
  * @swagger
- * /admin/performance/reset:
+ * /api/v1/admin/performance/reset:
  *   post:
  *     tags: [Admin]
  *     summary: Reset performance statistics

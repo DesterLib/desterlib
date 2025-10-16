@@ -315,7 +315,7 @@ export interface Settings {
   libraries?: Collection[];
 }
 
-export type GetAdminAlertsHistoryParams = {
+export type GetApiV1AdminAlertsHistoryParams = {
   limit?: number;
 };
 
@@ -1144,80 +1144,91 @@ export type GetApiV1TvShowsIdSeasonsSeasonNumberEpisodesEpisodeNumber200 =
 /**
  * @summary List all database backups
  */
-export type getAdminBackupsResponse200 = {
+export type getApiV1AdminBackupsResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getAdminBackupsResponseSuccess = getAdminBackupsResponse200 & {
-  headers: Headers;
-};
-export type getAdminBackupsResponse = getAdminBackupsResponseSuccess;
+export type getApiV1AdminBackupsResponseSuccess =
+  getApiV1AdminBackupsResponse200 & {
+    headers: Headers;
+  };
+export type getApiV1AdminBackupsResponse = getApiV1AdminBackupsResponseSuccess;
 
-export const getGetAdminBackupsUrl = () => {
-  return `/admin/backups`;
+export const getGetApiV1AdminBackupsUrl = () => {
+  return `/api/v1/admin/backups`;
 };
 
-export const getAdminBackups = async (
+export const getApiV1AdminBackups = async (
   options?: RequestInit,
-): Promise<getAdminBackupsResponse> => {
-  return customFetcher<getAdminBackupsResponse>(getGetAdminBackupsUrl(), {
-    ...options,
-    method: "GET",
-  });
+): Promise<getApiV1AdminBackupsResponse> => {
+  return customFetcher<getApiV1AdminBackupsResponse>(
+    getGetApiV1AdminBackupsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**
  * @summary Create a new database backup
  */
-export type postAdminBackupsResponse201 = {
+export type postApiV1AdminBackupsResponse201 = {
   data: void;
   status: 201;
 };
 
-export type postAdminBackupsResponseSuccess = postAdminBackupsResponse201 & {
-  headers: Headers;
-};
-export type postAdminBackupsResponse = postAdminBackupsResponseSuccess;
+export type postApiV1AdminBackupsResponseSuccess =
+  postApiV1AdminBackupsResponse201 & {
+    headers: Headers;
+  };
+export type postApiV1AdminBackupsResponse =
+  postApiV1AdminBackupsResponseSuccess;
 
-export const getPostAdminBackupsUrl = () => {
-  return `/admin/backups`;
+export const getPostApiV1AdminBackupsUrl = () => {
+  return `/api/v1/admin/backups`;
 };
 
-export const postAdminBackups = async (
+export const postApiV1AdminBackups = async (
   options?: RequestInit,
-): Promise<postAdminBackupsResponse> => {
-  return customFetcher<postAdminBackupsResponse>(getPostAdminBackupsUrl(), {
-    ...options,
-    method: "POST",
-  });
+): Promise<postApiV1AdminBackupsResponse> => {
+  return customFetcher<postApiV1AdminBackupsResponse>(
+    getPostApiV1AdminBackupsUrl(),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
 };
 
 /**
  * @summary Restore database from backup
  */
-export type postAdminBackupsFilenameRestoreResponse200 = {
+export type postApiV1AdminBackupsFilenameRestoreResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAdminBackupsFilenameRestoreResponseSuccess =
-  postAdminBackupsFilenameRestoreResponse200 & {
+export type postApiV1AdminBackupsFilenameRestoreResponseSuccess =
+  postApiV1AdminBackupsFilenameRestoreResponse200 & {
     headers: Headers;
   };
-export type postAdminBackupsFilenameRestoreResponse =
-  postAdminBackupsFilenameRestoreResponseSuccess;
+export type postApiV1AdminBackupsFilenameRestoreResponse =
+  postApiV1AdminBackupsFilenameRestoreResponseSuccess;
 
-export const getPostAdminBackupsFilenameRestoreUrl = (filename: string) => {
-  return `/admin/backups/${filename}/restore`;
+export const getPostApiV1AdminBackupsFilenameRestoreUrl = (
+  filename: string,
+) => {
+  return `/api/v1/admin/backups/${filename}/restore`;
 };
 
-export const postAdminBackupsFilenameRestore = async (
+export const postApiV1AdminBackupsFilenameRestore = async (
   filename: string,
   options?: RequestInit,
-): Promise<postAdminBackupsFilenameRestoreResponse> => {
-  return customFetcher<postAdminBackupsFilenameRestoreResponse>(
-    getPostAdminBackupsFilenameRestoreUrl(filename),
+): Promise<postApiV1AdminBackupsFilenameRestoreResponse> => {
+  return customFetcher<postApiV1AdminBackupsFilenameRestoreResponse>(
+    getPostApiV1AdminBackupsFilenameRestoreUrl(filename),
     {
       ...options,
       method: "POST",
@@ -1228,28 +1239,28 @@ export const postAdminBackupsFilenameRestore = async (
 /**
  * @summary Delete a backup file
  */
-export type deleteAdminBackupsFilenameResponse200 = {
+export type deleteApiV1AdminBackupsFilenameResponse200 = {
   data: void;
   status: 200;
 };
 
-export type deleteAdminBackupsFilenameResponseSuccess =
-  deleteAdminBackupsFilenameResponse200 & {
+export type deleteApiV1AdminBackupsFilenameResponseSuccess =
+  deleteApiV1AdminBackupsFilenameResponse200 & {
     headers: Headers;
   };
-export type deleteAdminBackupsFilenameResponse =
-  deleteAdminBackupsFilenameResponseSuccess;
+export type deleteApiV1AdminBackupsFilenameResponse =
+  deleteApiV1AdminBackupsFilenameResponseSuccess;
 
-export const getDeleteAdminBackupsFilenameUrl = (filename: string) => {
-  return `/admin/backups/${filename}`;
+export const getDeleteApiV1AdminBackupsFilenameUrl = (filename: string) => {
+  return `/api/v1/admin/backups/${filename}`;
 };
 
-export const deleteAdminBackupsFilename = async (
+export const deleteApiV1AdminBackupsFilename = async (
   filename: string,
   options?: RequestInit,
-): Promise<deleteAdminBackupsFilenameResponse> => {
-  return customFetcher<deleteAdminBackupsFilenameResponse>(
-    getDeleteAdminBackupsFilenameUrl(filename),
+): Promise<deleteApiV1AdminBackupsFilenameResponse> => {
+  return customFetcher<deleteApiV1AdminBackupsFilenameResponse>(
+    getDeleteApiV1AdminBackupsFilenameUrl(filename),
     {
       ...options,
       method: "DELETE",
@@ -1260,27 +1271,27 @@ export const deleteAdminBackupsFilename = async (
 /**
  * @summary Manually update business metrics
  */
-export type postAdminMetricsUpdateResponse200 = {
+export type postApiV1AdminMetricsUpdateResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAdminMetricsUpdateResponseSuccess =
-  postAdminMetricsUpdateResponse200 & {
+export type postApiV1AdminMetricsUpdateResponseSuccess =
+  postApiV1AdminMetricsUpdateResponse200 & {
     headers: Headers;
   };
-export type postAdminMetricsUpdateResponse =
-  postAdminMetricsUpdateResponseSuccess;
+export type postApiV1AdminMetricsUpdateResponse =
+  postApiV1AdminMetricsUpdateResponseSuccess;
 
-export const getPostAdminMetricsUpdateUrl = () => {
-  return `/admin/metrics/update`;
+export const getPostApiV1AdminMetricsUpdateUrl = () => {
+  return `/api/v1/admin/metrics/update`;
 };
 
-export const postAdminMetricsUpdate = async (
+export const postApiV1AdminMetricsUpdate = async (
   options?: RequestInit,
-): Promise<postAdminMetricsUpdateResponse> => {
-  return customFetcher<postAdminMetricsUpdateResponse>(
-    getPostAdminMetricsUpdateUrl(),
+): Promise<postApiV1AdminMetricsUpdateResponse> => {
+  return customFetcher<postApiV1AdminMetricsUpdateResponse>(
+    getPostApiV1AdminMetricsUpdateUrl(),
     {
       ...options,
       method: "POST",
@@ -1291,46 +1302,50 @@ export const postAdminMetricsUpdate = async (
 /**
  * @summary Get active alerts
  */
-export type getAdminAlertsResponse200 = {
+export type getApiV1AdminAlertsResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getAdminAlertsResponseSuccess = getAdminAlertsResponse200 & {
-  headers: Headers;
-};
-export type getAdminAlertsResponse = getAdminAlertsResponseSuccess;
+export type getApiV1AdminAlertsResponseSuccess =
+  getApiV1AdminAlertsResponse200 & {
+    headers: Headers;
+  };
+export type getApiV1AdminAlertsResponse = getApiV1AdminAlertsResponseSuccess;
 
-export const getGetAdminAlertsUrl = () => {
-  return `/admin/alerts`;
+export const getGetApiV1AdminAlertsUrl = () => {
+  return `/api/v1/admin/alerts`;
 };
 
-export const getAdminAlerts = async (
+export const getApiV1AdminAlerts = async (
   options?: RequestInit,
-): Promise<getAdminAlertsResponse> => {
-  return customFetcher<getAdminAlertsResponse>(getGetAdminAlertsUrl(), {
-    ...options,
-    method: "GET",
-  });
+): Promise<getApiV1AdminAlertsResponse> => {
+  return customFetcher<getApiV1AdminAlertsResponse>(
+    getGetApiV1AdminAlertsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 /**
  * @summary Get alert history
  */
-export type getAdminAlertsHistoryResponse200 = {
+export type getApiV1AdminAlertsHistoryResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getAdminAlertsHistoryResponseSuccess =
-  getAdminAlertsHistoryResponse200 & {
+export type getApiV1AdminAlertsHistoryResponseSuccess =
+  getApiV1AdminAlertsHistoryResponse200 & {
     headers: Headers;
   };
-export type getAdminAlertsHistoryResponse =
-  getAdminAlertsHistoryResponseSuccess;
+export type getApiV1AdminAlertsHistoryResponse =
+  getApiV1AdminAlertsHistoryResponseSuccess;
 
-export const getGetAdminAlertsHistoryUrl = (
-  params?: GetAdminAlertsHistoryParams,
+export const getGetApiV1AdminAlertsHistoryUrl = (
+  params?: GetApiV1AdminAlertsHistoryParams,
 ) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1343,16 +1358,16 @@ export const getGetAdminAlertsHistoryUrl = (
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/admin/alerts/history?${stringifiedParams}`
-    : `/admin/alerts/history`;
+    ? `/api/v1/admin/alerts/history?${stringifiedParams}`
+    : `/api/v1/admin/alerts/history`;
 };
 
-export const getAdminAlertsHistory = async (
-  params?: GetAdminAlertsHistoryParams,
+export const getApiV1AdminAlertsHistory = async (
+  params?: GetApiV1AdminAlertsHistoryParams,
   options?: RequestInit,
-): Promise<getAdminAlertsHistoryResponse> => {
-  return customFetcher<getAdminAlertsHistoryResponse>(
-    getGetAdminAlertsHistoryUrl(params),
+): Promise<getApiV1AdminAlertsHistoryResponse> => {
+  return customFetcher<getApiV1AdminAlertsHistoryResponse>(
+    getGetApiV1AdminAlertsHistoryUrl(params),
     {
       ...options,
       method: "GET",
@@ -1363,26 +1378,27 @@ export const getAdminAlertsHistory = async (
 /**
  * @summary Perform comprehensive health check
  */
-export type getAdminHealthCheckResponse200 = {
+export type getApiV1AdminHealthCheckResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getAdminHealthCheckResponseSuccess =
-  getAdminHealthCheckResponse200 & {
+export type getApiV1AdminHealthCheckResponseSuccess =
+  getApiV1AdminHealthCheckResponse200 & {
     headers: Headers;
   };
-export type getAdminHealthCheckResponse = getAdminHealthCheckResponseSuccess;
+export type getApiV1AdminHealthCheckResponse =
+  getApiV1AdminHealthCheckResponseSuccess;
 
-export const getGetAdminHealthCheckUrl = () => {
-  return `/admin/health/check`;
+export const getGetApiV1AdminHealthCheckUrl = () => {
+  return `/api/v1/admin/health/check`;
 };
 
-export const getAdminHealthCheck = async (
+export const getApiV1AdminHealthCheck = async (
   options?: RequestInit,
-): Promise<getAdminHealthCheckResponse> => {
-  return customFetcher<getAdminHealthCheckResponse>(
-    getGetAdminHealthCheckUrl(),
+): Promise<getApiV1AdminHealthCheckResponse> => {
+  return customFetcher<getApiV1AdminHealthCheckResponse>(
+    getGetApiV1AdminHealthCheckUrl(),
     {
       ...options,
       method: "GET",
@@ -1393,26 +1409,27 @@ export const getAdminHealthCheck = async (
 /**
  * @summary Get performance statistics
  */
-export type getAdminPerformanceResponse200 = {
+export type getApiV1AdminPerformanceResponse200 = {
   data: void;
   status: 200;
 };
 
-export type getAdminPerformanceResponseSuccess =
-  getAdminPerformanceResponse200 & {
+export type getApiV1AdminPerformanceResponseSuccess =
+  getApiV1AdminPerformanceResponse200 & {
     headers: Headers;
   };
-export type getAdminPerformanceResponse = getAdminPerformanceResponseSuccess;
+export type getApiV1AdminPerformanceResponse =
+  getApiV1AdminPerformanceResponseSuccess;
 
-export const getGetAdminPerformanceUrl = () => {
-  return `/admin/performance`;
+export const getGetApiV1AdminPerformanceUrl = () => {
+  return `/api/v1/admin/performance`;
 };
 
-export const getAdminPerformance = async (
+export const getApiV1AdminPerformance = async (
   options?: RequestInit,
-): Promise<getAdminPerformanceResponse> => {
-  return customFetcher<getAdminPerformanceResponse>(
-    getGetAdminPerformanceUrl(),
+): Promise<getApiV1AdminPerformanceResponse> => {
+  return customFetcher<getApiV1AdminPerformanceResponse>(
+    getGetApiV1AdminPerformanceUrl(),
     {
       ...options,
       method: "GET",
@@ -1423,27 +1440,27 @@ export const getAdminPerformance = async (
 /**
  * @summary Reset performance statistics
  */
-export type postAdminPerformanceResetResponse200 = {
+export type postApiV1AdminPerformanceResetResponse200 = {
   data: void;
   status: 200;
 };
 
-export type postAdminPerformanceResetResponseSuccess =
-  postAdminPerformanceResetResponse200 & {
+export type postApiV1AdminPerformanceResetResponseSuccess =
+  postApiV1AdminPerformanceResetResponse200 & {
     headers: Headers;
   };
-export type postAdminPerformanceResetResponse =
-  postAdminPerformanceResetResponseSuccess;
+export type postApiV1AdminPerformanceResetResponse =
+  postApiV1AdminPerformanceResetResponseSuccess;
 
-export const getPostAdminPerformanceResetUrl = () => {
-  return `/admin/performance/reset`;
+export const getPostApiV1AdminPerformanceResetUrl = () => {
+  return `/api/v1/admin/performance/reset`;
 };
 
-export const postAdminPerformanceReset = async (
+export const postApiV1AdminPerformanceReset = async (
   options?: RequestInit,
-): Promise<postAdminPerformanceResetResponse> => {
-  return customFetcher<postAdminPerformanceResetResponse>(
-    getPostAdminPerformanceResetUrl(),
+): Promise<postApiV1AdminPerformanceResetResponse> => {
+  return customFetcher<postApiV1AdminPerformanceResetResponse>(
+    getPostApiV1AdminPerformanceResetUrl(),
     {
       ...options,
       method: "POST",

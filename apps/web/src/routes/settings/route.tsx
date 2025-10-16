@@ -4,7 +4,7 @@ import {
   Outlet,
   redirect,
 } from "@tanstack/react-router";
-import { CogIcon, LibraryIcon, VideoIcon } from "lucide-react";
+import { CogIcon, LibraryIcon, VideoIcon, ActivityIcon } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
@@ -41,6 +41,15 @@ function RouteComponent() {
             <VideoIcon className="size-4" />
           </div>
           <span>Video Player</span>
+        </Link>
+        <Link
+          className="flex items-center gap-2 hover:bg-white/10 rounded-xl px-4 h-12 text-sm text-white transition focus-visible:outline-2"
+          to="/settings/system"
+        >
+          <div className="h-8 w-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center">
+            <ActivityIcon className="size-4" />
+          </div>
+          <span>System & Monitoring</span>
         </Link>
       </nav>
       <div className="flex-1 w-full px-16 2xl:p-16">
