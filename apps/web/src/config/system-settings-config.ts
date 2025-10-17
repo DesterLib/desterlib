@@ -5,13 +5,14 @@ import type {
   ActiveAlertsResponse,
   BackupsResponse,
 } from "@/types/system";
-import { Download, RefreshCw, Trash2, Database } from "lucide-react";
+import { Download, RefreshCw, Trash2, Database, Loader2 } from "lucide-react";
 
 interface SystemSettingsConfigParams {
   healthData?: AdminHealthCheckResponse | null;
   performanceData?: PerformanceMetricsResponse | null;
   alertData?: ActiveAlertsResponse | null;
   backupData?: BackupsResponse | null;
+  isBackupInProgress?: boolean;
   onRefreshHealth: () => void;
   onResetPerformanceMetrics: () => void;
   onCreateBackup: () => void;
@@ -28,6 +29,7 @@ export function systemSettingsConfig({
   performanceData,
   alertData,
   backupData,
+  isBackupInProgress = false,
   onRefreshHealth,
   onResetPerformanceMetrics,
   onCreateBackup,
@@ -214,10 +216,11 @@ export function systemSettingsConfig({
         title: "Database Backups",
         description: "Create and manage database backups",
         headerAction: {
-          label: "Create Backup",
-          icon: Download,
+          label: isBackupInProgress ? "Creating..." : "Create Backup",
+          icon: isBackupInProgress ? Loader2 : Download,
           variant: "default",
           onClick: onCreateBackup,
+          disabled: isBackupInProgress,
         },
         items: [
           ...(backupData?.stats

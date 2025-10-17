@@ -5,14 +5,13 @@
  */
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { webSocketClient, WS_EVENTS } from "@/lib/websocket";
 
 export interface BackupProgress {
   filename: string;
   type?: string;
   status: "idle" | "starting" | "in_progress" | "completed" | "error";
-  bytesWritten?: number;
-  size?: number;
   verified?: boolean;
   error?: string;
   timestamp: string;
@@ -35,6 +34,7 @@ export function useBackupProgress() {
         data: { filename: string; type: string; status: string };
       };
       console.log("Backup started:", backupData);
+
       setProgress({
         filename: backupData.data.filename,
         type: backupData.data.type,
@@ -46,13 +46,13 @@ export function useBackupProgress() {
     // Handler for backup progress
     const handleBackupProgress = (data: unknown) => {
       const backupData = data as {
-        data: { filename: string; bytesWritten: number; status: string };
+        data: { filename: string; sizeText: string; status: string };
       };
       console.log("Backup progress:", backupData);
+
       setProgress((prev) => ({
         ...prev,
         filename: backupData.data.filename,
-        bytesWritten: backupData.data.bytesWritten,
         status: "in_progress",
         timestamp: new Date().toISOString(),
       }));
@@ -63,30 +63,34 @@ export function useBackupProgress() {
       const backupData = data as {
         data: {
           filename: string;
-          size: number;
+          sizeText: string;
           type: string;
           verified: boolean;
           status: string;
         };
       };
       console.log("Backup completed:", backupData);
+
+      toast.success("Backup created successfully", {
+        description: `${backupData.data.sizeText} • ${backupData.data.verified ? "Verified" : "Unverified"}`,
+      });
+
       setProgress({
         filename: backupData.data.filename,
         type: backupData.data.type,
-        size: backupData.data.size,
         verified: backupData.data.verified,
         status: "completed",
         timestamp: new Date().toISOString(),
       });
 
-      // Reset to idle after 5 seconds
+      // Reset to idle after 3 seconds
       setTimeout(() => {
         setProgress({
           filename: "",
           status: "idle",
           timestamp: new Date().toISOString(),
         });
-      }, 5000);
+      }, 3000);
     };
 
     // Handler for backup error
@@ -95,6 +99,12 @@ export function useBackupProgress() {
         data: { filename: string; error: string; status: string };
       };
       console.error("Backup error:", backupData);
+
+      toast.error("Backup failed", {
+        description: backupData.data.error,
+        duration: 5000,
+      });
+
       setProgress({
         filename: backupData.data.filename,
         error: backupData.data.error,

@@ -35,6 +35,16 @@ const MAX_MONTHLY_BACKUPS = 12;
 const BACKUP_HOUR = 2; // 2 AM
 const BACKUP_MINUTE = 0;
 
+/**
+ * Format bytes to human readable string
+ */
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 Bytes";
+  if (bytes < 1024) return `${bytes} Bytes`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
 export interface BackupMetadata {
   filename: string;
   filepath: string;
@@ -226,22 +236,46 @@ export async function createBackup(
 
       // Track progress by monitoring file size
       let bytesWritten = 0;
-      const progressInterval = setInterval(async () => {
-        try {
-          const stats = await fs.stat(backupPath);
-          const newBytes = stats.size;
-          if (newBytes > bytesWritten) {
-            bytesWritten = newBytes;
-            webSocketService.broadcast(WS_EVENTS.BACKUP_PROGRESS, {
-              filename,
-              bytesWritten: newBytes,
-              status: "in_progress",
-            });
+      let progressInterval: NodeJS.Timeout | null = null;
+      let progressTimeout: NodeJS.Timeout | null = null;
+      let isProcessComplete = false;
+
+      const clearProgressMonitoring = () => {
+        isProcessComplete = true;
+        if (progressTimeout) clearTimeout(progressTimeout);
+        if (progressInterval) clearInterval(progressInterval);
+      };
+
+      // Wait a bit before starting progress monitoring to avoid showing tiny initial values
+      progressTimeout = setTimeout(() => {
+        if (isProcessComplete) return; // Don't start if already complete
+
+        progressInterval = setInterval(async () => {
+          if (isProcessComplete) {
+            if (progressInterval) clearInterval(progressInterval);
+            return;
           }
-        } catch {
-          // File might not exist yet, ignore
-        }
-      }, 1000); // Update every second
+
+          try {
+            const stats = await fs.stat(backupPath);
+            const newBytes = stats.size;
+            // Only broadcast if there's a meaningful change (at least 1KB difference)
+            if (
+              newBytes > bytesWritten &&
+              (newBytes - bytesWritten >= 1024 || bytesWritten === 0)
+            ) {
+              bytesWritten = newBytes;
+              webSocketService.broadcast(WS_EVENTS.BACKUP_PROGRESS, {
+                filename,
+                sizeText: formatBytes(newBytes),
+                status: "in_progress",
+              });
+            }
+          } catch {
+            // File might not exist yet, ignore
+          }
+        }, 1000); // Update every second
+      }, 500); // Start monitoring after 500ms
 
       let errorOutput = "";
       pgDump.stderr.on("data", (data) => {
@@ -249,12 +283,12 @@ export async function createBackup(
       });
 
       pgDump.on("error", (error) => {
-        clearInterval(progressInterval);
+        clearProgressMonitoring();
         reject(new Error(`pg_dump process error: ${error.message}`));
       });
 
       pgDump.on("close", (code) => {
-        clearInterval(progressInterval);
+        clearProgressMonitoring();
         if (code === 0) {
           resolve();
         } else {
@@ -274,12 +308,12 @@ export async function createBackup(
       });
 
       destination.on("error", (error) => {
-        clearInterval(progressInterval);
+        clearProgressMonitoring();
         reject(error);
       });
 
       gzip.on("error", (error) => {
-        clearInterval(progressInterval);
+        clearProgressMonitoring();
         reject(error);
       });
     });
@@ -301,13 +335,13 @@ export async function createBackup(
     };
 
     logger.info(
-      `Backup created successfully: ${filename} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`
+      `Backup created successfully: ${filename} (${formatBytes(stats.size)})`
     );
 
     // Emit backup completed event
     webSocketService.broadcast(WS_EVENTS.BACKUP_COMPLETED, {
       filename,
-      size: stats.size,
+      sizeText: formatBytes(stats.size),
       type,
       verified: isValid,
       status: "completed",

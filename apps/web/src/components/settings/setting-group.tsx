@@ -21,10 +21,13 @@ export function SettingGroup({ group }: SettingGroupProps) {
             variant={group.headerAction.variant || "default"}
             size="sm"
             onClick={group.headerAction.onClick}
+            disabled={group.headerAction.disabled}
             className="w-full md:w-auto"
           >
             {group.headerAction.icon && (
-              <group.headerAction.icon className="w-4 h-4 mr-2" />
+              <group.headerAction.icon
+                className={`w-4 h-4 mr-2 ${group.headerAction.disabled ? "animate-spin" : ""}`}
+              />
             )}
             {group.headerAction.label}
           </Button>

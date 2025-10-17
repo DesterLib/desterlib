@@ -7,6 +7,7 @@
 
 import { useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { webSocketClient, WS_EVENTS } from "@/lib/websocket";
 
 /**
@@ -23,12 +24,18 @@ export function useWebSocket() {
     // Setup event listeners for settings updates
     const handleSettingsUpdated = () => {
       console.log("Settings updated via WebSocket - invalidating cache");
+      toast.success("Settings updated", {
+        description: "Your changes have been saved",
+      });
       queryClient.invalidateQueries({ queryKey: ["settings"] });
       queryClient.invalidateQueries({ queryKey: ["setup-status"] });
     };
 
     const handleSetupCompleted = () => {
       console.log("Setup completed via WebSocket - invalidating cache");
+      toast.success("Setup completed", {
+        description: "Your application is ready to use",
+      });
       queryClient.invalidateQueries({ queryKey: ["settings"] });
       queryClient.invalidateQueries({ queryKey: ["setup-status"] });
     };
@@ -43,11 +50,16 @@ export function useWebSocket() {
     // Setup event listeners for scan events
     const handleScanStarted = () => {
       console.log("Scan started via WebSocket");
-      // Could show a notification or update UI
+      toast.info("Media scan started", {
+        description: "Scanning your library for new media...",
+      });
     };
 
     const handleScanCompleted = () => {
       console.log("Scan completed via WebSocket - invalidating media cache");
+      toast.success("Media scan completed", {
+        description: "Your library has been updated",
+      });
       queryClient.invalidateQueries({ queryKey: ["media"] });
       queryClient.invalidateQueries({ queryKey: ["movies"] });
       queryClient.invalidateQueries({ queryKey: ["tv-shows"] });
