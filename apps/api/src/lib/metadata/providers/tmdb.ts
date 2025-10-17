@@ -167,7 +167,7 @@ export class TMDBProvider extends BaseMetadataProvider {
     const apiKey = await this.getApiKey();
 
     if (!apiKey) {
-      logger.warn("TMDB API key not configured");
+      logger.warn("TMDB API key not configured - metadata fetch skipped");
       return null;
     }
 
@@ -182,16 +182,28 @@ export class TMDBProvider extends BaseMetadataProvider {
       const response = await fetch(url.toString());
 
       if (!response.ok) {
+        const errorBody = await response
+          .text()
+          .catch(() => "Unable to read error body");
         logger.error(
           `TMDB API error: ${response.status} ${response.statusText}`,
-          { status: response.status, statusText: response.statusText, endpoint }
+          {
+            status: response.status,
+            statusText: response.statusText,
+            endpoint,
+            error: errorBody,
+          }
         );
         return null;
       }
 
       return (await response.json()) as T;
     } catch (error) {
-      logger.error("TMDB API request failed:", { error, endpoint });
+      logger.error("TMDB API request failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        endpoint,
+      });
       return null;
     }
   }

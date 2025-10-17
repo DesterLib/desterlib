@@ -11,6 +11,7 @@ import type {
 } from "./types.js";
 import { parseExternalIds } from "../../../lib/metadata/index.js";
 import { metadataService } from "../../../lib/metadata/index.js";
+import { genreService } from "../../../lib/genreService.js";
 import logger from "../../../config/logger.js";
 
 export class MovieProcessor implements MediaProcessor {
@@ -97,8 +98,19 @@ export class MovieProcessor implements MediaProcessor {
           parsedIds[0].source,
           MediaTypeEnum.MOVIE
         );
+
+        if (!metadata) {
+          logger.warn(`No metadata returned for movie ${title}`, {
+            externalId: parsedIds[0].id,
+            source: parsedIds[0].source,
+          });
+        }
       } catch (error) {
-        logger.warn("Failed to fetch metadata:", { error });
+        logger.warn("Failed to fetch metadata:", {
+          error,
+          title,
+          externalId: parsedIds[0].id,
+        });
       }
     }
 
@@ -127,6 +139,11 @@ export class MovieProcessor implements MediaProcessor {
           externalIds.length > 0 ? { create: externalIds } : undefined,
       },
     });
+
+    // Link genres if available
+    if (metadata?.genres && metadata.genres.length > 0) {
+      await genreService.linkGenresToMedia(media.id, metadata.genres);
+    }
 
     // Link to collection
     await this.linkToCollection(media.id, collectionId, prisma);
@@ -177,6 +194,14 @@ export class MovieProcessor implements MediaProcessor {
         trailerUrl: metadata?.movie?.trailerUrl || existingMovie.trailerUrl,
       },
     });
+
+    // Update genres if available
+    if (metadata?.genres && metadata.genres.length > 0) {
+      await genreService.updateGenresForMedia(
+        existingMovie.mediaId,
+        metadata.genres
+      );
+    }
 
     // Add new external IDs
     const existingExternalIdSources = new Set(

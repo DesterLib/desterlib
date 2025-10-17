@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { SettingGroup } from "@/components/settings/setting-group";
 import { LibraryFormDialog } from "@/components/settings/library-form-dialog";
 import { LibraryDeleteDialog } from "@/components/settings/library-delete-dialog";
@@ -16,7 +17,6 @@ import { useSettings, useUpdateSettings } from "@/lib/hooks/useSettings";
 import { librariesSettingsConfig } from "@/config/libraries-settings-config";
 import type { Collection } from "@dester/api-client";
 import type { MediaType } from "@/lib/schemas/library.schema";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useScanProgress } from "@/hooks/useScanProgress";
 import { blockGuests } from "@/lib/route-guards";
@@ -47,7 +47,6 @@ function RouteComponent() {
   const [selectedLibrary, setSelectedLibrary] = useState<
     Collection | undefined
   >();
-  const [cleanupStatus, setCleanupStatus] = useState<string | null>(null);
 
   // Handle adding a new library
   const handleAddLibrary = async (values: {
@@ -102,14 +101,57 @@ function RouteComponent() {
     await deleteLibrary.mutateAsync(selectedLibrary.id);
   };
 
+  // Track which library is currently scanning
+  const [scanningLibraryId, setScanningLibraryId] = useState<string | null>(
+    null
+  );
+  const [isScanningAll, setIsScanningAll] = useState(false);
+
   // Handle scanning a library
   const handleScanLibrary = async (library: Collection) => {
-    if (!library.libraryPath || !library.libraryType) return;
+    if (!library.libraryPath || !library.libraryType || !library.id) return;
 
-    await scanLibrary.mutateAsync({
-      path: library.libraryPath,
-      mediaType: library.libraryType,
-    });
+    setScanningLibraryId(library.id || null);
+    try {
+      await scanLibrary.mutateAsync({
+        path: library.libraryPath,
+        mediaType: library.libraryType,
+        updateExisting: true, // Force metadata refresh including genres
+      });
+
+      toast.success("Library scan complete", {
+        description: "Metadata and genres have been updated",
+      });
+    } catch (error) {
+      toast.error("Scan failed", {
+        description:
+          error instanceof Error ? error.message : "Failed to scan library",
+      });
+    } finally {
+      setScanningLibraryId(null);
+    }
+  };
+
+  // Handle scanning all libraries
+  const handleScanAll = async (librariesToScan: Collection[]) => {
+    setIsScanningAll(true);
+    try {
+      for (const lib of librariesToScan) {
+        await handleScanLibrary(lib);
+      }
+      toast.success("All libraries scanned", {
+        description: `Successfully scanned ${librariesToScan.length} ${librariesToScan.length === 1 ? "library" : "libraries"}`,
+      });
+    } catch (error) {
+      toast.error("Batch scan failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to scan all libraries",
+      });
+    } finally {
+      setIsScanningAll(false);
+    }
   };
 
   // Handle TMDB API key update
@@ -126,21 +168,18 @@ function RouteComponent() {
 
   // Handle cleanup orphaned media
   const handleCleanupOrphaned = async () => {
-    setCleanupStatus("cleaning");
     try {
       const result = await cleanupOrphaned.mutateAsync();
       const deletedCount = result?.deleted ?? 0;
       if (deletedCount > 0) {
-        setCleanupStatus(
-          `Cleaned up ${deletedCount} orphaned media item${deletedCount === 1 ? "" : "s"}`
-        );
+        toast.success("Cleanup complete", {
+          description: `Removed ${deletedCount} orphaned media item${deletedCount === 1 ? "" : "s"}`,
+        });
       } else {
-        setCleanupStatus("No orphaned media found");
+        toast.info("No orphaned media found");
       }
     } catch {
-      setCleanupStatus("Failed to clean up orphaned media");
-    } finally {
-      setTimeout(() => setCleanupStatus(null), 5000);
+      toast.error("Failed to clean up orphaned media");
     }
   };
 
@@ -158,11 +197,14 @@ function RouteComponent() {
       setDeleteDialogOpen(true);
     },
     onScanLibrary: handleScanLibrary,
+    onScanAll: handleScanAll,
     onUpdateSetting: handleUpdateSetting,
     onConfigureTmdb: () => setTmdbDialogOpen(true),
     onCleanupOrphaned: handleCleanupOrphaned,
     currentUserId: user?.id,
     currentUserRole: user?.role,
+    scanningLibraryId,
+    isScanningAll,
   });
 
   if (isLoading) {
@@ -175,71 +217,24 @@ function RouteComponent() {
 
   return (
     <>
-      <div className="flex flex-col px-4 md:p-4 rounded-xl md:h-full">
+      <div className="flex flex-col md:h-full md:py-4">
         {/* Fixed Header */}
-        <header className="space-y-1 pb-4 pt-2 md:pt-0 flex-shrink-0">
+        <header className="space-y-1 pb-4 flex-shrink-0">
           <h1 className="text-xl md:text-2xl font-bold">{config.title}</h1>
           <p className="text-xs md:text-sm text-white/60">
             {config.description}
           </p>
         </header>
 
-        {/* Scrollable Content with Gradient Masks */}
-        <div className="md:relative md:flex-1 md:overflow-hidden">
-          {/* Top Gradient Mask - Desktop only */}
-          <div className="hidden md:block absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
+        {/* Scrollable Content */}
+        <div className="flex-1 md:overflow-y-auto space-y-6">
+          {/* Show real-time scan progress */}
+          {activeScan && <ScanProgressCard progress={activeScan} />}
 
-          {/* Scrollable Content */}
-          <div className="space-y-6 px-1 py-4 md:py-8 md:h-full md:overflow-y-auto">
-            {config.groups.map((group, index) => (
-              <div key={group.id}>
-                {/* Show cleanup status */}
-                {index === 0 && cleanupStatus && (
-                  <div className="mb-4 bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/10">
-                    <div className="flex items-center gap-3">
-                      {cleanupStatus === "cleaning" && (
-                        <>
-                          <Loader2 className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-white">
-                              Cleaning up orphaned media...
-                            </p>
-                            <p className="text-xs text-white/60 mt-1">
-                              Removing media items not associated with any
-                              library
-                            </p>
-                          </div>
-                        </>
-                      )}
-                      {cleanupStatus !== "cleaning" && (
-                        <>
-                          {cleanupStatus.includes("Failed") ? (
-                            <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                          ) : (
-                            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                          )}
-                          <p className="text-sm font-medium text-white">
-                            {cleanupStatus}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Show real-time scan progress */}
-                {index === 0 && activeScan && (
-                  <div className="mb-4">
-                    <ScanProgressCard progress={activeScan} />
-                  </div>
-                )}
-                <SettingGroup group={group} />
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom Gradient Mask - Desktop only */}
-          <div className="hidden md:block absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
+          {/* Render setting groups */}
+          {config.groups.map((group) => (
+            <SettingGroup key={group.id} group={group} />
+          ))}
         </div>
       </div>
 

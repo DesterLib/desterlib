@@ -211,6 +211,7 @@ export function roleBasedRateLimiter(
       if (!req.user) return guestLimit;
 
       switch (req.user.role) {
+        case "SUPER_ADMIN":
         case "ADMIN":
           return adminLimit;
         case "USER":
@@ -227,7 +228,7 @@ export function roleBasedRateLimiter(
  * Skip rate limiting for admin users
  */
 export function skipForAdmin(req: Request): boolean {
-  return req.user?.role === "ADMIN";
+  return req.user?.role === "ADMIN" || req.user?.role === "SUPER_ADMIN";
 }
 
 /**

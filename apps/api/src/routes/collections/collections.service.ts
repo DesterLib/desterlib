@@ -9,7 +9,7 @@ export class CollectionsService {
    */
   private buildAccessFilter(userId?: string, userRole?: UserRole) {
     // Admin sees everything
-    if (userRole === "ADMIN") {
+    if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
       return {};
     }
 
@@ -47,7 +47,7 @@ export class CollectionsService {
     userRole?: UserRole
   ): Promise<boolean> {
     // Admin can modify anything
-    if (userRole === "ADMIN") {
+    if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
       return true;
     }
 
@@ -352,7 +352,7 @@ export class CollectionsService {
    */
   async cleanupOrphanedMedia(_userId?: string, userRole?: UserRole) {
     // Only admins can cleanup orphaned media
-    if (userRole !== "ADMIN") {
+    if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
       throw new ForbiddenError(
         "Only administrators can clean up orphaned media"
       );

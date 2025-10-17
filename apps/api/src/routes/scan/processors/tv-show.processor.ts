@@ -15,6 +15,7 @@ import {
 } from "../../../lib/metadata/index.js";
 import logger from "../../../config/logger.js";
 import { metadataService } from "../../../lib/metadata/index.js";
+import { genreService } from "../../../lib/genreService.js";
 
 interface TVShowInfo extends ParsedMediaInfo {
   showName: string;
@@ -204,8 +205,25 @@ export class TVShowProcessor implements MediaProcessor {
           parsedIds[0].source,
           MediaTypeEnum.TV_SHOW
         );
+
+        if (!metadata) {
+          logger.warn(`No metadata returned for TV show ${showName}`, {
+            externalId: parsedIds[0].id,
+            source: parsedIds[0].source,
+          });
+        } else {
+          logger.debug(`Fetched metadata for ${showName}`, {
+            title: metadata.title,
+            hasGenres: !!metadata.genres && metadata.genres.length > 0,
+            genreCount: metadata.genres?.length || 0,
+          });
+        }
       } catch (error) {
-        logger.warn("Failed to fetch metadata:", { error });
+        logger.warn("Failed to fetch metadata:", {
+          error,
+          showName,
+          externalId: parsedIds[0].id,
+        });
       }
     }
 
@@ -214,7 +232,7 @@ export class TVShowProcessor implements MediaProcessor {
       externalId: id.id,
     }));
 
-    return await prisma.media.create({
+    const media = await prisma.media.create({
       data: {
         title: metadata?.title || showName,
         type: MediaTypeEnum.TV_SHOW,
@@ -239,6 +257,13 @@ export class TVShowProcessor implements MediaProcessor {
         externalIds: true,
       },
     });
+
+    // Link genres if available
+    if (metadata?.genres && metadata.genres.length > 0) {
+      await genreService.linkGenresToMedia(media.id, metadata.genres);
+    }
+
+    return media;
   }
 
   private async updateShow(
@@ -287,6 +312,11 @@ export class TVShowProcessor implements MediaProcessor {
           network: metadata?.tvShow?.network || media.tvShow.network,
         },
       });
+    }
+
+    // Update genres if available
+    if (metadata?.genres && metadata.genres.length > 0) {
+      await genreService.updateGenresForMedia(media.id, metadata.genres);
     }
 
     // Add new external IDs

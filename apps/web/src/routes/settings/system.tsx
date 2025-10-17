@@ -145,28 +145,19 @@ function RouteComponent() {
   }
 
   return (
-    <div className="flex flex-col px-4 md:p-4 rounded-xl md:h-full">
+    <div className="flex flex-col md:h-full md:py-4">
       {/* Fixed Header */}
-      <header className="space-y-1 pb-4 pt-2 md:pt-0 flex-shrink-0">
+      <header className="space-y-1 pb-4 flex-shrink-0">
         <h1 className="text-xl md:text-2xl font-bold">{config.title}</h1>
         <p className="text-xs md:text-sm text-white/60">{config.description}</p>
       </header>
 
-      {/* Scrollable Content with Gradient Masks */}
-      <div className="md:relative md:flex-1 md:overflow-hidden">
-        {/* Top Gradient Mask - Desktop only */}
-        <div className="hidden md:block absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
-
-        {/* Scrollable Content */}
-        <div className="space-y-6 px-1 py-4 md:py-8 md:h-full md:overflow-y-auto">
-          {/* Render setting groups */}
-          {config.groups.map((group) => (
-            <SettingGroup key={group.id} group={group} />
-          ))}
-        </div>
-
-        {/* Bottom Gradient Mask - Desktop only */}
-        <div className="hidden md:block absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
+      {/* Scrollable Content */}
+      <div className="flex-1 md:overflow-y-auto space-y-6">
+        {/* Render setting groups */}
+        {config.groups.map((group) => (
+          <SettingGroup key={group.id} group={group} />
+        ))}
       </div>
     </div>
   );

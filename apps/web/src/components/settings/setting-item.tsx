@@ -3,6 +3,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import type { SettingItem } from "@/config/settings-config";
 import { Badge } from "../ui/badge";
+import { CircularProgress } from "../ui/circular-progress";
 
 interface SettingItemProps {
   item: SettingItem;
@@ -99,12 +100,20 @@ export function SettingItem({ item }: SettingItemProps) {
               key={index}
               variant={action.variant || "ghost"}
               size="icon"
-              className="h-9 w-9 md:h-8 md:w-8 rounded-full flex-shrink-0"
+              className="h-9 w-9 md:h-8 md:w-8 rounded-full flex-shrink-0 disabled:opacity-100 disabled:cursor-not-allowed"
               onClick={action.onClick}
               title={action.label}
               disabled={action.disabled}
             >
-              {action.icon && <action.icon className="w-4 h-4" />}
+              {action.isLoading ? (
+                <CircularProgress
+                  value={75}
+                  strokeWidth={2.5}
+                  className="w-4 h-4"
+                />
+              ) : (
+                action.icon && <action.icon className="w-4 h-4" />
+              )}
             </Button>
           ))}
       </div>

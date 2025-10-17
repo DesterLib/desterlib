@@ -6,6 +6,7 @@ export interface SettingAction {
   variant?: "default" | "ghost" | "menuItem" | "modification" | "danger";
   onClick?: () => void;
   disabled?: boolean;
+  isLoading?: boolean;
 }
 
 export interface SliderConfig {

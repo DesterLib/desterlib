@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { SettingGroup } from "@/components/settings/setting-group";
 import { UserFormDialog } from "@/components/settings/user-form-dialog";
 import { UserDeleteDialog } from "@/components/settings/user-delete-dialog";
 import { userSettingsConfig } from "@/config/user-settings-config";
 import { useUsers, useUpdateUser, useDeleteUser } from "@/lib/hooks/useUsers";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, CheckCircle, XCircle, ShieldAlert } from "lucide-react";
+import { Loader2, ShieldAlert, XCircle } from "lucide-react";
 import type {
   GetApiV1Users200UsersItem,
   PutApiV1UsersUserIdBody,
@@ -38,11 +39,6 @@ function RouteComponent() {
     useState<GetApiV1Users200UsersItem | null>(null);
   const [deletingUser, setDeletingUser] =
     useState<GetApiV1Users200UsersItem | null>(null);
-  const [operationStatus, setOperationStatus] = useState<{
-    type: string;
-    message: string;
-    status: "loading" | "success" | "error";
-  } | null>(null);
 
   // Handle editing a user
   const handleEditUser = (userId: string) => {
@@ -62,42 +58,26 @@ function RouteComponent() {
 
   // Handle user creation (redirect to register page for now)
   const handleCreateUser = () => {
-    // For now, we'll show a message. In production, you'd want a full user creation dialog
-    setOperationStatus({
-      type: "create",
-      message:
+    toast.info("Coming soon", {
+      description:
         "User creation from admin panel coming soon. Use the registration page.",
-      status: "error",
     });
-    setTimeout(() => setOperationStatus(null), 5000);
   };
 
   // Handle update user form submission
   const handleUpdateUser = async (input: PutApiV1UsersUserIdBody) => {
     if (!editingUser || !editingUser.id) return;
 
-    setOperationStatus({
-      type: "update",
-      message: `Updating user ${editingUser.username}...`,
-      status: "loading",
-    });
-
     try {
       await updateUser.mutateAsync({ userId: editingUser.id, input });
-      setOperationStatus({
-        type: "update",
-        message: "User updated successfully",
-        status: "success",
+      toast.success("User updated", {
+        description: editingUser.username,
       });
       setEditingUser(null);
     } catch (error) {
-      setOperationStatus({
-        type: "update",
-        message: `Failed to update user: ${error instanceof Error ? error.message : "Unknown error"}`,
-        status: "error",
+      toast.error("Failed to update user", {
+        description: error instanceof Error ? error.message : "Unknown error",
       });
-    } finally {
-      setTimeout(() => setOperationStatus(null), 5000);
     }
   };
 
@@ -105,28 +85,16 @@ function RouteComponent() {
   const handleConfirmDelete = async () => {
     if (!deletingUser || !deletingUser.id) return;
 
-    setOperationStatus({
-      type: "delete",
-      message: `Deleting user ${deletingUser.username}...`,
-      status: "loading",
-    });
-
     try {
       await deleteUser.mutateAsync(deletingUser.id);
-      setOperationStatus({
-        type: "delete",
-        message: "User deleted successfully",
-        status: "success",
+      toast.success("User deleted", {
+        description: deletingUser.username,
       });
       setDeletingUser(null);
     } catch (error) {
-      setOperationStatus({
-        type: "delete",
-        message: `Failed to delete user: ${error instanceof Error ? error.message : "Unknown error"}`,
-        status: "error",
+      toast.error("Failed to delete user", {
+        description: error instanceof Error ? error.message : "Unknown error",
       });
-    } finally {
-      setTimeout(() => setOperationStatus(null), 5000);
     }
   };
 
@@ -197,62 +165,19 @@ function RouteComponent() {
   }
 
   return (
-    <div className="flex flex-col px-4 md:p-4 rounded-xl md:h-full">
+    <div className="flex flex-col md:h-full md:py-4">
       {/* Fixed Header */}
-      <header className="space-y-1 pb-4 pt-2 md:pt-0 flex-shrink-0">
+      <header className="space-y-1 pb-4 flex-shrink-0">
         <h1 className="text-xl md:text-2xl font-bold">{config.title}</h1>
         <p className="text-xs md:text-sm text-white/60">{config.description}</p>
       </header>
 
-      {/* Scrollable Content with Gradient Masks */}
-      <div className="md:relative md:flex-1 md:overflow-hidden">
-        {/* Top Gradient Mask - Desktop only */}
-        <div className="hidden md:block absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
-
-        {/* Scrollable Content */}
-        <div className="space-y-6 px-1 py-4 md:py-8 md:h-full md:overflow-y-auto">
-          {/* Operation Status */}
-          {operationStatus && (
-            <div className="mb-4 bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/10">
-              <div className="flex items-center gap-3">
-                {operationStatus.status === "loading" && (
-                  <>
-                    <Loader2 className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white">
-                        {operationStatus.message}
-                      </p>
-                    </div>
-                  </>
-                )}
-                {operationStatus.status === "success" && (
-                  <>
-                    <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                    <p className="text-sm font-medium text-white">
-                      {operationStatus.message}
-                    </p>
-                  </>
-                )}
-                {operationStatus.status === "error" && (
-                  <>
-                    <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                    <p className="text-sm font-medium text-white">
-                      {operationStatus.message}
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Render setting groups */}
-          {config.groups.map((group) => (
-            <SettingGroup key={group.id} group={group} />
-          ))}
-        </div>
-
-        {/* Bottom Gradient Mask - Desktop only */}
-        <div className="hidden md:block absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background/80 via-background/40 to-transparent pointer-events-none z-10" />
+      {/* Scrollable Content */}
+      <div className="flex-1 md:overflow-y-auto space-y-6">
+        {/* Render setting groups */}
+        {config.groups.map((group) => (
+          <SettingGroup key={group.id} group={group} />
+        ))}
       </div>
 
       {/* Edit User Dialog */}

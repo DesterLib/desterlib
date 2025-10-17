@@ -519,6 +519,7 @@ class BulkOperationsService {
           );
 
           if (freshMetadata) {
+            // Update media fields
             await prisma.media.update({
               where: { id: mediaId },
               data: {
@@ -530,6 +531,16 @@ class BulkOperationsService {
                 rating: freshMetadata.rating,
               },
             });
+
+            // Update genres if available
+            if (freshMetadata.genres && freshMetadata.genres.length > 0) {
+              const { genreService } = await import("../genreService.js");
+              await genreService.updateGenresForMedia(
+                mediaId,
+                freshMetadata.genres
+              );
+            }
+
             logger.info(`Refreshed metadata for ${media.type} ${mediaId}`);
             result.queued++;
           } else {

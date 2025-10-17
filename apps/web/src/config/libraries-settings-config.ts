@@ -16,11 +16,14 @@ interface LibrariesSettingsConfigParams {
   onEditLibrary: (library: Collection) => void;
   onDeleteLibrary: (library: Collection) => void;
   onScanLibrary: (library: Collection) => void;
+  onScanAll: (libraries: Collection[]) => void;
   onUpdateSetting: (key: string, value: unknown) => void;
   onConfigureTmdb: () => void;
   onCleanupOrphaned: () => void;
   currentUserId?: string;
   currentUserRole?: string;
+  scanningLibraryId?: string | null;
+  isScanningAll?: boolean;
 }
 
 /**
@@ -33,10 +36,13 @@ export function librariesSettingsConfig({
   onEditLibrary,
   onDeleteLibrary,
   onScanLibrary,
+  onScanAll,
   onConfigureTmdb,
   onCleanupOrphaned,
   currentUserId,
   currentUserRole,
+  scanningLibraryId,
+  isScanningAll,
 }: LibrariesSettingsConfigParams): SettingsPageConfig {
   const isAdmin =
     currentUserRole === "ADMIN" || currentUserRole === "SUPER_ADMIN";
@@ -97,8 +103,10 @@ export function librariesSettingsConfig({
                       icon: FolderSync,
                       variant: "modification" as const,
                       onClick: () => {
-                        userLibraries.forEach((lib) => onScanLibrary(lib));
+                        onScanAll(userLibraries);
                       },
+                      disabled: isScanningAll,
+                      isLoading: isScanningAll,
                     },
                   ],
                 },
@@ -128,6 +136,7 @@ export function librariesSettingsConfig({
                 };
                 const canModify =
                   isAdmin || libWithOwnership.createdById === currentUserId;
+                const isScanning = scanningLibraryId === library.id;
 
                 return {
                   id: `library-${library.id}`,
@@ -145,6 +154,8 @@ export function librariesSettingsConfig({
                           icon: FolderSync,
                           variant: "modification" as const,
                           onClick: () => onScanLibrary(library),
+                          disabled: isScanning,
+                          isLoading: isScanning,
                         },
                         {
                           label: "Edit",
@@ -165,6 +176,8 @@ export function librariesSettingsConfig({
                           icon: FolderSync,
                           variant: "modification" as const,
                           onClick: () => onScanLibrary(library),
+                          disabled: isScanning,
+                          isLoading: isScanning,
                         },
                       ],
                 };

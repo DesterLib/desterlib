@@ -1,16 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireAuth } from "@/lib/route-guards";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   SearchIcon,
   XIcon,
   SlidersHorizontal,
-  ArrowUpDown,
   Film,
   Tv,
-  ChevronDown,
   Loader2,
+  Music,
+  BookOpen,
+  Grid3x3,
+  ArrowUpDown,
+  Calendar,
+  CalendarDays,
+  Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Card from "@/components/ui/card";
@@ -42,13 +47,7 @@ function RouteComponent() {
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [sortBy, setSortBy] = useState<SortOption>("title-asc");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [showSortMenu, setShowSortMenu] = useState(false);
-  const [showTypeMenu, setShowTypeMenu] = useState(false);
-  const [showGenreMenu, setShowGenreMenu] = useState(false);
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
-  const sortMenuRef = useRef<HTMLDivElement>(null);
-  const typeMenuRef = useRef<HTMLDivElement>(null);
-  const genreMenuRef = useRef<HTMLDivElement>(null);
 
   // Fetch media from API with filters
   const {
@@ -75,36 +74,6 @@ function RouteComponent() {
     });
     return Array.from(genresSet).sort();
   }, [allMedia]);
-
-  // Close menus when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        sortMenuRef.current &&
-        !sortMenuRef.current.contains(event.target as Node)
-      ) {
-        setShowSortMenu(false);
-      }
-      if (
-        typeMenuRef.current &&
-        !typeMenuRef.current.contains(event.target as Node)
-      ) {
-        setShowTypeMenu(false);
-      }
-      if (
-        genreMenuRef.current &&
-        !genreMenuRef.current.contains(event.target as Node)
-      ) {
-        setShowGenreMenu(false);
-      }
-    };
-
-    if (showSortMenu || showTypeMenu || showGenreMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [showSortMenu, showTypeMenu, showGenreMenu]);
 
   // Filter and sort items based on all criteria (client-side filtering for genres)
   const filteredItems = useMemo(() => {
@@ -167,58 +136,233 @@ function RouteComponent() {
     setSearchQuery("");
   };
 
-  const getSortLabel = (sort: SortOption) => {
-    switch (sort) {
-      case "title-asc":
-        return "Title (A-Z)";
-      case "title-desc":
-        return "Title (Z-A)";
-      case "year-newest":
-        return "Newest First";
-      case "year-oldest":
-        return "Oldest First";
-      default:
-        return "Sort";
-    }
-  };
-
-  const getTypeLabel = () => {
-    switch (filterType) {
-      case "all":
-        return "All Types";
-      case "MOVIE":
-        return "Movies";
-      case "TV_SHOW":
-        return "TV Shows";
-      case "MUSIC":
-        return "Music";
-      case "COMIC":
-        return "Comics";
-      default:
-        return "Type";
-    }
-  };
-
-  const getGenreLabel = () => {
-    if (selectedGenres.length === 0) return "All Genres";
-    if (selectedGenres.length === 1) return selectedGenres[0];
-    return `${selectedGenres.length} Genres`;
-  };
-
   const activeFiltersCount =
     (filterType !== "all" ? 1 : 0) +
     selectedGenres.length +
     (sortBy !== "title-asc" ? 1 : 0);
 
   return (
-    <div className="md:pt-[100px] pb-20 md:pb-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg p-4">
-          {/* Search Bar and Filter Controls */}
-          <div className="mb-4">
+    <div className="md:pt-[100px] pb-20 md:pb-0 md:h-[calc(100vh-100px)] md:px-6">
+      <div className="max-w-7xl mx-auto md:flex md:gap-6 md:h-full">
+        {/* Left Sidebar - Desktop Only */}
+        <aside className="hidden md:block md:w-64 md:flex-shrink-0 md:h-full md:overflow-y-auto py-4">
+          <div className="space-y-4">
+            {/* Search */}
+            <div
+              className={cn(
+                "relative flex items-center bg-white/5 border rounded-xl transition-all",
+                isSearchFocused ? "border-white/20" : "border-white/10"
+              )}
+            >
+              <div className="pl-3 pr-2 flex items-center">
+                <SearchIcon className="w-4 h-4 text-white/40" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+                placeholder="Search..."
+                className="flex-1 h-10 bg-transparent text-sm text-white outline-none placeholder:text-white/40"
+              />
+              <AnimatePresence>
+                {searchQuery && (
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={handleClearSearch}
+                    className="mr-2 p-1 hover:bg-white/10 rounded-md transition-colors"
+                  >
+                    <XIcon className="w-3.5 h-3.5 text-white/60" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Type Filter */}
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+              <div className="px-3 py-2 border-b border-white/10">
+                <h3 className="text-xs font-medium text-white/60 uppercase tracking-wide">
+                  Media Type
+                </h3>
+              </div>
+              <div className="p-1.5 space-y-0.5">
+                <button
+                  onClick={() => setFilterType("all")}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
+                    filterType === "all"
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                  All
+                </button>
+                <button
+                  onClick={() => setFilterType("MOVIE")}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
+                    filterType === "MOVIE"
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <Film className="w-4 h-4" />
+                  Movies
+                </button>
+                <button
+                  onClick={() => setFilterType("TV_SHOW")}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
+                    filterType === "TV_SHOW"
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <Tv className="w-4 h-4" />
+                  TV Shows
+                </button>
+                <button
+                  onClick={() => setFilterType("MUSIC")}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
+                    filterType === "MUSIC"
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <Music className="w-4 h-4" />
+                  Music
+                </button>
+                <button
+                  onClick={() => setFilterType("COMIC")}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
+                    filterType === "COMIC"
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Comics
+                </button>
+              </div>
+            </div>
+
+            {/* Genre Filter */}
+            {availableGenres.length > 0 && (
+              <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                <div className="px-3 py-2 border-b border-white/10">
+                  <h3 className="text-xs font-medium text-white/60 uppercase tracking-wide flex items-center gap-2">
+                    Genres
+                    {selectedGenres.length > 0 && (
+                      <span className="ml-auto text-xs px-1.5 py-0.5 bg-white/10 text-white rounded">
+                        {selectedGenres.length}
+                      </span>
+                    )}
+                  </h3>
+                </div>
+                <div className="p-2 flex flex-wrap gap-1.5 max-h-48 overflow-y-auto">
+                  {availableGenres.map((genre) => (
+                    <button
+                      key={genre}
+                      onClick={() => handleToggleGenre(genre)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-md text-xs font-medium transition-colors",
+                        selectedGenres.includes(genre)
+                          ? "bg-white text-black"
+                          : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                      )}
+                    >
+                      {genre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sort Options */}
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+              <div className="px-3 py-2 border-b border-white/10">
+                <h3 className="text-xs font-medium text-white/60 uppercase tracking-wide">
+                  Sort By
+                </h3>
+              </div>
+              <div className="p-1.5 space-y-0.5">
+                <button
+                  onClick={() => setSortBy("title-asc")}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
+                    sortBy === "title-asc"
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <ArrowUpDown className="w-4 h-4 rotate-180" />
+                  A-Z
+                </button>
+                <button
+                  onClick={() => setSortBy("title-desc")}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
+                    sortBy === "title-desc"
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <ArrowUpDown className="w-4 h-4" />
+                  Z-A
+                </button>
+                <button
+                  onClick={() => setSortBy("year-newest")}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
+                    sortBy === "year-newest"
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  Newest
+                </button>
+                <button
+                  onClick={() => setSortBy("year-oldest")}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
+                    sortBy === "year-oldest"
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  )}
+                >
+                  <Calendar className="w-4 h-4" />
+                  Oldest
+                </button>
+              </div>
+            </div>
+
+            {/* Clear All Button */}
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={handleClearAllFilters}
+                className="w-full px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-white/10"
+              >
+                <XIcon className="w-4 h-4" />
+                Reset ({activeFiltersCount})
+              </button>
+            )}
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="flex-1 md:h-full md:overflow-hidden flex flex-col">
+          {/* Mobile Header - Search + Filter Button */}
+          <div className="md:hidden sticky top-0 z-10 bg-background/80 backdrop-blur-lg p-4 flex-shrink-0">
             <div className="flex items-center gap-3">
               {/* Search Bar */}
-              <div className="flex-1 max-w-2xl">
+              <div className="flex-1">
                 <div
                   className={cn(
                     "relative flex items-center bg-neutral-900/60 backdrop-blur-lg border rounded-[50px] transition-all duration-300",
@@ -236,7 +380,7 @@ function RouteComponent() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    placeholder="Search by title or genre..."
+                    placeholder="Search..."
                     className="flex-1 h-12 bg-transparent text-white outline-none placeholder:text-white/40"
                   />
                   <AnimatePresence>
@@ -256,474 +400,305 @@ function RouteComponent() {
                 </div>
               </div>
 
-              {/* Filter Controls - Desktop */}
-              <div className="hidden md:flex items-center gap-2">
-                {/* Type Dropdown */}
-                <div className="relative" ref={typeMenuRef}>
-                  <button
-                    onClick={() => {
-                      setShowTypeMenu(!showTypeMenu);
-                      setShowSortMenu(false);
-                      setShowGenreMenu(false);
-                    }}
-                    className={cn(
-                      "flex items-center gap-2 h-12 px-4 bg-neutral-900/60 backdrop-blur-lg border rounded-2xl transition-all duration-200 hover:border-white/30",
-                      showTypeMenu ? "border-white/30" : "border-white/10"
-                    )}
-                  >
-                    <Film className="w-4 h-4 text-white/60" />
-                    <span className="text-white text-sm">{getTypeLabel()}</span>
-                    <ChevronDown className="w-4 h-4 text-white/40" />
-                  </button>
-
-                  <AnimatePresence>
-                    {showTypeMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-48 bg-neutral-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50"
-                      >
-                        <div className="py-2">
-                          <button
-                            onClick={() => {
-                              setFilterType("all");
-                              setShowTypeMenu(false);
-                            }}
-                            className={cn(
-                              "w-full px-4 py-2.5 text-left text-sm transition-colors",
-                              filterType === "all"
-                                ? "bg-white/10 text-white"
-                                : "text-white/70 hover:bg-white/5 hover:text-white"
-                            )}
-                          >
-                            All Types
-                          </button>
-                          <button
-                            onClick={() => {
-                              setFilterType("MOVIE");
-                              setShowTypeMenu(false);
-                            }}
-                            className={cn(
-                              "w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center gap-2",
-                              filterType === "MOVIE"
-                                ? "bg-white/10 text-white"
-                                : "text-white/70 hover:bg-white/5 hover:text-white"
-                            )}
-                          >
-                            <Film className="w-4 h-4" />
-                            Movies
-                          </button>
-                          <button
-                            onClick={() => {
-                              setFilterType("TV_SHOW");
-                              setShowTypeMenu(false);
-                            }}
-                            className={cn(
-                              "w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center gap-2",
-                              filterType === "TV_SHOW"
-                                ? "bg-white/10 text-white"
-                                : "text-white/70 hover:bg-white/5 hover:text-white"
-                            )}
-                          >
-                            <Tv className="w-4 h-4" />
-                            TV Shows
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Genre Dropdown */}
-                <div className="relative" ref={genreMenuRef}>
-                  <button
-                    onClick={() => {
-                      setShowGenreMenu(!showGenreMenu);
-                      setShowSortMenu(false);
-                      setShowTypeMenu(false);
-                    }}
-                    className={cn(
-                      "flex items-center gap-2 h-12 px-4 bg-neutral-900/60 backdrop-blur-lg border rounded-2xl transition-all duration-200 hover:border-white/30",
-                      showGenreMenu ? "border-white/30" : "border-white/10"
-                    )}
-                  >
-                    <SlidersHorizontal className="w-4 h-4 text-white/60" />
-                    <span className="text-white text-sm">
-                      {getGenreLabel()}
-                    </span>
-                    <ChevronDown className="w-4 h-4 text-white/40" />
-                    {selectedGenres.length > 0 && (
-                      <span className="flex items-center justify-center w-5 h-5 text-xs bg-white text-black rounded-full">
-                        {selectedGenres.length}
-                      </span>
-                    )}
-                  </button>
-
-                  <AnimatePresence>
-                    {showGenreMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-48 bg-neutral-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50"
-                      >
-                        <div className="py-2">
-                          <button
-                            onClick={() => {
-                              setSelectedGenres([]);
-                              setShowGenreMenu(false);
-                            }}
-                            className={cn(
-                              "w-full px-4 py-2.5 text-left text-sm transition-colors",
-                              selectedGenres.length === 0
-                                ? "bg-white/10 text-white"
-                                : "text-white/70 hover:bg-white/5 hover:text-white"
-                            )}
-                          >
-                            All Genres
-                          </button>
-                          <div className="border-t border-white/10 my-1" />
-                          {availableGenres.map((genre) => (
-                            <button
-                              key={genre}
-                              onClick={() => handleToggleGenre(genre)}
-                              className={cn(
-                                "w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between",
-                                selectedGenres.includes(genre)
-                                  ? "bg-white/10 text-white"
-                                  : "text-white/70 hover:bg-white/5 hover:text-white"
-                              )}
-                            >
-                              {genre}
-                              {selectedGenres.includes(genre) && (
-                                <span className="w-2 h-2 bg-white rounded-full" />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Sort Dropdown */}
-                <div className="relative" ref={sortMenuRef}>
-                  <button
-                    onClick={() => {
-                      setShowSortMenu(!showSortMenu);
-                      setShowTypeMenu(false);
-                      setShowGenreMenu(false);
-                    }}
-                    className={cn(
-                      "flex items-center gap-2 h-12 px-4 bg-neutral-900/60 backdrop-blur-lg border rounded-2xl transition-all duration-200 hover:border-white/30",
-                      showSortMenu ? "border-white/30" : "border-white/10"
-                    )}
-                  >
-                    <ArrowUpDown className="w-4 h-4 text-white/60" />
-                    <span className="text-white text-sm">
-                      {getSortLabel(sortBy)}
-                    </span>
-                    <ChevronDown className="w-4 h-4 text-white/40" />
-                  </button>
-
-                  <AnimatePresence>
-                    {showSortMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-56 bg-neutral-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50"
-                      >
-                        <div className="py-2">
-                          {[
-                            { value: "title-asc", label: "Title (A-Z)" },
-                            { value: "title-desc", label: "Title (Z-A)" },
-                            { value: "year-newest", label: "Newest First" },
-                            { value: "year-oldest", label: "Oldest First" },
-                          ].map((option) => (
-                            <button
-                              key={option.value}
-                              onClick={() => {
-                                setSortBy(option.value as SortOption);
-                                setShowSortMenu(false);
-                              }}
-                              className={cn(
-                                "w-full px-4 py-2.5 text-left text-sm transition-colors",
-                                sortBy === option.value
-                                  ? "bg-white/10 text-white"
-                                  : "text-white/70 hover:bg-white/5 hover:text-white"
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Clear Filters Button */}
+              {/* Mobile Filter Button */}
+              <Button
+                onClick={() => setShowMobileDrawer(true)}
+                variant="default"
+                className="w-12 h-12 relative"
+              >
+                <SlidersHorizontal className="w-4 h-4 text-white/60" />
                 {activeFiltersCount > 0 && (
-                  <button
-                    onClick={handleClearAllFilters}
-                    className="flex items-center gap-2 h-12 px-4 bg-neutral-900/60 backdrop-blur-lg border border-white/10 rounded-2xl transition-all duration-200 hover:border-white/30 hover:bg-white/5"
-                  >
-                    <XIcon className="w-4 h-4 text-white/60" />
-                    <span className="text-white text-sm">Clear</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Filter Controls - Mobile */}
-              <div className="flex md:hidden items-center gap-2">
-                <Button
-                  onClick={() => setShowMobileDrawer(true)}
-                  variant="default"
-                  className="w-12 h-12 lg:w-auto"
-                >
-                  <SlidersHorizontal className="w-4 h-4 text-white/60" />
-                  <span className="text-white text-sm hidden lg:block">
-                    Filters
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs bg-white text-black rounded-full">
+                    {activeFiltersCount}
                   </span>
-                  {activeFiltersCount > 0 && (
-                    <span className="flex items-center justify-center w-5 h-5 text-xs bg-white text-black rounded-full">
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </Button>
-              </div>
+                )}
+              </Button>
             </div>
           </div>
+
           {/* Results Count */}
-          <div>
+          <div className="px-4 md:px-0 pb-2 md:pb-4 md:pt-4 flex-shrink-0">
             <p className="text-white/60 text-sm">
               {filteredItems.length}{" "}
               {filteredItems.length === 1 ? "item" : "items"} found
             </p>
           </div>
-        </div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-12 h-12 text-white/40 animate-spin mb-4" />
-            <p className="text-white/60">Loading your media library...</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !isLoading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="bg-red-900/20 backdrop-blur-lg border border-red-500/20 rounded-2xl p-8 text-center max-w-md">
-              <XIcon className="w-12 h-12 text-red-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">
-                Failed to load library
-              </h3>
-              <p className="text-white/60 text-sm">
-                {error instanceof Error
-                  ? error.message
-                  : "An error occurred while loading your media."}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Grid of Items */}
-        {!isLoading && !error && (
-          <AnimatePresence mode="popLayout">
-            {filteredItems.length > 0 ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
-                {filteredItems.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    layoutId={item.id}
-                  >
-                    <Card
-                      title={item.title || "Untitled"}
-                      year={
-                        item.releaseDate
-                          ? new Date(item.releaseDate).getFullYear()
-                          : 0
-                      }
-                      image={item.posterUrl || "/placeholder.png"}
-                      onClick={() => {
-                        // TODO: Navigate to media detail page
-                        console.log("Clicked:", item.id);
-                      }}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
+          {/* Scrollable Content */}
+          <div className="flex-1 md:overflow-y-auto">
+            {/* Loading State */}
+            {isLoading && (
               <div className="flex flex-col items-center justify-center py-20">
-                <div className="bg-neutral-900/60 backdrop-blur-lg border border-white/10 rounded-2xl p-8 text-center max-w-md">
-                  <SearchIcon className="w-12 h-12 text-white/20 mx-auto mb-4" />
+                <Loader2 className="w-12 h-12 text-white/40 animate-spin mb-4" />
+                <p className="text-white/60">Loading your media library...</p>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && !isLoading && (
+              <div className="flex flex-col items-center justify-center py-20 px-4">
+                <div className="bg-red-900/20 backdrop-blur-lg border border-red-500/20 rounded-2xl p-8 text-center max-w-md">
+                  <XIcon className="w-12 h-12 text-red-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-white mb-2">
-                    No items found
+                    Failed to load library
                   </h3>
                   <p className="text-white/60 text-sm">
-                    Try adjusting your search or filters to find what you're
-                    looking for.
+                    {error instanceof Error
+                      ? error.message
+                      : "An error occurred while loading your media."}
                   </p>
-                  {searchQuery && (
-                    <button
-                      onClick={handleClearSearch}
-                      className="mt-4 px-4 py-2 bg-neutral-800/60 hover:bg-neutral-800 text-white rounded-xl transition-colors"
-                    >
-                      Clear search
-                    </button>
-                  )}
                 </div>
               </div>
             )}
-          </AnimatePresence>
-        )}
 
-        {/* Mobile Filters Drawer */}
-        <Drawer open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
-          <DrawerContent className="bg-neutral-950/95 backdrop-blur-xl border-white/10">
-            <DrawerHeader>
-              <div className="flex items-center justify-between">
-                <DrawerTitle className="text-white text-lg font-semibold">
-                  Filters & Sort
-                </DrawerTitle>
-                <DrawerClose asChild>
-                  <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                    <XIcon className="w-5 h-5 text-white/60" />
-                  </button>
-                </DrawerClose>
-              </div>
-            </DrawerHeader>
-
-            <div className="p-4 space-y-6 overflow-y-auto max-h-[60vh]">
-              {/* Type Filter */}
-              <div>
-                <label className="text-sm font-medium text-white/80 mb-3 block">
-                  Media Type
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setFilterType("all")}
-                    className={cn(
-                      "px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 border",
-                      filterType === "all"
-                        ? "bg-white text-black border-white"
-                        : "bg-neutral-900/60 text-white/70 border-white/10 hover:border-white/30"
-                    )}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setFilterType("MOVIE")}
-                    className={cn(
-                      "px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 border flex items-center justify-center gap-2",
-                      filterType === "MOVIE"
-                        ? "bg-white text-black border-white"
-                        : "bg-neutral-900/60 text-white/70 border-white/10 hover:border-white/30"
-                    )}
-                  >
-                    <Film className="w-4 h-4" />
-                    Movies
-                  </button>
-                  <button
-                    onClick={() => setFilterType("TV_SHOW")}
-                    className={cn(
-                      "px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 border flex items-center justify-center gap-2",
-                      filterType === "TV_SHOW"
-                        ? "bg-white text-black border-white"
-                        : "bg-neutral-900/60 text-white/70 border-white/10 hover:border-white/30"
-                    )}
-                  >
-                    <Tv className="w-4 h-4" />
-                    TV Shows
-                  </button>
-                </div>
-              </div>
-
-              {/* Genre Filter */}
-              <div>
-                <label className="text-sm font-medium text-white/80 mb-3 block">
-                  Genres
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {availableGenres.map((genre) => (
-                    <button
-                      key={genre}
-                      onClick={() => handleToggleGenre(genre)}
-                      className={cn(
-                        "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border",
-                        selectedGenres.includes(genre)
-                          ? "bg-white text-black border-white"
-                          : "bg-neutral-900/60 text-white/70 border-white/10 hover:border-white/30"
-                      )}
-                    >
-                      {genre}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sort Options */}
-              <div>
-                <label className="text-sm font-medium text-white/80 mb-3 block">
-                  Sort By
-                </label>
-                <div className="space-y-2">
-                  {[
-                    { value: "title-asc", label: "Title (A-Z)" },
-                    { value: "title-desc", label: "Title (Z-A)" },
-                    { value: "year-newest", label: "Newest First" },
-                    { value: "year-oldest", label: "Oldest First" },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setSortBy(option.value as SortOption)}
-                      className={cn(
-                        "w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all duration-200 border",
-                        sortBy === option.value
-                          ? "bg-white text-black border-white"
-                          : "bg-neutral-900/60 text-white/70 border-white/10 hover:border-white/30"
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer Actions */}
-            <div className="p-4 border-t border-white/10 flex gap-2">
-              {activeFiltersCount > 0 && (
-                <button
-                  onClick={() => {
-                    handleClearAllFilters();
-                    setShowMobileDrawer(false);
-                  }}
-                  className="flex-1 px-4 py-3 bg-neutral-900/60 hover:bg-neutral-900 text-white rounded-xl transition-colors border border-white/10"
-                >
-                  Clear All
-                </button>
-              )}
-              <button
-                onClick={() => setShowMobileDrawer(false)}
-                className="flex-1 px-4 py-3 bg-white hover:bg-white/90 text-black rounded-xl transition-colors font-medium"
-              >
-                Show Results ({filteredItems.length})
-              </button>
-            </div>
-          </DrawerContent>
-        </Drawer>
+            {/* Grid of Items */}
+            {!isLoading && !error && (
+              <AnimatePresence mode="popLayout">
+                {filteredItems.length > 0 ? (
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 p-4">
+                    {filteredItems.map((item) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        layoutId={item.id}
+                      >
+                        <Link
+                          to="/media/$mediaId"
+                          params={{ mediaId: item.id || "" }}
+                        >
+                          <Card
+                            title={item.title || "Untitled"}
+                            year={
+                              item.releaseDate
+                                ? new Date(item.releaseDate).getFullYear()
+                                : 0
+                            }
+                            image={item.posterUrl || "/placeholder.png"}
+                          />
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 px-4">
+                    <div className="text-center">
+                      <SearchIcon className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        No media found
+                      </h3>
+                      <p className="text-white/60 text-sm">
+                        Try adjusting your filters or search query
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </AnimatePresence>
+            )}
+          </div>
+        </main>
       </div>
+
+      {/* Mobile Filter Drawer */}
+      <Drawer open={showMobileDrawer} onOpenChange={setShowMobileDrawer}>
+        <DrawerContent className="bg-neutral-900/95 backdrop-blur-xl border-t border-white/10">
+          <DrawerHeader>
+            <div className="flex items-center justify-between">
+              <DrawerTitle className="text-white text-lg font-semibold">
+                Filters
+              </DrawerTitle>
+              <DrawerClose>
+                <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                  <XIcon className="w-5 h-5 text-white/60" />
+                </button>
+              </DrawerClose>
+            </div>
+          </DrawerHeader>
+
+          <div className="p-4 space-y-6 overflow-y-auto max-h-[60vh]">
+            {/* Type Filter */}
+            <div>
+              <label className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
+                <Grid3x3 className="w-4 h-4" />
+                Media Type
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setFilterType("all")}
+                  className={cn(
+                    "px-3 py-3 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2",
+                    filterType === "all"
+                      ? "bg-white text-black border-white"
+                      : "bg-white/5 text-white/70 border-white/10 hover:border-white/20"
+                  )}
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                  All
+                </button>
+                <button
+                  onClick={() => setFilterType("MOVIE")}
+                  className={cn(
+                    "px-3 py-3 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2",
+                    filterType === "MOVIE"
+                      ? "bg-white text-black border-white"
+                      : "bg-white/5 text-white/70 border-white/10 hover:border-white/20"
+                  )}
+                >
+                  <Film className="w-4 h-4" />
+                  Movies
+                </button>
+                <button
+                  onClick={() => setFilterType("TV_SHOW")}
+                  className={cn(
+                    "px-3 py-3 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2",
+                    filterType === "TV_SHOW"
+                      ? "bg-white text-black border-white"
+                      : "bg-white/5 text-white/70 border-white/10 hover:border-white/20"
+                  )}
+                >
+                  <Tv className="w-4 h-4" />
+                  TV
+                </button>
+                <button
+                  onClick={() => setFilterType("MUSIC")}
+                  className={cn(
+                    "px-3 py-3 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2",
+                    filterType === "MUSIC"
+                      ? "bg-white text-black border-white"
+                      : "bg-white/5 text-white/70 border-white/10 hover:border-white/20"
+                  )}
+                >
+                  <Music className="w-4 h-4" />
+                  Music
+                </button>
+                <button
+                  onClick={() => setFilterType("COMIC")}
+                  className={cn(
+                    "px-3 py-3 rounded-xl text-sm font-medium transition-colors border flex items-center justify-center gap-2",
+                    filterType === "COMIC"
+                      ? "bg-white text-black border-white"
+                      : "bg-white/5 text-white/70 border-white/10 hover:border-white/20"
+                  )}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Comics
+                </button>
+              </div>
+            </div>
+
+            {/* Genre Filter */}
+            <div>
+              <label className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
+                <Tag className="w-4 h-4" />
+                Genres
+                {selectedGenres.length > 0 && (
+                  <span className="ml-auto text-xs px-1.5 py-0.5 bg-white/10 text-white rounded">
+                    {selectedGenres.length}
+                  </span>
+                )}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {availableGenres.map((genre) => (
+                  <button
+                    key={genre}
+                    onClick={() => handleToggleGenre(genre)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                      selectedGenres.includes(genre)
+                        ? "bg-white text-black"
+                        : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sort Options */}
+            <div>
+              <label className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
+                <ArrowUpDown className="w-4 h-4" />
+                Sort By
+              </label>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setSortBy("title-asc")}
+                  className={cn(
+                    "w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-colors border flex items-center gap-2",
+                    sortBy === "title-asc"
+                      ? "bg-white text-black border-white"
+                      : "bg-neutral-900/60 text-white/70 border-white/10 hover:border-white/30"
+                  )}
+                >
+                  <ArrowUpDown className="w-4 h-4 rotate-180" />
+                  A-Z
+                </button>
+                <button
+                  onClick={() => setSortBy("title-desc")}
+                  className={cn(
+                    "w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-colors border flex items-center gap-2",
+                    sortBy === "title-desc"
+                      ? "bg-white text-black border-white"
+                      : "bg-neutral-900/60 text-white/70 border-white/10 hover:border-white/30"
+                  )}
+                >
+                  <ArrowUpDown className="w-4 h-4" />
+                  Z-A
+                </button>
+                <button
+                  onClick={() => setSortBy("year-newest")}
+                  className={cn(
+                    "w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-colors border flex items-center gap-2",
+                    sortBy === "year-newest"
+                      ? "bg-white text-black border-white"
+                      : "bg-neutral-900/60 text-white/70 border-white/10 hover:border-white/30"
+                  )}
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  Newest
+                </button>
+                <button
+                  onClick={() => setSortBy("year-oldest")}
+                  className={cn(
+                    "w-full px-4 py-2 rounded-xl text-sm font-medium text-left transition-colors border flex items-center gap-2",
+                    sortBy === "year-oldest"
+                      ? "bg-white text-black border-white"
+                      : "bg-neutral-900/60 text-white/70 border-white/10 hover:border-white/30"
+                  )}
+                >
+                  <Calendar className="w-4 h-4" />
+                  Oldest
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="p-4 border-t border-white/10 flex gap-2">
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={() => {
+                  handleClearAllFilters();
+                  setShowMobileDrawer(false);
+                }}
+                className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition-colors border border-white/10 font-medium flex items-center justify-center gap-2"
+              >
+                <XIcon className="w-4 h-4" />
+                Reset
+              </button>
+            )}
+            <button
+              onClick={() => setShowMobileDrawer(false)}
+              className="flex-1 px-4 py-3 bg-white hover:bg-white/90 text-black rounded-xl transition-colors font-medium"
+            >
+              Show {filteredItems.length}
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

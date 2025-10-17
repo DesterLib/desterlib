@@ -85,6 +85,7 @@ export function useUpdateLibraries() {
 
 /**
  * Hook to scan a library
+ * By default, updateExisting is true to refresh metadata and genres
  */
 export function useScanLibrary() {
   const queryClient = useQueryClient();
@@ -99,15 +100,22 @@ export function useScanLibrary() {
       mediaType: MediaType;
       updateExisting?: boolean;
     }) => {
-      const response = await postApiV1Scan({ path, mediaType, updateExisting });
+      const response = await postApiV1Scan({
+        path,
+        mediaType,
+        updateExisting,
+      });
       if (response.status === 200) {
         return response.data.data?.scan ?? null;
       }
       return null;
     },
     onSuccess: () => {
+      // Invalidate all media-related queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       queryClient.invalidateQueries({ queryKey: ["media"] });
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+      queryClient.invalidateQueries({ queryKey: ["tv-shows"] });
     },
   });
 }
