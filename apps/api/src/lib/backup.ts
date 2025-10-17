@@ -1,7 +1,7 @@
 /**
  * Database Backup Service
  *
- * Provides automated backup functionality for the SQLite database:
+ * Provides automated backup functionality for the PostgreSQL database:
  * - Scheduled automatic backups
  * - On-demand backup creation
  * - Backup rotation (keep last N backups)
@@ -19,10 +19,11 @@
 import { promises as fs, createReadStream, createWriteStream } from "fs";
 import { join } from "path";
 import { createGzip, createGunzip } from "zlib";
-import { pipeline } from "stream/promises";
+import { spawn } from "child_process";
 import { env } from "../config/env.js";
 import logger from "../config/logger.js";
 import { prisma } from "./prisma.js";
+import { webSocketService, WS_EVENTS } from "./websocket.js";
 
 // Backup configuration
 const BACKUP_DIR = process.env.BACKUP_DIR || join(process.cwd(), "backups");
@@ -70,18 +71,38 @@ async function ensureBackupDir(): Promise<void> {
 }
 
 /**
- * Get the database file path from DATABASE_URL
+ * Parse PostgreSQL connection details from DATABASE_URL
  */
-function getDatabasePath(): string {
+interface PostgresConfig {
+  host: string;
+  port: string;
+  database: string;
+  username: string;
+  password: string;
+}
+
+function parsePostgresUrl(): PostgresConfig {
   const dbUrl = env.DATABASE_URL;
 
-  if (dbUrl.startsWith("file:")) {
-    // Extract path from file:./path/to/db
-    const filePath = dbUrl.replace(/^file:/, "");
-    return join(process.cwd(), "apps/api/prisma", filePath);
+  // Parse PostgreSQL connection URL
+  // Format: postgresql://username:password@host:port/database?params
+  const match = dbUrl.match(
+    /^postgres(?:ql)?:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/
+  );
+
+  if (!match) {
+    throw new Error("Invalid PostgreSQL DATABASE_URL format");
   }
 
-  throw new Error("Only SQLite databases are supported for backup");
+  const [, username, password, host, port, database] = match;
+
+  return {
+    host: host!,
+    port: port!,
+    database: database!,
+    username: username!,
+    password: password!,
+  };
 }
 
 /**
@@ -92,7 +113,7 @@ function generateBackupFilename(
 ): string {
   const now = new Date();
   const timestamp = now.toISOString().replace(/[:.]/g, "-");
-  return `backup-${type}-${timestamp}.db.gz`;
+  return `backup-${type}-${timestamp}.sql.gz`;
 }
 
 /**
@@ -113,29 +134,155 @@ function getBackupType(): "daily" | "weekly" | "monthly" {
 }
 
 /**
- * Create a compressed backup of the database
+ * Create a compressed backup of the database using pg_dump
  */
 export async function createBackup(
   type: BackupMetadata["type"] = "manual"
 ): Promise<BackupResult> {
+  const filename = generateBackupFilename(type);
+
   try {
     await ensureBackupDir();
 
-    const dbPath = getDatabasePath();
-    const filename = generateBackupFilename(type);
+    const config = parsePostgresUrl();
     const backupPath = join(BACKUP_DIR, filename);
 
     logger.info(`Creating ${type} backup: ${filename}`);
 
-    // Ensure database is in a consistent state
-    await prisma.$executeRaw`PRAGMA wal_checkpoint(TRUNCATE)`;
+    // Emit backup started event
+    webSocketService.broadcast(WS_EVENTS.BACKUP_STARTED, {
+      filename,
+      type,
+      status: "starting",
+    });
 
-    // Copy database file with compression
-    const source = createReadStream(dbPath);
-    const destination = createWriteStream(backupPath);
-    const gzip = createGzip({ level: 9 }); // Maximum compression
+    // Create backup using pg_dump with compression
+    await new Promise<void>((resolve, reject) => {
+      const destination = createWriteStream(backupPath);
+      const gzip = createGzip({ level: 9 }); // Maximum compression
 
-    await pipeline(source, gzip, destination);
+      // Check if we should use docker exec for pg_dump
+      const useDocker = process.env.USE_DOCKER_PGDUMP === "true";
+      const containerName = process.env.POSTGRES_CONTAINER_NAME || "postgres";
+
+      let pgDump;
+      if (useDocker) {
+        // Use docker exec to run pg_dump from the PostgreSQL container
+        pgDump = spawn(
+          "docker",
+          [
+            "exec",
+            "-i",
+            containerName,
+            "pg_dump",
+            "-h",
+            config.host,
+            "-p",
+            config.port,
+            "-U",
+            config.username,
+            "-d",
+            config.database,
+            "-F",
+            "p", // Plain text format
+            "--no-owner",
+            "--no-acl",
+          ],
+          {
+            env: {
+              ...process.env,
+              PGPASSWORD: config.password,
+            },
+          }
+        );
+      } else {
+        // Use local pg_dump
+        pgDump = spawn(
+          "pg_dump",
+          [
+            "-h",
+            config.host,
+            "-p",
+            config.port,
+            "-U",
+            config.username,
+            "-d",
+            config.database,
+            "-F",
+            "p", // Plain text format
+            "--no-owner",
+            "--no-acl",
+          ],
+          {
+            env: {
+              ...process.env,
+              PGPASSWORD: config.password,
+            },
+          }
+        );
+      }
+
+      pgDump.stdout.pipe(gzip).pipe(destination);
+
+      // Track progress by monitoring file size
+      let bytesWritten = 0;
+      const progressInterval = setInterval(async () => {
+        try {
+          const stats = await fs.stat(backupPath);
+          const newBytes = stats.size;
+          if (newBytes > bytesWritten) {
+            bytesWritten = newBytes;
+            webSocketService.broadcast(WS_EVENTS.BACKUP_PROGRESS, {
+              filename,
+              bytesWritten: newBytes,
+              status: "in_progress",
+            });
+          }
+        } catch {
+          // File might not exist yet, ignore
+        }
+      }, 1000); // Update every second
+
+      let errorOutput = "";
+      pgDump.stderr.on("data", (data) => {
+        errorOutput += data.toString();
+      });
+
+      pgDump.on("error", (error) => {
+        clearInterval(progressInterval);
+        reject(new Error(`pg_dump process error: ${error.message}`));
+      });
+
+      pgDump.on("close", (code) => {
+        clearInterval(progressInterval);
+        if (code === 0) {
+          resolve();
+        } else {
+          // Provide helpful error message for version mismatch
+          if (errorOutput.includes("version mismatch")) {
+            reject(
+              new Error(
+                `pg_dump version mismatch. Please upgrade your local PostgreSQL client tools to match the server version. Error: ${errorOutput}`
+              )
+            );
+          } else {
+            reject(
+              new Error(`pg_dump failed with code ${code}: ${errorOutput}`)
+            );
+          }
+        }
+      });
+
+      destination.on("error", (error) => {
+        clearInterval(progressInterval);
+        reject(error);
+      });
+
+      gzip.on("error", (error) => {
+        clearInterval(progressInterval);
+        reject(error);
+      });
+    });
 
     // Get file stats
     const stats = await fs.stat(backupPath);
@@ -157,6 +304,15 @@ export async function createBackup(
       `Backup created successfully: ${filename} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`
     );
 
+    // Emit backup completed event
+    webSocketService.broadcast(WS_EVENTS.BACKUP_COMPLETED, {
+      filename,
+      size: stats.size,
+      type,
+      verified: isValid,
+      status: "completed",
+    });
+
     // Rotate old backups
     await rotateBackups();
 
@@ -166,6 +322,14 @@ export async function createBackup(
     };
   } catch (error) {
     logger.error("Failed to create backup:", error);
+
+    // Emit backup error event
+    webSocketService.broadcast(WS_EVENTS.BACKUP_ERROR, {
+      filename,
+      error: error instanceof Error ? error.message : String(error),
+      status: "error",
+    });
+
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
@@ -184,7 +348,7 @@ export async function listBackups(): Promise<BackupMetadata[]> {
     const backups: BackupMetadata[] = [];
 
     for (const file of files) {
-      if (file.endsWith(".db.gz") || file.endsWith(".db")) {
+      if (file.endsWith(".sql.gz") || file.endsWith(".sql")) {
         const filepath = join(BACKUP_DIR, file);
         const stats = await fs.stat(filepath);
 
@@ -248,7 +412,7 @@ async function verifyBackup(backupPath: string): Promise<boolean> {
 }
 
 /**
- * Restore database from backup
+ * Restore database from backup using psql
  */
 export async function restoreBackup(
   backupFilename: string
@@ -269,7 +433,7 @@ export async function restoreBackup(
       throw new Error("Backup file is corrupted or invalid");
     }
 
-    const dbPath = getDatabasePath();
+    const config = parsePostgresUrl();
 
     logger.warn(`Restoring database from backup: ${backupFilename}`);
     logger.warn("This will overwrite the current database!");
@@ -280,21 +444,103 @@ export async function restoreBackup(
       throw new Error("Failed to create safety backup before restore");
     }
 
-    // Disconnect Prisma to release database locks
+    // Disconnect Prisma to release database connections
     await prisma.$disconnect();
 
     try {
-      // Decompress and restore
-      if (backupPath.endsWith(".gz")) {
-        const source = createReadStream(backupPath);
-        const destination = createWriteStream(dbPath);
-        const gunzip = createGunzip();
+      // Drop all existing connections to the database
+      await new Promise<void>((resolve) => {
+        const dropConnections = spawn(
+          "psql",
+          [
+            "-h",
+            config.host,
+            "-p",
+            config.port,
+            "-U",
+            config.username,
+            "-d",
+            "postgres", // Connect to postgres database to drop connections to target
+            "-c",
+            `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${config.database}' AND pid <> pg_backend_pid();`,
+          ],
+          {
+            env: {
+              ...process.env,
+              PGPASSWORD: config.password,
+            },
+          }
+        );
 
-        await pipeline(source, gunzip, destination);
-      } else {
-        // Direct copy for uncompressed backups
-        await fs.copyFile(backupPath, dbPath);
-      }
+        dropConnections.on("close", (code) => {
+          if (code === 0 || code === null) {
+            resolve();
+          } else {
+            // Don't fail if there are no connections to drop
+            resolve();
+          }
+        });
+
+        dropConnections.on("error", () => {
+          // Don't fail if dropping connections fails
+          resolve();
+        });
+      });
+
+      // Restore using psql
+      await new Promise<void>((resolve, reject) => {
+        let psqlInput;
+
+        if (backupPath.endsWith(".gz")) {
+          // Decompress on the fly
+          psqlInput = createReadStream(backupPath).pipe(createGunzip());
+        } else {
+          psqlInput = createReadStream(backupPath);
+        }
+
+        const psql = spawn(
+          "psql",
+          [
+            "-h",
+            config.host,
+            "-p",
+            config.port,
+            "-U",
+            config.username,
+            "-d",
+            config.database,
+            "-v",
+            "ON_ERROR_STOP=1", // Stop on first error
+          ],
+          {
+            env: {
+              ...process.env,
+              PGPASSWORD: config.password,
+            },
+          }
+        );
+
+        psqlInput.pipe(psql.stdin);
+
+        let errorOutput = "";
+        psql.stderr.on("data", (data) => {
+          errorOutput += data.toString();
+        });
+
+        psql.on("error", (error) => {
+          reject(new Error(`psql process error: ${error.message}`));
+        });
+
+        psql.on("close", (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`psql failed with code ${code}: ${errorOutput}`));
+          }
+        });
+
+        psqlInput.on("error", reject);
+      });
 
       logger.info(`Database restored successfully from: ${backupFilename}`);
 

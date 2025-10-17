@@ -10,8 +10,10 @@
  */
 
 // Load environment variables from .env file
+// .env.local takes precedence over .env
 import { config } from "dotenv";
-config();
+config({ path: ".env.local" }); // Load .env.local first (if exists)
+config(); // Then load .env (won't override existing vars)
 
 import { z } from "zod";
 

@@ -49,8 +49,8 @@ COPY --from=builder /app/apps/api/src/generated ./src/generated
 COPY apps/api/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Install netcat for healthcheck
-RUN apk add --no-cache netcat-openbsd
+# Install netcat for healthcheck and PostgreSQL client tools for backups
+RUN apk add --no-cache netcat-openbsd postgresql-client
 
 # Create logs directory
 RUN mkdir -p logs backups

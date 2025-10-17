@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { SettingGroup } from "@/components/settings/setting-group";
 import { systemSettingsConfig } from "@/config/system-settings-config";
@@ -13,6 +13,7 @@ import {
   useAdminHealthCheck,
 } from "@/lib/hooks/useSystem";
 import { useAuth } from "@/hooks/useAuth";
+import { useBackupProgress } from "@/hooks/useBackupProgress";
 import { Loader2, CheckCircle, XCircle, ShieldAlert } from "lucide-react";
 import { requireAdmin } from "@/lib/route-guards";
 
@@ -37,34 +38,62 @@ function RouteComponent() {
   const resetPerformanceMetrics = useResetPerformanceMetrics();
   const updateMetrics = useUpdateMetrics();
 
+  // Get real-time backup progress
+  const backupProgress = useBackupProgress();
+
   const [operationStatus, setOperationStatus] = useState<{
     type: string;
     message: string;
     status: "loading" | "success" | "error";
   } | null>(null);
 
-  // Handle creating a backup
-  const handleCreateBackup = async () => {
-    setOperationStatus({
-      type: "backup",
-      message: "Creating database backup...",
-      status: "loading",
-    });
-    try {
-      await createBackup.mutateAsync();
+  // Update operation status based on backup progress
+  useEffect(() => {
+    if (
+      backupProgress.status === "starting" ||
+      backupProgress.status === "in_progress"
+    ) {
+      const sizeText = backupProgress.bytesWritten
+        ? ` (${(backupProgress.bytesWritten / 1024 / 1024).toFixed(2)} MB written)`
+        : "";
       setOperationStatus({
         type: "backup",
-        message: "Backup created successfully",
+        message: `Creating database backup...${sizeText}`,
+        status: "loading",
+      });
+    } else if (backupProgress.status === "completed") {
+      const sizeText = backupProgress.size
+        ? ` (${(backupProgress.size / 1024 / 1024).toFixed(2)} MB)`
+        : "";
+      setOperationStatus({
+        type: "backup",
+        message: `Backup created successfully${sizeText}`,
         status: "success",
       });
-    } catch {
+    } else if (backupProgress.status === "error") {
       setOperationStatus({
         type: "backup",
-        message: "Failed to create backup",
+        message: `Failed to create backup: ${backupProgress.error || "Unknown error"}`,
         status: "error",
       });
-    } finally {
-      setTimeout(() => setOperationStatus(null), 5000);
+    }
+  }, [backupProgress]);
+
+  // Handle creating a backup
+  const handleCreateBackup = async () => {
+    try {
+      await createBackup.mutateAsync();
+      // Status updates will come from WebSocket events
+    } catch {
+      // Only set error if WebSocket didn't already report it
+      if (backupProgress.status !== "error") {
+        setOperationStatus({
+          type: "backup",
+          message: "Failed to create backup",
+          status: "error",
+        });
+        setTimeout(() => setOperationStatus(null), 5000);
+      }
     }
   };
 

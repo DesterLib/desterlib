@@ -214,4 +214,10 @@ export const WS_EVENTS = {
 
   // Health events
   HEALTH_STATUS_CHANGED: "health:status_changed",
+
+  // Backup events
+  BACKUP_STARTED: "backup:started",
+  BACKUP_PROGRESS: "backup:progress",
+  BACKUP_COMPLETED: "backup:completed",
+  BACKUP_ERROR: "backup:error",
 } as const;
