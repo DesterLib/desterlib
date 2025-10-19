@@ -32,6 +32,7 @@ export const scanPathSchema = z.object({
       maxDepth: z.number().int().min(0).max(10).optional(),
       mediaType: z.enum(["movie", "tv"]).optional(),
       fileExtensions: z.array(sanitizedStringSchema).max(20).optional(),
+      libraryName: z.string().min(1).max(100).optional(),
     })
     .optional(),
 });

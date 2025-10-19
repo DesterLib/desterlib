@@ -89,7 +89,8 @@ async function saveMediaToDatabase(
   mediaEntry: MediaEntry,
   mediaType: "movie" | "tv",
   tmdbApiKey: string,
-  episodeCache: Map<string, TmdbEpisodeMetadata>
+  episodeCache: Map<string, TmdbEpisodeMetadata>,
+  libraryId: string
 ): Promise<void> {
   try {
     // Only process if we have metadata and a TMDB ID
@@ -223,6 +224,43 @@ async function saveMediaToDatabase(
           mediaId: media.id,
         },
       });
+    }
+
+    // Handle genres if they exist in metadata
+    if (extendedMetadata.genres && extendedMetadata.genres.length > 0) {
+      for (const genreData of extendedMetadata.genres) {
+        // Create slug from genre name (lowercase, replace spaces with hyphens)
+        const slug = genreData.name.toLowerCase().replace(/\s+/g, "-");
+
+        // Create or get genre
+        const genre = await prisma.genre.upsert({
+          where: { slug },
+          update: { name: genreData.name },
+          create: {
+            id: genreData.id.toString(),
+            name: genreData.name,
+            slug,
+          },
+        });
+
+        // Link genre to media
+        await prisma.mediaGenre.upsert({
+          where: {
+            mediaId_genreId: {
+              mediaId: media.id,
+              genreId: genre.id,
+            },
+          },
+          update: {},
+          create: {
+            mediaId: media.id,
+            genreId: genre.id,
+          },
+        });
+      }
+      logger.debug(
+        `✓ Linked ${extendedMetadata.genres.length} genre(s) to ${media.title}`
+      );
     }
 
     // Create or update type-specific record (Movie or TVShow)
@@ -398,6 +436,21 @@ async function saveMediaToDatabase(
         );
       }
     }
+
+    // Link media to library
+    await prisma.mediaLibrary.upsert({
+      where: {
+        mediaId_libraryId: {
+          mediaId: media.id,
+          libraryId: libraryId,
+        },
+      },
+      update: {},
+      create: {
+        mediaId: media.id,
+        libraryId: libraryId,
+      },
+    });
   } catch (error) {
     logger.error(
       `Error saving media to database for ${mediaEntry.path}: ${error instanceof Error ? error.message : error}`
@@ -468,6 +521,7 @@ export const scanServices = {
       tmdbApiKey: string;
       mediaType?: "movie" | "tv";
       fileExtensions?: string[];
+      libraryName?: string;
     }
   ) => {
     const {
@@ -475,11 +529,40 @@ export const scanServices = {
       tmdbApiKey,
       mediaType = "movie",
       fileExtensions = [".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v"],
+      libraryName,
     } = options;
 
     if (!tmdbApiKey) {
       throw new Error("TMDB API key is required");
     }
+
+    // Create or get library for this scan
+    const finalLibraryName = libraryName || `Library - ${rootPath}`;
+    const librarySlug = finalLibraryName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    logger.info(`📚 Creating/getting library: ${finalLibraryName}`);
+
+    const library = await prisma.library.upsert({
+      where: { slug: librarySlug },
+      update: {
+        name: finalLibraryName,
+        libraryPath: rootPath,
+        libraryType: mediaType === "tv" ? MediaType.TV_SHOW : MediaType.MOVIE,
+        isLibrary: true,
+      },
+      create: {
+        name: finalLibraryName,
+        slug: librarySlug,
+        libraryPath: rootPath,
+        libraryType: mediaType === "tv" ? MediaType.TV_SHOW : MediaType.MOVIE,
+        isLibrary: true,
+      },
+    });
+
+    logger.info(`✓ Library ready: ${library.name} (ID: ${library.id})\n`);
 
     const mediaEntries: MediaEntry[] = [];
     const rateLimiter = createRateLimiter();
@@ -744,7 +827,8 @@ export const scanServices = {
             mediaEntry,
             mediaType,
             tmdbApiKey,
-            episodeMetadataCache
+            episodeMetadataCache,
+            library.id
           );
         } catch (error) {
           logger.error(
