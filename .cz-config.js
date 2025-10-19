@@ -63,6 +63,37 @@ function detectScope() {
 
 const availableScopes = detectScope();
 
+// Define hardcoded scopes that should always be available
+const hardcodedScopes = [
+  { name: "web", value: "web" },
+  { name: "api", value: "api" },
+  { name: "ui", value: "ui" },
+  { name: "eslint-config", value: "eslint-config" },
+  { name: "typescript-config", value: "typescript-config" },
+  { name: "root", value: "root" },
+];
+
+// Merge detected scopes with hardcoded ones, removing duplicates
+function mergeScopes(detectedScopes, hardcodedScopes) {
+  const scopeMap = new Map();
+
+  // Add detected scopes first
+  detectedScopes.forEach((scope) => {
+    scopeMap.set(scope, { name: scope, value: scope });
+  });
+
+  // Add hardcoded scopes (won't overwrite existing keys)
+  hardcodedScopes.forEach((scope) => {
+    if (!scopeMap.has(scope.value)) {
+      scopeMap.set(scope.value, scope);
+    }
+  });
+
+  return Array.from(scopeMap.values());
+}
+
+const allScopes = mergeScopes(availableScopes, hardcodedScopes);
+
 module.exports = {
   types: [
     { value: "feat", name: "feat:     ✨  A new feature" },
@@ -99,35 +130,11 @@ module.exports = {
     { value: "revert", name: "revert:   ⏪️  Reverts a previous commit" },
   ],
 
-  scopes: [
-    ...availableScopes,
-    { name: "web", value: "web" },
-    { name: "api", value: "api" },
-    { name: "ui", value: "ui" },
-    { name: "eslint-config", value: "eslint-config" },
-    { name: "typescript-config", value: "typescript-config" },
-    { name: "root", value: "root" },
-  ],
+  scopes: allScopes,
 
   scopeOverrides: {
-    feat: [
-      ...availableScopes,
-      { name: "web", value: "web" },
-      { name: "api", value: "api" },
-      { name: "ui", value: "ui" },
-      { name: "eslint-config", value: "eslint-config" },
-      { name: "typescript-config", value: "typescript-config" },
-      { name: "root", value: "root" },
-    ],
-    fix: [
-      ...availableScopes,
-      { name: "web", value: "web" },
-      { name: "api", value: "api" },
-      { name: "ui", value: "ui" },
-      { name: "eslint-config", value: "eslint-config" },
-      { name: "typescript-config", value: "typescript-config" },
-      { name: "root", value: "root" },
-    ],
+    feat: allScopes,
+    fix: allScopes,
   },
 
   messages: {
