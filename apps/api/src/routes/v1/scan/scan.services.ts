@@ -10,6 +10,7 @@ import type {
 } from "@/lib/providers/tmdb/tmdb.types";
 import prisma from "@/lib/database/prisma";
 import { MediaType } from "@/lib/database";
+import { wsManager } from "@/lib/websocket";
 
 /**
  * Rate limiter for TMDB API calls
@@ -574,6 +575,16 @@ export const scanServices = {
     // Phase 1: Collect all entries
     logger.info("📁 Phase 1: Scanning directory structure...");
 
+    // Send initial progress
+    wsManager.sendScanProgress({
+      phase: "scanning",
+      progress: 0,
+      current: 0,
+      total: 0,
+      message: "Starting directory scan...",
+      libraryId: library.id,
+    });
+
     async function collectEntries(
       currentPath: string,
       depth: number = 0
@@ -660,12 +671,35 @@ export const scanServices = {
     await collectEntries(rootPath);
     logger.info(`\n✓ Found ${mediaEntries.length} media items\n`);
 
+    // Send scanning complete progress
+    wsManager.sendScanProgress({
+      phase: "scanning",
+      progress: 25,
+      current: mediaEntries.length,
+      total: mediaEntries.length,
+      message: `Found ${mediaEntries.length} media items`,
+      libraryId: library.id,
+    });
+
     // Phase 2: Batch fetch all metadata with rate limiting
     logger.info(
       "🌐 Phase 2: Fetching metadata from TMDB (rate-limited parallel)..."
     );
 
+    wsManager.sendScanProgress({
+      phase: "fetching-metadata",
+      progress: 25,
+      current: 0,
+      total: mediaEntries.length,
+      message: "Fetching metadata from TMDB...",
+      libraryId: library.id,
+    });
+
     const metadataFetchPromises: Promise<void>[] = [];
+    let metadataFetched = 0;
+    const totalMetadataToFetch = mediaEntries.filter(
+      (e) => e.extractedIds.tmdbId || e.extractedIds.title
+    ).length;
 
     for (const mediaEntry of mediaEntries) {
       const { extractedIds } = mediaEntry;
@@ -676,6 +710,7 @@ export const scanServices = {
           // Check cache first
           if (metadataCache.has(extractedIds.tmdbId!)) {
             mediaEntry.metadata = metadataCache.get(extractedIds.tmdbId!)!;
+            metadataFetched++;
             return;
           }
 
@@ -695,6 +730,26 @@ export const scanServices = {
               const typedMetadata = metadata as TmdbMetadata;
               metadataCache.set(extractedIds.tmdbId!, typedMetadata);
               mediaEntry.metadata = typedMetadata;
+              metadataFetched++;
+
+              // Send progress update every 5 items or at 100%
+              if (
+                metadataFetched % 5 === 0 ||
+                metadataFetched === totalMetadataToFetch
+              ) {
+                const progress =
+                  25 +
+                  Math.floor((metadataFetched / totalMetadataToFetch) * 25);
+                wsManager.sendScanProgress({
+                  phase: "fetching-metadata",
+                  progress,
+                  current: metadataFetched,
+                  total: totalMetadataToFetch,
+                  message: `Fetching metadata: ${metadataFetched}/${totalMetadataToFetch}`,
+                  libraryId: library.id,
+                });
+              }
+
               logger.info(
                 `✓ Fetched: ${typedMetadata.title || typedMetadata.name}`
               );
@@ -703,6 +758,7 @@ export const scanServices = {
             logger.error(
               `✗ Failed to fetch TMDB ID ${extractedIds.tmdbId} (${mediaEntry.name}): ${metadataError instanceof Error ? metadataError.message : metadataError}`
             );
+            metadataFetched++;
           }
         });
         metadataFetchPromises.push(fetchPromise);
@@ -728,6 +784,7 @@ export const scanServices = {
               // Check cache before fetching
               if (metadataCache.has(foundId)) {
                 mediaEntry.metadata = metadataCache.get(foundId)!;
+                metadataFetched++;
               } else {
                 const metadata = await tmdbServices.get(
                   foundId,
@@ -743,6 +800,26 @@ export const scanServices = {
                   const typedMetadata = metadata as TmdbMetadata;
                   metadataCache.set(foundId, typedMetadata);
                   mediaEntry.metadata = typedMetadata;
+                  metadataFetched++;
+
+                  // Send progress update every 5 items or at 100%
+                  if (
+                    metadataFetched % 5 === 0 ||
+                    metadataFetched === totalMetadataToFetch
+                  ) {
+                    const progress =
+                      25 +
+                      Math.floor((metadataFetched / totalMetadataToFetch) * 25);
+                    wsManager.sendScanProgress({
+                      phase: "fetching-metadata",
+                      progress,
+                      current: metadataFetched,
+                      total: totalMetadataToFetch,
+                      message: `Fetching metadata: ${metadataFetched}/${totalMetadataToFetch}`,
+                      libraryId: library.id,
+                    });
+                  }
+
                   logger.info(
                     `✓ Fetched: ${typedMetadata.title || typedMetadata.name}`
                   );
@@ -750,11 +827,13 @@ export const scanServices = {
               }
             } else {
               logger.warn(`✗ No results found for: "${extractedIds.title}"`);
+              metadataFetched++;
             }
           } catch (searchError) {
             logger.error(
               `✗ Failed to search for "${extractedIds.title}": ${searchError instanceof Error ? searchError.message : searchError}`
             );
+            metadataFetched++;
           }
         });
         metadataFetchPromises.push(searchPromise);
@@ -768,7 +847,26 @@ export const scanServices = {
     // Phase 3: Fetch episode metadata for TV shows (with rate limiting)
     logger.info("📺 Phase 3: Fetching episode metadata...");
 
+    const episodesToFetch = mediaEntries.filter(
+      (e) =>
+        !e.isDirectory &&
+        e.extractedIds.tmdbId &&
+        e.extractedIds.season &&
+        e.extractedIds.episode &&
+        mediaType === "tv"
+    );
+
+    wsManager.sendScanProgress({
+      phase: "fetching-episodes",
+      progress: 50,
+      current: 0,
+      total: episodesToFetch.length,
+      message: `Fetching episode metadata (${episodesToFetch.length} episodes)...`,
+      libraryId: library.id,
+    });
+
     const episodeFetchPromises: Promise<void>[] = [];
+    let episodesFetched = 0;
 
     for (const mediaEntry of mediaEntries) {
       const { extractedIds, isDirectory } = mediaEntry;
@@ -799,6 +897,26 @@ export const scanServices = {
 
             if (episodeMetadata) {
               episodeMetadataCache.set(episodeCacheKey, episodeMetadata);
+              episodesFetched++;
+
+              // Send progress update every 3 items or at 100%
+              if (
+                episodesFetched % 3 === 0 ||
+                episodesFetched === episodesToFetch.length
+              ) {
+                const progress =
+                  50 +
+                  Math.floor((episodesFetched / episodesToFetch.length) * 25);
+                wsManager.sendScanProgress({
+                  phase: "fetching-episodes",
+                  progress,
+                  current: episodesFetched,
+                  total: episodesToFetch.length,
+                  message: `Fetching episodes: ${episodesFetched}/${episodesToFetch.length}`,
+                  libraryId: library.id,
+                });
+              }
+
               logger.info(
                 `✓ Fetched episode: S${extractedIds.season}E${extractedIds.episode} - ${episodeMetadata.name}`
               );
@@ -807,6 +925,7 @@ export const scanServices = {
             logger.warn(
               `Could not fetch episode S${extractedIds.season}E${extractedIds.episode}: ${error instanceof Error ? error.message : error}`
             );
+            episodesFetched++;
           }
         });
         episodeFetchPromises.push(fetchPromise);
@@ -819,6 +938,18 @@ export const scanServices = {
     // Phase 4: Save to database
     logger.info("💾 Phase 4: Saving to database...");
 
+    const mediaFilesToSave = mediaEntries.filter((e) => !e.isDirectory);
+    let savedCount = 0;
+
+    wsManager.sendScanProgress({
+      phase: "saving",
+      progress: 75,
+      current: 0,
+      total: mediaFilesToSave.length,
+      message: "Saving to database...",
+      libraryId: library.id,
+    });
+
     for (const mediaEntry of mediaEntries) {
       // Only save files (not directories)
       if (!mediaEntry.isDirectory) {
@@ -830,15 +961,39 @@ export const scanServices = {
             episodeMetadataCache,
             library.id
           );
+          savedCount++;
+
+          // Send progress update every 2 items or at 100%
+          if (savedCount % 2 === 0 || savedCount === mediaFilesToSave.length) {
+            const progress =
+              75 + Math.floor((savedCount / mediaFilesToSave.length) * 25);
+            wsManager.sendScanProgress({
+              phase: "saving",
+              progress,
+              current: savedCount,
+              total: mediaFilesToSave.length,
+              message: `Saving to database: ${savedCount}/${mediaFilesToSave.length}`,
+              libraryId: library.id,
+            });
+          }
         } catch (error) {
           logger.error(
             `Failed to save ${mediaEntry.name}: ${error instanceof Error ? error.message : error}`
           );
+          savedCount++;
         }
       }
     }
 
     logger.info("\n✅ Scan complete!\n");
+
+    // Send completion message
+    wsManager.sendScanComplete({
+      libraryId: library.id,
+      totalItems: savedCount,
+      message: `Scan complete! Saved ${savedCount} items to library "${library.name}"`,
+    });
+
     return mediaEntries;
   },
 };

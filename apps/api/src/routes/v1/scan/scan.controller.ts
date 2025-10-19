@@ -4,6 +4,7 @@ import { scanPathSchema } from "./scan.schema";
 import { config } from "../../../config/env";
 import { z } from "zod";
 import { logger } from "@/lib/utils";
+import { wsManager } from "@/lib/websocket";
 
 type ScanPathRequest = z.infer<typeof scanPathSchema>;
 
@@ -38,13 +39,18 @@ export const scanPathController = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    logger.error(
-      `Scan path controller error: ${error instanceof Error ? error.message : error}`
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to scan path";
+    logger.error(`Scan path controller error: ${errorMessage}`);
+
+    // Send error via WebSocket
+    wsManager.sendScanError({
+      error: errorMessage,
+    });
 
     return res.status(500).json({
       error: "Internal server error",
-      message: error instanceof Error ? error.message : "Failed to scan path",
+      message: errorMessage,
     });
   }
 };
