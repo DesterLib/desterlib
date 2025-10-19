@@ -16,7 +16,24 @@ const limiter = rateLimit({
 // Middleware setup function
 export function setupMiddleware(app: express.Application) {
   // Security & compression
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          imgSrc: ["'self'", "data:", "https://image.tmdb.org"],
+          scriptSrc: ["'self'"],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            "https://fonts.googleapis.com",
+          ],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          connectSrc: ["'self'"],
+        },
+      },
+    })
+  );
   app.use(compression());
   app.use(limiter);
 
@@ -26,7 +43,12 @@ export function setupMiddleware(app: express.Application) {
       origin:
         config.nodeEnv === "production"
           ? config.frontendUrl
-          : ["http://localhost:3000", "http://localhost:3001"],
+          : [
+              "http://localhost:3000",
+              "http://localhost:3001",
+              "http://localhost:5173", // Vite dev server
+              "http://localhost:4173", // Vite preview
+            ],
       credentials: true,
     })
   );
