@@ -102,7 +102,7 @@ module.exports = {
   scopes: [
     ...availableScopes,
     { name: "web", value: "web" },
-    { name: "docs", value: "docs" },
+    { name: "api", value: "api" },
     { name: "ui", value: "ui" },
     { name: "eslint-config", value: "eslint-config" },
     { name: "typescript-config", value: "typescript-config" },
@@ -113,7 +113,7 @@ module.exports = {
     feat: [
       ...availableScopes,
       { name: "web", value: "web" },
-      { name: "docs", value: "docs" },
+      { name: "api", value: "api" },
       { name: "ui", value: "ui" },
       { name: "eslint-config", value: "eslint-config" },
       { name: "typescript-config", value: "typescript-config" },
@@ -122,7 +122,7 @@ module.exports = {
     fix: [
       ...availableScopes,
       { name: "web", value: "web" },
-      { name: "docs", value: "docs" },
+      { name: "api", value: "api" },
       { name: "ui", value: "ui" },
       { name: "eslint-config", value: "eslint-config" },
       { name: "typescript-config", value: "typescript-config" },
