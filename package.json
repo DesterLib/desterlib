@@ -7,8 +7,8 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "commit": "git-cz",
-    "commit:retry": "git-cz --retry",
+    "commit": "TERM=dumb git-cz",
+    "commit:retry": "TERM=dumb git-cz --retry",
     "prepare": "husky"
   },
   "devDependencies": {
