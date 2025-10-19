@@ -67,13 +67,14 @@ export async function downloadMedia(
 
     // In a real implementation, you would fetch the actual video file
     // For now, this is a placeholder structure
-    if (media.files && media.files.length > 0) {
-      const videoFile = media.files[0];
-      // TODO: Implement actual video download
-      // const videoResponse = await fetch(videoFile.url);
-      // videoBlob = await videoResponse.blob();
-      // totalSize += videoBlob.size;
-    }
+    // Note: Media type doesn't have a files property directly
+    // Video files would typically be accessed through the specific media type (movie, tvShow, etc.)
+    // TODO: Implement actual video download based on media type
+    // if (media.movie?.fileUrl || media.tvShow?.seasons?.[0]?.episodes?.[0]?.fileUrl) {
+    //   const videoResponse = await fetch(fileUrl);
+    //   videoBlob = await videoResponse.blob();
+    //   totalSize += videoBlob.size;
+    // }
 
     // Download poster image
     if (media.posterUrl) {
@@ -156,7 +157,17 @@ export function getDownloadSizeEstimate(media: Media): number {
 
   // Estimate video size based on duration and quality
   // Average bitrate assumptions: 720p ~5 Mbps, 1080p ~8 Mbps
-  const durationInMinutes = (media.runtime || 90) / 60;
+  // Get duration from the specific media type
+  let durationInMinutes = 90; // default fallback
+  if (media.movie?.duration) {
+    durationInMinutes = media.movie.duration;
+  } else if (media.music?.duration) {
+    durationInMinutes = (media.music.duration || 0) / 60; // convert seconds to minutes
+  } else {
+    // For TV shows, we can't easily estimate without knowing episode count
+    // Use a default duration per episode assumption
+    durationInMinutes = 45; // typical episode length
+  }
   const estimatedBitrateMbps = 6; // Average between 720p and 1080p
   const videoSizeMB = (durationInMinutes * estimatedBitrateMbps * 60) / 8;
   estimatedSize += videoSizeMB * 1024 * 1024;

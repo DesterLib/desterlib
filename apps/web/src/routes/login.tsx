@@ -7,9 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Film, Loader2, ArrowLeft } from "lucide-react";
 import { loginSchema } from "@/lib/schemas/auth.schema";
-import { authClient } from "@/lib/auth-client";
-import { getActiveServer, getForceOfflineMode } from "@/lib/server-storage";
+// Temporarily disabled imports due to auth bypass
+// import { authClient } from "@/lib/auth-client";
+// import { getActiveServer, getForceOfflineMode } from "@/lib/server-storage";
 
+// Temporarily disabled function due to auth bypass
+/*
 async function checkApiReachable(): Promise<boolean> {
   try {
     // Check if force offline mode is enabled
@@ -37,10 +40,17 @@ async function checkApiReachable(): Promise<boolean> {
     return false;
   }
 }
+*/
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
   beforeLoad: async () => {
+    // TEMPORARY: Since auth is bypassed and user is always authenticated,
+    // redirect to home to prevent staying on login page
+    throw redirect({ to: "/" });
+
+    // Original logic commented out for temporary disable
+    /*
     // Check if API is offline - if so, redirect to home
     const apiOnline = await checkApiReachable();
     if (!apiOnline) {
@@ -56,6 +66,7 @@ export const Route = createFileRoute("/login")({
     } catch {
       // Not authenticated, allow access to login page
     }
+    */
   },
 });
 

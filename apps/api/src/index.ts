@@ -5,6 +5,9 @@ import compression from "compression";
 import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
+import { networkInterfaces } from "os";
 
 // Configuration
 import { env } from "./config/env.js";
@@ -92,22 +95,56 @@ app.use(
 // Specific routes below will have their own more restrictive limits
 app.use("/api/", rateLimiters.standard);
 
-// CORS configuration
-app.use(
-  cors({
-    origin: env.CORS_ORIGIN.split(",").map((origin) => origin.trim()),
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "x-csrf-token",
-      "cookie",
-      "set-cookie",
-    ],
-    exposedHeaders: ["set-cookie"],
-  })
-);
+// CORS configuration - allow localhost and LAN access
+const corsOrigins = env.CORS_ORIGIN.split(",").map((origin) => origin.trim());
+
+// Add dynamic origin checking for LAN access
+const corsOptions = {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) => {
+    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    // Check if origin matches any of our configured origins
+    const isConfiguredOrigin = corsOrigins.some((configuredOrigin) => {
+      if (configuredOrigin === origin) return true;
+      // Allow any localhost or LAN IP on our port
+      if (
+        configuredOrigin.includes("localhost") &&
+        origin.includes("localhost")
+      )
+        return true;
+      if (configuredOrigin.includes(":3000") && origin.includes(":3000")) {
+        // Allow any IP address on port 3000 (LAN access)
+        const lanIpRegex = /^https?:\/\/([0-9]{1,3}\.){3}[0-9]{1,3}:3000$/;
+        return lanIpRegex.test(origin);
+      }
+      return false;
+    });
+
+    if (isConfiguredOrigin) {
+      callback(null, true);
+    } else {
+      // Log the blocked origin for debugging
+      logger.info(`CORS blocked origin: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-csrf-token",
+    "cookie",
+    "set-cookie",
+  ],
+  exposedHeaders: ["set-cookie"],
+};
+
+app.use(cors(corsOptions));
 
 // Compression - Reduce response size
 app.use(compression());
@@ -213,6 +250,28 @@ app.get("/metrics", metricsHandler);
 // CSRF token endpoint (for web clients)
 app.get("/api/v1/csrf-token", csrfTokenHandler);
 
+// Server info endpoint for LAN discovery
+app.get("/api/v1/server-info", (_req, res) => {
+  const interfaces = networkInterfaces();
+  const lanIps: string[] = [];
+
+  // Find all LAN IP addresses
+  Object.values(interfaces).forEach((netInterface) => {
+    netInterface?.forEach((details) => {
+      if (details.family === "IPv4" && !details.internal) {
+        lanIps.push(details.address);
+      }
+    });
+  });
+
+  res.json({
+    port: env.PORT,
+    lanIps,
+    urls: lanIps.map((ip) => `http://${ip}:${env.PORT}`),
+    localhost: `http://localhost:${env.PORT}`,
+  });
+});
+
 // ────────────────────────────────────────────────────────────────────────────
 // Health Check Routes (no versioning, no rate limiting)
 // ────────────────────────────────────────────────────────────────────────────
@@ -250,6 +309,55 @@ app.use(`${API_V1}/search`, rateLimiters.search, searchRouter); // GET requests,
 app.use(`${API_V1}/bulk`, csrfProtection, bulkRouter);
 
 // ────────────────────────────────────────────────────────────────────────────
+// Static File Serving (Web App)
+// ────────────────────────────────────────────────────────────────────────────
+
+// Get the current file directory for path resolution
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Path to the built web app static files
+// In development: ../../web/dist (relative to src/)
+// In production Docker: ../web/dist (relative to dist/)
+const webDistPath =
+  process.env.NODE_ENV === "production"
+    ? path.join(__dirname, "../web/dist")
+    : path.join(__dirname, "../../../web/dist");
+
+// Serve static files from the web app build directory
+app.use(
+  express.static(webDistPath, {
+    maxAge: env.NODE_ENV === "production" ? "1y" : "0", // Cache for 1 year in production
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, path) => {
+      // Set proper MIME types for JavaScript and CSS files
+      if (path.endsWith(".js")) {
+        res.setHeader("Content-Type", "application/javascript");
+      } else if (path.endsWith(".css")) {
+        res.setHeader("Content-Type", "text/css");
+      }
+    },
+  })
+);
+
+// Handle client-side routing - serve index.html for all non-API routes
+app.get("*", (req, res, next) => {
+  // Skip if this is an API route, health check, metrics, or docs
+  if (
+    req.path.startsWith("/api") ||
+    req.path.startsWith("/health") ||
+    req.path.startsWith("/metrics") ||
+    req.path.startsWith("/api-docs")
+  ) {
+    return next();
+  }
+
+  // Serve the web app index.html for all other routes (client-side routing)
+  res.sendFile(path.join(webDistPath, "index.html"));
+});
+
+// ────────────────────────────────────────────────────────────────────────────
 // Error Handlers
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -268,17 +376,21 @@ async function startServer() {
     logger.info("Verifying database connection...");
     await verifyDatabaseConnection();
 
-    // Start the HTTP server
-    const server = app.listen(env.PORT, () => {
+    // Start the HTTP server - bind to all interfaces for LAN access
+    const server = app.listen(env.PORT, "0.0.0.0", () => {
       logger.info(`🚀 Server started successfully`);
       logger.info(`   Environment: ${env.NODE_ENV}`);
       logger.info(`   Port: ${env.PORT}`);
+      logger.info(`   Web App: http://localhost:${env.PORT}`);
       logger.info(`   API: http://localhost:${env.PORT}/api/v1`);
       logger.info(`   Docs: http://localhost:${env.PORT}/api-docs`);
       logger.info(`   Health: http://localhost:${env.PORT}/health`);
       logger.info(`   Metrics: http://localhost:${env.PORT}/metrics`);
       logger.info(`   WebSocket: ws://localhost:${env.PORT}/ws`);
       logger.info(`   CSRF Protection: Enabled`);
+      logger.info(
+        `   🌐 Server is accessible on LAN - check your local IP address`
+      );
     });
 
     // Initialize WebSocket server

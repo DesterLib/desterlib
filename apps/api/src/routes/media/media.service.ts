@@ -393,6 +393,9 @@ export class MediaService {
   private addStreamingUrls(media: any): any {
     if (!media) return media;
 
+    // Convert BigInt fields to strings to prevent serialization errors
+    this.convertBigIntToString(media);
+
     // Add streaming URL for movies
     if (media.movie && media.movie.filePath) {
       media.movie.streamUrl = `${API_BASE_URL}/api/media/stream/movie/${media.id}`;
@@ -419,6 +422,21 @@ export class MediaService {
    */
   private addStreamingUrlsToArray(mediaArray: any[]): any[] {
     return mediaArray.map((media) => this.addStreamingUrls(media));
+  }
+
+  /**
+   * Convert BigInt fields to strings recursively
+   */
+  private convertBigIntToString(obj: any): void {
+    if (!obj || typeof obj !== "object") return;
+
+    for (const key in obj) {
+      if (typeof obj[key] === "bigint") {
+        obj[key] = obj[key].toString();
+      } else if (typeof obj[key] === "object" && obj[key] !== null) {
+        this.convertBigIntToString(obj[key]);
+      }
+    }
   }
 }
 

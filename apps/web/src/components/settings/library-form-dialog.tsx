@@ -63,16 +63,27 @@ export function LibraryFormDialog({
 
   // Handle directory picker
   const handleBrowseClick = async () => {
-    // Check if we're in Flutter WebView (webview_flutter)
-    if (window.pickDirectory) {
-      // Set up callback for Flutter to call back with the path
+    // Check if we're in Flutter WebView (flutter_inappwebview with injected bridge)
+    if (window.flutterPickDirectory) {
+      try {
+        const path = await window.flutterPickDirectory();
+        if (path) {
+          form.setFieldValue("path", path);
+        }
+      } catch (error) {
+        console.error("Failed to call Flutter directory picker:", error);
+        alert(
+          "Failed to open directory picker. Please enter the path manually."
+        );
+      }
+    } else if (window.pickDirectory) {
+      // Fallback for old Flutter webview_flutter approach
       window.flutter_directory_callback = (path: string) => {
         if (path) {
           form.setFieldValue("path", path);
         }
       };
 
-      // Call Flutter's JavaScript channel
       try {
         window.pickDirectory.postMessage("");
       } catch (error) {

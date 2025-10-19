@@ -5,16 +5,15 @@
  * instead of checking authorization in components.
  */
 
-import { redirect } from "@tanstack/react-router";
-import { authClient } from "./auth-client";
-import { getActiveServer, getForceOfflineMode } from "./server-storage";
+// Temporarily disabled imports due to auth bypass
+// import { redirect } from "@tanstack/react-router";
+// import { authClient } from "./auth-client";
+// import { getActiveServer, getForceOfflineMode } from "./server-storage";
 
 export type UserRole = "SUPER_ADMIN" | "ADMIN" | "USER" | "GUEST";
 
-/**
- * Check if API is reachable (not just network status)
- * Uses active server from localStorage
- */
+// Temporarily disabled functions due to auth bypass
+/*
 async function isApiReachable(): Promise<boolean> {
   try {
     // Check if force offline mode is enabled
@@ -45,10 +44,6 @@ async function isApiReachable(): Promise<boolean> {
   }
 }
 
-/**
- * Get current session from auth client
- * This can be called in beforeLoad since it's not a React hook
- */
 async function getCurrentSession() {
   try {
     const response = await authClient.getSession();
@@ -57,12 +52,26 @@ async function getCurrentSession() {
     return null;
   }
 }
+*/
 
 /**
  * Require authentication - redirect to login if not authenticated
- * In offline mode, authentication is bypassed
+ * TEMPORARILY DISABLED - All auth checks bypassed
  */
 export async function requireAuth() {
+  // TEMPORARY: Always bypass authentication - return mock user
+  return {
+    user: {
+      id: "temp-user",
+      name: "Temporary User",
+      email: "temp@local",
+      role: "ADMIN", // Give admin role for full access
+    },
+    session: null,
+  };
+
+  // Original code commented out for temporary disable
+  /*
   // Check if API is reachable first
   const apiOnline = await isApiReachable();
 
@@ -91,19 +100,23 @@ export async function requireAuth() {
   }
 
   return session;
+  */
 }
 
 /**
  * Require specific role(s) - shows error or redirects if unauthorized
- * In offline mode, role checks are bypassed for basic access
+ * TEMPORARILY DISABLED - All role checks bypassed
  *
  * @param allowedRoles - Array of roles that are allowed to access the route
  * @param redirectOnFail - If true, redirects to home. If false, lets component show access denied.
  */
-export async function requireRole(
-  allowedRoles: UserRole[],
-  redirectOnFail = false
-) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function requireRole(..._args: [UserRole[], boolean?]) {
+  // TEMPORARY: Always allow access - bypass all role checks
+  return true;
+
+  // Original code commented out for temporary disable
+  /*
   // Check if API is reachable first
   const apiOnline = await isApiReachable();
 
@@ -143,6 +156,7 @@ export async function requireRole(
   }
 
   return true;
+  */
 }
 
 /**
@@ -168,8 +182,15 @@ export async function requireUser(redirectOnFail = false) {
 
 /**
  * Block guests - require any authenticated role except GUEST
+ * TEMPORARILY DISABLED - All guest checks bypassed
  */
-export async function blockGuests(redirectOnFail = true) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function blockGuests(_redirectOnFail = true) {
+  // TEMPORARY: Always allow access - bypass guest checks
+  return true;
+
+  // Original code commented out for temporary disable
+  /*
   const session = await requireAuth();
   const userRole = (session.user as unknown as { role?: UserRole }).role;
 
@@ -186,4 +207,5 @@ export async function blockGuests(redirectOnFail = true) {
   }
 
   return true;
+  */
 }

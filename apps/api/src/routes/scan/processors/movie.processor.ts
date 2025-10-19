@@ -40,7 +40,7 @@ export class MovieProcessor implements MediaProcessor {
     const stats: SaveStats = { added: 0, skipped: 0, updated: 0 };
 
     for (const file of files) {
-      // Check if movie already exists
+      // Check if movie already exists by file path
       const existingMovie = await prisma.movie.findUnique({
         where: { filePath: file.path },
         include: {
@@ -65,6 +65,48 @@ export class MovieProcessor implements MediaProcessor {
           stats.skipped++;
         }
       } else {
+        // Check if a movie with the same external ID already exists
+        const fullPath = `${file.relativePath}/${file.name}`;
+        const parsedIds = parseExternalIds(fullPath);
+
+        if (parsedIds.length > 0 && parsedIds[0]) {
+          const existingMediaByExternalId = await prisma.externalId.findUnique({
+            where: {
+              source_externalId: {
+                source: parsedIds[0].source,
+                externalId: parsedIds[0].id,
+              },
+            },
+            include: {
+              media: {
+                include: {
+                  movie: true,
+                  externalIds: true,
+                },
+              },
+            },
+          });
+
+          if (existingMediaByExternalId) {
+            logger.info(
+              `Movie with external ID ${parsedIds[0].source}:${parsedIds[0].id} already exists, linking to collection`,
+              {
+                existingFilePath:
+                  existingMediaByExternalId.media.movie?.filePath,
+                newFilePath: file.path,
+              }
+            );
+            // Link existing media to this collection
+            await this.linkToCollection(
+              existingMediaByExternalId.mediaId,
+              collection.id,
+              prisma
+            );
+            stats.skipped++;
+            continue;
+          }
+        }
+
         await this.createMovie(file, collection.id, prisma);
         stats.added++;
       }
@@ -84,10 +126,6 @@ export class MovieProcessor implements MediaProcessor {
     // Extract external IDs from path
     const fullPath = `${file.relativePath}/${file.name}`;
     const parsedIds = parseExternalIds(fullPath);
-    const externalIds = parsedIds.map((id) => ({
-      source: id.source,
-      externalId: id.id,
-    }));
 
     // Fetch metadata if we have an external ID
     let metadata = null;
@@ -114,7 +152,7 @@ export class MovieProcessor implements MediaProcessor {
       }
     }
 
-    // Create movie with metadata
+    // Create movie with metadata (without external IDs to avoid constraint errors)
     const media = await prisma.media.create({
       data: {
         title: metadata?.title || title,
@@ -135,10 +173,38 @@ export class MovieProcessor implements MediaProcessor {
             trailerUrl: metadata?.movie?.trailerUrl,
           },
         },
-        externalIds:
-          externalIds.length > 0 ? { create: externalIds } : undefined,
       },
     });
+
+    // Add external IDs separately to handle duplicates gracefully
+    if (parsedIds.length > 0) {
+      for (const parsed of parsedIds) {
+        try {
+          await prisma.externalId.create({
+            data: {
+              source: parsed.source,
+              externalId: parsed.id,
+              mediaId: media.id,
+            },
+          });
+        } catch (error) {
+          // If it's a unique constraint error, log and continue
+          if ((error as { code?: string })?.code === "P2002") {
+            logger.warn(
+              `External ID ${parsed.source}:${parsed.id} already exists, skipping`,
+              {
+                mediaId: media.id,
+                source: parsed.source,
+                externalId: parsed.id,
+              }
+            );
+          } else {
+            // Re-throw other errors
+            throw error;
+          }
+        }
+      }
+    }
 
     // Link genres if available
     if (metadata?.genres && metadata.genres.length > 0) {

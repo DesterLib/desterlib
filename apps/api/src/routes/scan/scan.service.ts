@@ -126,9 +126,14 @@ export class ScanService {
     );
 
     const processor = getProcessor(mediaType);
-    const stats = await processor.saveToDatabase(files, collection, prisma, {
-      updateExisting,
-    });
+    const stats = await processor.saveToDatabase(
+      files,
+      collection,
+      prisma as any,
+      {
+        updateExisting,
+      }
+    );
 
     // Notify completion
     notificationService.completed(

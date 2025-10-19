@@ -6,15 +6,7 @@ import {
   useNavigate,
   useLocation,
 } from "@tanstack/react-router";
-import {
-  LibraryIcon,
-  VideoIcon,
-  ActivityIcon,
-  Edit,
-  Users,
-  Star,
-  Shield,
-} from "lucide-react";
+import { LibraryIcon, VideoIcon, Edit, Star, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +30,6 @@ function RouteComponent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
   // Define navigation items
   const navItems = useMemo(() => {
@@ -57,25 +48,8 @@ function RouteComponent() {
       },
     ];
 
-    const adminItems = isAdmin
-      ? [
-          {
-            id: "users",
-            label: "User Management",
-            href: "/settings/users",
-            icon: Users,
-          },
-          {
-            id: "system",
-            label: "System & Monitoring",
-            href: "/settings/system",
-            icon: ActivityIcon,
-          },
-        ]
-      : [];
-
-    return [...baseItems, ...adminItems];
-  }, [isAdmin]);
+    return [...baseItems];
+  }, []);
 
   // Get active tab based on current path
   const activeTab = useMemo(() => {
@@ -178,43 +152,6 @@ function RouteComponent() {
                 </Link>
               </div>
             </div>
-
-            {/* Admin-only settings */}
-            {isAdmin && (
-              <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-                <div className="px-3 py-2 border-b border-white/10">
-                  <h3 className="text-xs font-medium text-white/60 uppercase tracking-wide">
-                    Admin
-                  </h3>
-                </div>
-                <div className="p-1.5 space-y-0.5">
-                  <Link
-                    to="/settings/users"
-                    className={cn(
-                      "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
-                      activeTab === "users"
-                        ? "bg-white text-black"
-                        : "text-white/70 hover:bg-white/5 hover:text-white"
-                    )}
-                  >
-                    <Users className="w-4 h-4" />
-                    Users
-                  </Link>
-                  <Link
-                    to="/settings/system"
-                    className={cn(
-                      "w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors flex items-center gap-2",
-                      activeTab === "system"
-                        ? "bg-white text-black"
-                        : "text-white/70 hover:bg-white/5 hover:text-white"
-                    )}
-                  >
-                    <ActivityIcon className="w-4 h-4" />
-                    System
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
         </nav>
 

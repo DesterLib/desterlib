@@ -13,7 +13,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { requireAuth } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/media/$mediaId")({
@@ -28,6 +28,16 @@ function MediaDetails() {
   const { mediaId } = Route.useParams();
   const navigate = useNavigate();
   const [expandedSeasonId, setExpandedSeasonId] = useState<string | null>(null);
+
+  // Debug: Log Flutter bridge status on mount
+  useEffect(() => {
+    console.log("🔍 Flutter Bridge Status:", {
+      isFlutterWebView: window.isFlutterWebView,
+      hasFlutterPlayVideo: !!window.flutterPlayVideo,
+      hasLegacyPlayVideo: !!window.playVideo,
+      hasFlutterPickDirectory: !!window.flutterPickDirectory,
+    });
+  }, []);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["media", mediaId],
@@ -57,9 +67,37 @@ function MediaDetails() {
       episodeTitle: options?.episodeTitle,
     };
 
-    // Check if running in webview (Flutter app)
-    if (window.playVideo) {
+    // Check if running in Flutter WebView (modern flutter_inappwebview)
+    if (window.flutterPlayVideo) {
+      console.log("🎬 Calling flutterPlayVideo with:", message);
+      window.flutterPlayVideo(message).catch((error) => {
+        console.error("Failed to call Flutter video player:", error);
+        alert("Failed to start video playback. Please try again.");
+      });
+    } else if (window.playVideo) {
+      // Fallback for legacy webview_flutter
+      console.log("🎬 Using legacy playVideo channel");
       window.playVideo.postMessage(JSON.stringify(message));
+    } else if (window.isFlutterWebView) {
+      // If we're in Flutter but the bridge isn't ready, wait a bit and retry
+      console.warn(
+        "Flutter bridge detected but flutterPlayVideo not available yet, retrying..."
+      );
+      setTimeout(() => {
+        if (window.flutterPlayVideo) {
+          console.log("🎬 Retry successful, calling flutterPlayVideo");
+          window.flutterPlayVideo(message).catch((error) => {
+            console.error(
+              "Failed to call Flutter video player on retry:",
+              error
+            );
+            alert("Failed to start video playback. Please try again.");
+          });
+        } else {
+          console.error("Flutter bridge still not ready after retry");
+          alert("Video player is still loading. Please try again in a moment.");
+        }
+      }, 500);
     } else {
       // Fallback for web browser (could open in new tab or show message)
       console.log("playVideo channel not available. Message:", message);

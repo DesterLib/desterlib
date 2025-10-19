@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -8,42 +8,60 @@ RUN npm install -g pnpm
 
 # Copy workspace files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/typescript-config ./packages/typescript-config/
 COPY turbo.json ./
 
-# Install dependencies
+# Copy all package.json files to establish workspace structure
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY packages/ ./packages/
+
+# Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
+# Copy source code for both API and web app
 COPY apps/api ./apps/api
+COPY apps/web ./apps/web
 
 # Generate Prisma Client
 WORKDIR /app/apps/api
 RUN pnpm prisma generate
 
-# Build application
-RUN pnpm build
+# Build both API and web app from the monorepo root to handle dependencies properly
+WORKDIR /app
+RUN pnpm turbo build --filter=api --filter=web
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
 # Install pnpm
 RUN npm install -g pnpm
 
-# Copy package files
-COPY --from=builder /app/apps/api/package.json ./
+# Create minimal workspace structure for production
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/pnpm-lock.yaml ./
+COPY --from=builder /app/pnpm-workspace.yaml ./
 
-# Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile
+# Copy API package.json and any required workspace packages
+COPY --from=builder /app/apps/api/package.json ./apps/api/
+COPY --from=builder /app/packages/typescript-config ./packages/typescript-config/
 
-# Copy built files and prisma
+# Install only production dependencies for the API and its workspace dependencies
+RUN pnpm install --prod --frozen-lockfile --filter=api
+
+# Switch to the api directory for runtime
+WORKDIR /app/apps/api
+
+# Copy built application files to the correct location
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
+# Ensure generated Prisma client is available in both locations for compatibility
 COPY --from=builder /app/apps/api/src/generated ./src/generated
+RUN mkdir -p ./dist/generated && cp -r ./src/generated/* ./dist/generated/
+
+# Copy built web app files so the API can serve them
+COPY --from=builder /app/apps/web/dist ./web/dist
 
 # Copy entrypoint script
 COPY apps/api/docker-entrypoint.sh /usr/local/bin/

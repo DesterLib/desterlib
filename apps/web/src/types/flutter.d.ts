@@ -9,12 +9,23 @@ interface JavaScriptChannel {
 
 declare global {
   interface Window {
-    // JavaScript channels from Flutter
+    // JavaScript channels from Flutter (legacy webview_flutter)
     pickDirectory?: JavaScriptChannel;
     playVideo?: JavaScriptChannel;
 
-    // Callback for Flutter to send directory path back
+    // Callback for Flutter to send directory path back (legacy)
     flutter_directory_callback?: (path: string) => void;
+
+    // Modern flutter_inappwebview bridge
+    isFlutterWebView?: boolean;
+    flutterPickDirectory?: () => Promise<string>;
+    flutterPlayVideo?: (videoData: {
+      url: string;
+      title?: string;
+      season?: number;
+      episode?: number;
+      episodeTitle?: string;
+    }) => Promise<void>;
   }
 }
 

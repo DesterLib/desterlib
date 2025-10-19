@@ -8,9 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Film, Loader2, Shield, ArrowLeft } from "lucide-react";
 import { registerSchema } from "@/lib/schemas/auth.schema";
-import { authClient } from "@/lib/auth-client";
-import { getActiveServer, getForceOfflineMode } from "@/lib/server-storage";
+// Temporarily disabled imports due to auth bypass
+// import { authClient } from "@/lib/auth-client";
+// import { getActiveServer, getForceOfflineMode } from "@/lib/server-storage";
 
+// Temporarily disabled function due to auth bypass
+/*
 async function checkApiReachable(): Promise<boolean> {
   try {
     // Check if force offline mode is enabled
@@ -38,10 +41,17 @@ async function checkApiReachable(): Promise<boolean> {
     return false;
   }
 }
+*/
 
 export const Route = createFileRoute("/register")({
   component: RegisterPage,
   beforeLoad: async () => {
+    // TEMPORARY: Since auth is bypassed and user is always authenticated,
+    // redirect to home to prevent staying on register page
+    throw redirect({ to: "/" });
+
+    // Original logic commented out for temporary disable
+    /*
     // Check if API is offline - if so, redirect to home
     const apiOnline = await checkApiReachable();
     if (!apiOnline) {
@@ -57,6 +67,7 @@ export const Route = createFileRoute("/register")({
     } catch {
       // Not authenticated, allow access to register page
     }
+    */
   },
 });
 

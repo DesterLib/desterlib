@@ -1,6 +1,10 @@
 import { createContext, type ReactNode } from "react";
-import { useSession, signIn, signUp, signOut } from "@/lib/auth-client";
-import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+// Temporarily disabled imports due to auth bypass
+// import { signIn, signUp, signOut } from "@/lib/auth-client";
+import { signUp, signOut } from "@/lib/auth-client";
+// import { signIn } from "@/lib/auth-client";
+// import { useSession } from "@/lib/auth-client";
+// import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import type {
   AuthContextType,
   LoginCredentials,
@@ -10,10 +14,17 @@ import type {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: session, isPending } = useSession();
-  const { isOnline } = useOnlineStatus();
+  // Temporarily disabled sessions due to auth bypass
+  // const { data: session, isPending } = useSession();
+  // const { isOnline } = useOnlineStatus();
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (_credentials: LoginCredentials) => {
+    // TEMPORARY: Bypass actual authentication during auth disable
+    // Simply return success without making API calls
+    return Promise.resolve();
+
+    // Original authentication logic commented out for temporary disable
+    /*
     // Convert username to email format if it doesn't contain @
     const emailOrUsername = credentials.username.includes("@")
       ? credentials.username
@@ -35,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (result.error) {
       throw new Error(result.error.message || "Login failed");
     }
+    */
   };
 
   const register = async (data: RegisterData) => {
@@ -74,19 +86,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Better-auth handles this automatically
   };
 
-  // In offline mode, provide a mock offline user
-  const offlineUser = !isOnline
-    ? {
-        id: "offline-user",
-        username: "Offline User",
-        email: "offline@local",
-        role: "USER" as const,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-    : null;
+  // TEMPORARY: Always provide authenticated user - bypass all auth checks
+  const tempUser = {
+    id: "temp-user",
+    username: "Temporary User",
+    email: "temp@local",
+    role: "ADMIN" as const, // Give admin role for full access
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  // In offline mode, provide a mock offline user (temporarily unused)
+  // const offlineUser = !isOnline
+  //   ? {
+  //       id: "offline-user",
+  //       username: "Offline User",
+  //       email: "offline@local",
+  //       role: "USER" as const,
+  //       createdAt: new Date().toISOString(),
+  //       updatedAt: new Date().toISOString(),
+  //     }
+  //   : null;
 
   const value: AuthContextType = {
+    // TEMPORARY: Always return authenticated user
+    user: tempUser,
+
+    // Original logic commented out for temporary disable
+    /*
     user: !isOnline
       ? offlineUser
       : session?.user
@@ -105,8 +132,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               session.user.updatedAt?.toString() || new Date().toISOString(),
           }
         : null,
-    isLoading: !isOnline ? false : isPending,
-    isAuthenticated: !isOnline ? true : !!session?.user,
+    */
+    isLoading: false, // TEMPORARY: Always false since we're not loading auth
+    isAuthenticated: true, // TEMPORARY: Always authenticated
     login,
     register,
     logout,
