@@ -1,5 +1,6 @@
 import express from "express";
 import { config } from "../../config/env";
+import { logger } from "../utils";
 
 // 404 handler
 export const notFoundHandler = (
@@ -19,7 +20,7 @@ export const errorHandler = (
   res: express.Response,
   _next: express.NextFunction // eslint-disable-line @typescript-eslint/no-unused-vars
 ) => {
-  console.error("Unhandled error:", error);
+  logger.error(`Unhandled error: ${error.message}`, { stack: error.stack });
   res.status(500).json({
     error:
       config.nodeEnv === "production" ? "Internal server error" : error.message,

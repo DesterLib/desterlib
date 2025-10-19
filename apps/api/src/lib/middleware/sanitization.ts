@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { sanitizeObject } from "../utils/sanitization";
+import { logger } from "../utils";
 
 /**
  * Middleware to sanitize request data
@@ -54,7 +55,9 @@ export function sanitizeInput(
 
       next();
     } catch (error) {
-      console.error("Sanitization error:", error);
+      logger.error(
+        `Sanitization error: ${error instanceof Error ? error.message : error}`
+      );
       return res.status(400).json({
         error: "Invalid input data",
         message: "Request data contains invalid or unsafe content",

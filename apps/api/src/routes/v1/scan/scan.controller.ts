@@ -3,6 +3,7 @@ import { scanServices } from "./scan.services";
 import { scanPathSchema } from "./scan.schema";
 import { config } from "../../../config/env";
 import { z } from "zod";
+import { logger } from "@/lib/utils";
 
 type ScanPathRequest = z.infer<typeof scanPathSchema>;
 
@@ -37,7 +38,9 @@ export const scanPathController = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Scan path controller error:", error);
+    logger.error(
+      `Scan path controller error: ${error instanceof Error ? error.message : error}`
+    );
 
     return res.status(500).json({
       error: "Internal server error",

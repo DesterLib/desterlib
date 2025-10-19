@@ -1,7 +1,7 @@
 import { readdir, stat } from "fs/promises";
 import { join } from "path";
 
-import { extractIds } from "@/lib/utils/extractExternalId";
+import { extractIds, logger } from "@/lib/utils";
 import { MediaEntry, TmdbMetadata } from "./scan.types";
 import { tmdbServices } from "@/lib/providers/tmdb/tmdb.services";
 import type {
@@ -94,7 +94,7 @@ async function saveMediaToDatabase(
   try {
     // Only process if we have metadata and a TMDB ID
     if (!mediaEntry.metadata || !mediaEntry.extractedIds.tmdbId) {
-      console.log(`Skipping ${mediaEntry.path} - no metadata or TMDB ID`);
+      logger.debug(`Skipping ${mediaEntry.path} - no metadata or TMDB ID`);
       return;
     }
 
@@ -327,7 +327,7 @@ async function saveMediaToDatabase(
                 episodeAirDate = cachedEpisode.air_date
                   ? new Date(cachedEpisode.air_date)
                   : null;
-                console.log(
+                logger.debug(
                   `✓ Using cached episode metadata for S${seasonNumber}E${episodeNumber}`
                 );
               }
@@ -350,9 +350,8 @@ async function saveMediaToDatabase(
                     : null;
                 }
               } catch (error) {
-                console.warn(
-                  `Could not fetch episode metadata for S${seasonNumber}E${episodeNumber}:`,
-                  error instanceof Error ? error.message : error
+                logger.warn(
+                  `Could not fetch episode metadata for S${seasonNumber}E${episodeNumber}: ${error instanceof Error ? error.message : error}`
                 );
               }
             }
@@ -387,22 +386,21 @@ async function saveMediaToDatabase(
             },
           });
 
-          console.log(
+          logger.info(
             `✓ Saved ${media.title} - S${seasonNumber}E${episodeNumber}: ${episodeTitle}${fileTitleExtracted ? ` (file: ${fileTitleExtracted})` : ""}`
           );
         } else {
-          console.log(`✓ Saved ${media.title} - Season ${seasonNumber}`);
+          logger.info(`✓ Saved ${media.title} - Season ${seasonNumber}`);
         }
       } else {
-        console.log(
+        logger.info(
           `✓ Saved ${media.title} (TV Show - no season/episode info)`
         );
       }
     }
   } catch (error) {
-    console.error(
-      `Error saving media to database for ${mediaEntry.path}:`,
-      error
+    logger.error(
+      `Error saving media to database for ${mediaEntry.path}: ${error instanceof Error ? error.message : error}`
     );
     throw error;
   }
@@ -491,7 +489,7 @@ export const scanServices = {
     const episodeMetadataCache = new Map<string, TmdbEpisodeMetadata>();
 
     // Phase 1: Collect all entries
-    console.log("📁 Phase 1: Scanning directory structure...");
+    logger.info("📁 Phase 1: Scanning directory structure...");
 
     async function collectEntries(
       currentPath: string,
@@ -555,7 +553,7 @@ export const scanServices = {
               const seasonEpInfo = extractedIds.season
                 ? ` S${extractedIds.season}${extractedIds.episode ? `E${extractedIds.episode}` : ""}`
                 : "";
-              console.log(
+              logger.debug(
                 `Found: ${entry.name}${extractedIds.tmdbId ? ` [TMDB: ${extractedIds.tmdbId}${seasonEpInfo}]` : extractedIds.title ? ` [Title: ${extractedIds.title}]` : ""}`
               );
             }
@@ -564,19 +562,23 @@ export const scanServices = {
               await collectEntries(fullPath, depth + 1);
             }
           } catch (err) {
-            console.warn(`Cannot access: ${fullPath}`, err);
+            logger.warn(
+              `Cannot access: ${fullPath} - ${err instanceof Error ? err.message : err}`
+            );
           }
         }
       } catch (err) {
-        console.error(`Error scanning ${currentPath}:`, err);
+        logger.error(
+          `Error scanning ${currentPath}: ${err instanceof Error ? err.message : err}`
+        );
       }
     }
 
     await collectEntries(rootPath);
-    console.log(`\n✓ Found ${mediaEntries.length} media items\n`);
+    logger.info(`\n✓ Found ${mediaEntries.length} media items\n`);
 
     // Phase 2: Batch fetch all metadata with rate limiting
-    console.log(
+    logger.info(
       "🌐 Phase 2: Fetching metadata from TMDB (rate-limited parallel)..."
     );
 
@@ -610,16 +612,13 @@ export const scanServices = {
               const typedMetadata = metadata as TmdbMetadata;
               metadataCache.set(extractedIds.tmdbId!, typedMetadata);
               mediaEntry.metadata = typedMetadata;
-              console.log(
+              logger.info(
                 `✓ Fetched: ${typedMetadata.title || typedMetadata.name}`
               );
             }
           } catch (metadataError) {
-            console.error(
-              `✗ Failed to fetch TMDB ID ${extractedIds.tmdbId} (${mediaEntry.name}):`,
-              metadataError instanceof Error
-                ? metadataError.message
-                : metadataError
+            logger.error(
+              `✗ Failed to fetch TMDB ID ${extractedIds.tmdbId} (${mediaEntry.name}): ${metadataError instanceof Error ? metadataError.message : metadataError}`
             );
           }
         });
@@ -638,7 +637,7 @@ export const scanServices = {
               }
             );
             if (foundId) {
-              console.log(
+              logger.info(
                 `✓ Search found TMDB ID ${foundId} for: "${extractedIds.title}"`
               );
               extractedIds.tmdbId = foundId;
@@ -661,18 +660,17 @@ export const scanServices = {
                   const typedMetadata = metadata as TmdbMetadata;
                   metadataCache.set(foundId, typedMetadata);
                   mediaEntry.metadata = typedMetadata;
-                  console.log(
+                  logger.info(
                     `✓ Fetched: ${typedMetadata.title || typedMetadata.name}`
                   );
                 }
               }
             } else {
-              console.log(`✗ No results found for: "${extractedIds.title}"`);
+              logger.warn(`✗ No results found for: "${extractedIds.title}"`);
             }
           } catch (searchError) {
-            console.error(
-              `✗ Failed to search for "${extractedIds.title}":`,
-              searchError instanceof Error ? searchError.message : searchError
+            logger.error(
+              `✗ Failed to search for "${extractedIds.title}": ${searchError instanceof Error ? searchError.message : searchError}`
             );
           }
         });
@@ -682,10 +680,10 @@ export const scanServices = {
 
     // Wait for all metadata fetches to complete
     await Promise.allSettled(metadataFetchPromises);
-    console.log("\n✓ Metadata fetching complete\n");
+    logger.info("\n✓ Metadata fetching complete\n");
 
     // Phase 3: Fetch episode metadata for TV shows (with rate limiting)
-    console.log("📺 Phase 3: Fetching episode metadata...");
+    logger.info("📺 Phase 3: Fetching episode metadata...");
 
     const episodeFetchPromises: Promise<void>[] = [];
 
@@ -718,14 +716,13 @@ export const scanServices = {
 
             if (episodeMetadata) {
               episodeMetadataCache.set(episodeCacheKey, episodeMetadata);
-              console.log(
+              logger.info(
                 `✓ Fetched episode: S${extractedIds.season}E${extractedIds.episode} - ${episodeMetadata.name}`
               );
             }
           } catch (error) {
-            console.warn(
-              `Could not fetch episode S${extractedIds.season}E${extractedIds.episode}:`,
-              error instanceof Error ? error.message : error
+            logger.warn(
+              `Could not fetch episode S${extractedIds.season}E${extractedIds.episode}: ${error instanceof Error ? error.message : error}`
             );
           }
         });
@@ -734,10 +731,10 @@ export const scanServices = {
     }
 
     await Promise.allSettled(episodeFetchPromises);
-    console.log("\n✓ Episode metadata fetching complete\n");
+    logger.info("\n✓ Episode metadata fetching complete\n");
 
     // Phase 4: Save to database
-    console.log("💾 Phase 4: Saving to database...");
+    logger.info("💾 Phase 4: Saving to database...");
 
     for (const mediaEntry of mediaEntries) {
       // Only save files (not directories)
@@ -750,15 +747,14 @@ export const scanServices = {
             episodeMetadataCache
           );
         } catch (error) {
-          console.error(
-            `Failed to save ${mediaEntry.name}:`,
-            error instanceof Error ? error.message : error
+          logger.error(
+            `Failed to save ${mediaEntry.name}: ${error instanceof Error ? error.message : error}`
           );
         }
       }
     }
 
-    console.log("\n✅ Scan complete!\n");
+    logger.info("\n✅ Scan complete!\n");
     return mediaEntries;
   },
 };

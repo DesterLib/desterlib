@@ -7,6 +7,7 @@ import {
   setupRoutes,
   prisma,
 } from "./lib";
+import { logger } from "./lib/utils";
 
 // Load environment variables
 dotenv.config();
@@ -25,7 +26,7 @@ setupErrorHandling(app);
 // ==================== SERVER SETUP ====================
 // Graceful shutdown
 const gracefulShutdown = async () => {
-  console.log("Shutting down gracefully...");
+  logger.info("Shutting down gracefully...");
   await prisma.$disconnect();
   process.exit(0);
 };
@@ -35,8 +36,8 @@ process.on("SIGINT", gracefulShutdown);
 
 // Start server
 app.listen(config.port, () => {
-  console.log(`🚀 Server running on port ${config.port}`);
-  console.log(`📊 Health check: http://localhost:${config.port}/health`);
-  console.log(`📚 API Documentation: http://localhost:${config.port}/api/docs`);
-  console.log(`🔧 Environment: ${config.nodeEnv}`);
+  logger.info(`🚀 Server running on port ${config.port}`);
+  logger.info(`📊 Health check: http://localhost:${config.port}/health`);
+  logger.info(`📚 API Documentation: http://localhost:${config.port}/api/docs`);
+  logger.info(`🔧 Environment: ${config.nodeEnv}`);
 });
