@@ -9,38 +9,75 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TvshowSplatRouteImport } from './routes/tvshow/$'
+import { Route as MovieSplatRouteImport } from './routes/movie/$'
 
+const SettingsRouteRoute = SettingsRouteRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TvshowSplatRoute = TvshowSplatRouteImport.update({
+  id: '/tvshow/$',
+  path: '/tvshow/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MovieSplatRoute = MovieSplatRouteImport.update({
+  id: '/movie/$',
+  path: '/movie/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRouteRoute
+  '/movie/$': typeof MovieSplatRoute
+  '/tvshow/$': typeof TvshowSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRouteRoute
+  '/movie/$': typeof MovieSplatRoute
+  '/tvshow/$': typeof TvshowSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRouteRoute
+  '/movie/$': typeof MovieSplatRoute
+  '/tvshow/$': typeof TvshowSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/settings' | '/movie/$' | '/tvshow/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/settings' | '/movie/$' | '/tvshow/$'
+  id: '__root__' | '/' | '/settings' | '/movie/$' | '/tvshow/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SettingsRouteRoute: typeof SettingsRouteRoute
+  MovieSplatRoute: typeof MovieSplatRoute
+  TvshowSplatRoute: typeof TvshowSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +85,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tvshow/$': {
+      id: '/tvshow/$'
+      path: '/tvshow/$'
+      fullPath: '/tvshow/$'
+      preLoaderRoute: typeof TvshowSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/movie/$': {
+      id: '/movie/$'
+      path: '/movie/$'
+      fullPath: '/movie/$'
+      preLoaderRoute: typeof MovieSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SettingsRouteRoute: SettingsRouteRoute,
+  MovieSplatRoute: MovieSplatRoute,
+  TvshowSplatRoute: TvshowSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

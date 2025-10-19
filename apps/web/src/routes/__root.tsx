@@ -1,17 +1,35 @@
-import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { Link as RadixLink } from "@radix-ui/themes";
+import { setFocus } from "@noriginmedia/norigin-spatial-navigation";
+import { useEffect } from "react";
+import Header from "../components/header";
+import { useConditionalFocusable } from "../hooks/general/useConditionalFocusable";
 
-const RootLayout = () => (
-  <>
-    <div className="p-2 flex gap-2">
-      <RadixLink asChild>
-        <Link to="/">Home</Link>
-      </RadixLink>
+const RootLayout = () => {
+  const { ref, isSpatialNavigationEnabled } = useConditionalFocusable({
+    focusKey: "ROOT",
+    focusable: false,
+  });
+
+  useEffect(() => {
+    // Only set initial focus if using spatial navigation (TV mode)
+    if (isSpatialNavigationEnabled) {
+      const timer = setTimeout(() => {
+        // Try to focus the first media card
+        setFocus("media-card-1");
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isSpatialNavigationEnabled]);
+
+  return (
+    <div ref={ref} className="min-h-screen">
+      <Header />
+      <Outlet />
+      <TanStackRouterDevtools />
     </div>
-    <Outlet />
-    <TanStackRouterDevtools />
-  </>
-);
+  );
+};
 
 export const Route = createRootRoute({ component: RootLayout });

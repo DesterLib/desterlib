@@ -1,6 +1,59 @@
-html,
-body {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import "@repo/tailwind-config/base";
+@import "@repo/tailwind-config/theme";
+
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 100 700;
+  src: url("/material-symbols.ttf") format("truetype");
+}
+
+.material-symbols-rounded {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "liga";
+  /* Variable font settings */
+  font-variation-settings:
+    "FILL" 0,
+    /* 0 for outlined, 1 for filled */ "wght" 400,
+    /* Weight: 100-700 */ "GRAD" 0,
+    /* Grade: -25 to 200 */ "opsz" 24; /* Optical size: 20-48 */
+}
+
+/* Filled variant */
+.material-symbols-rounded-filled {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "liga";
+  font-variation-settings:
+    "FILL" 1,
+    /* Filled */ "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+@layer base {
+  /* App-specific styles can go here */
 }
