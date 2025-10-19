@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -14,11 +8,306 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Add your database models here
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum MediaType {
+  MOVIE
+  TV_SHOW
+  MUSIC
+  COMIC
+}
+
+model Media {
+  id          String    @id @default(cuid())
+  title       String
+  type        MediaType
+  description String?
+  posterUrl   String?
+  backdropUrl String?
+  releaseDate DateTime?
+  rating      Float?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations - subtypes point to Media, not the other way around
+  movie  Movie?
+  tvShow TVShow?
+  music  Music?
+  comic  Comic?
+
+  people      MediaPerson[]
+  genres      MediaGenre[]
+  externalIds ExternalId[]
+  libraries MediaLibrary[]
+
+  @@index([type])
+  @@index([releaseDate])
+  @@index([rating])
+  @@index([title])
+}
+
+// ────────────────────────────
+// MOVIES
+// ────────────────────────────
+
+model Movie {
+  id             String    @id @default(cuid())
+  duration       Int? // in minutes
+  trailerUrl     String?
+  filePath       String?   @unique // File path on disk
+  fileSize       BigInt? // File size in bytes
+  fileModifiedAt DateTime? // Last modified time of file
+  // Required relationship to Media
+  mediaId        String    @unique
+  media          Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([filePath])
+}
+
+// ────────────────────────────
+// TV SHOWS
+// ────────────────────────────
+
+model TVShow {
+  id      String   @id @default(cuid())
+  seasons Season[]
+  creator String?
+  network String?
+  // Required relationship to Media
+  mediaId String   @unique
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model Season {
+  id       String    @id @default(cuid())
+  number   Int
+  episodes Episode[]
+  tvShowId String
+  tvShow   TVShow    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+
+  @@unique([tvShowId, number])
+  @@index([tvShowId])
+}
+
+model Episode {
+  id             String    @id @default(cuid())
+  title          String
+  fileTitle      String? // Title extracted from filename
+  number         Int
+  duration       Int?
+  airDate        DateTime?
+  filePath       String?   @unique // File path on disk
+  fileSize       BigInt? // File size in bytes
+  fileModifiedAt DateTime? // Last modified time of file
+  seasonId       String
+  season         Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, number])
+  @@index([seasonId])
+  @@index([filePath])
+}
+
+// ────────────────────────────
+// MUSIC
+// ────────────────────────────
+
+model Music {
+  id             String    @id @default(cuid())
+  artist         String
+  album          String?
+  genre          String?
+  duration       Int?
+  filePath       String?   @unique // File path on disk
+  fileSize       BigInt? // File size in bytes
+  fileModifiedAt DateTime? // Last modified time of file
+  // Required relationship to Media
+  mediaId        String    @unique
+  media          Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([artist])
+  @@index([genre])
+  @@index([filePath])
+}
+
+// ────────────────────────────
+// COMICS
+// ────────────────────────────
+
+model Comic {
+  id             String    @id @default(cuid())
+  issue          Int?
+  volume         String?
+  publisher      String?
+  pages          Int?
+  filePath       String?   @unique // File path on disk
+  fileSize       BigInt? // File size in bytes
+  fileModifiedAt DateTime? // Last modified time of file
+  // Required relationship to Media
+  mediaId        String    @unique
+  media          Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([publisher])
+  @@index([filePath])
+}
+
+// ────────────────────────────
+// PERSON
+// ────────────────────────────
+
+enum RoleType {
+  ACTOR
+  DIRECTOR
+  WRITER
+  PRODUCER
+  ARTIST
+  COMPOSER
+  AUTHOR
+}
+
+model Person {
+  id         String    @id @default(cuid())
+  name       String
+  bio        String?
+  birthDate  DateTime?
+  profileUrl String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Media relationships
+  media MediaPerson[]
+
+  @@index([name])
+}
+
+// ────────────────────────────
+// JOIN TABLE (MEDIA ↔ PERSON)
+// ────────────────────────────
+
+model MediaPerson {
+  id        String   @id @default(cuid())
+  role      RoleType
+  mediaId   String
+  personId  String
+  character String? // e.g., "Bruce Wayne"
+
+  media  Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, personId, role])
+  @@index([mediaId])
+  @@index([personId])
+}
+
+// ────────────────────────────
+// GENRES
+// ────────────────────────────
+
+model Genre {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  media MediaGenre[]
+
+  @@index([slug])
+}
+
+// ────────────────────────────
+// JOIN TABLE (MEDIA ↔ GENRE)
+// ────────────────────────────
+
+model MediaGenre {
+  id      String @id @default(cuid())
+  mediaId String
+  genreId String
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, genreId])
+  @@index([mediaId])
+  @@index([genreId])
+}
+
+// ────────────────────────────
+// LIBRARIES
+// ────────────────────────────
+
+model Library {
+  id          String               @id @default(cuid())
+  name        String
+  slug        String               @unique
+  description String?
+  posterUrl   String?
+  backdropUrl String?
+
+  isLibrary   Boolean              @default(false)
+  libraryPath String? 
+  libraryType MediaType? 
+
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  parentId String?
+  parent   Library?  @relation("LibraryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Library[] @relation("LibraryHierarchy")
+
+  media      MediaLibrary[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@index([isLibrary])
+  @@index([libraryPath])
+}
+
+// ────────────────────────────
+// JOIN TABLE (MEDIA ↔ LIBRARY)
+// ────────────────────────────
+
+model MediaLibrary {
+  id           String @id @default(cuid())
+  mediaId      String
+  libraryId String
+  order        Int? // For ordering media within a library
+
+  media      Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  library Library @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, libraryId])
+  @@index([mediaId])
+  @@index([libraryId])
+  @@index([order])
+}
+
+// ────────────────────────────
+// EXTERNAL IDS (TMDB, IMDB, etc.)
+// ────────────────────────────
+
+enum ExternalIdSource {
+  TMDB
+  IMDB
+  TVDB
+  ANIDB
+  MYANIMELIST
+  MUSICBRAINZ
+  SPOTIFY
+  COMICVINE
+  OTHER
+}
+
+model ExternalId {
+  id         String           @id @default(cuid())
+  source     ExternalIdSource
+  externalId String
+  mediaId    String
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([source, externalId])
+  @@unique([source, mediaId])
+  @@index([mediaId])
+  @@index([externalId])
 }

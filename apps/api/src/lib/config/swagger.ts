@@ -39,23 +39,10 @@ const options = {
             },
           },
         },
-        HelloResponse: {
-          type: "object",
-          properties: {
-            message: {
-              type: "string",
-              example: "Hello World from DesterLib API v1! 👋",
-            },
-            timestamp: {
-              type: "string",
-              format: "date-time",
-            },
-          },
-        },
       },
     },
   },
-  apis: ["./src/routes/*.ts"], // paths to files containing OpenAPI definitions
+  apis: ["./src/routes/**/*.ts", "./dist/src/routes/**/*.ts"], // paths to files containing OpenAPI definitions
 };
 
 const specs = swaggerJsdoc(options);

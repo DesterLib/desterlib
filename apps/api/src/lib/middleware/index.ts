@@ -10,4 +10,5 @@ export {
   validateQuery,
   validateParams,
 } from "./validation";
+export { sanitizeInput } from "./sanitization";
 // Auth middleware exports go here

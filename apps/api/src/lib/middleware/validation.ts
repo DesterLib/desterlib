@@ -1,5 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import { z, ZodSchema, ZodError } from "zod";
+import { sanitizeObject } from "../utils/sanitization";
+
+type SanitizeOptions = {
+  stripHtml?: boolean;
+  escapeHtml?: boolean;
+  trimWhitespace?: boolean;
+  maxLength?: number;
+};
+
+type ValidateOptions = {
+  sanitize?: boolean;
+  sanitizeOptions?: SanitizeOptions;
+};
 
 /**
  * Validation middleware factory that creates middleware for validating request data
@@ -8,14 +21,27 @@ import { z, ZodSchema, ZodError } from "zod";
  */
 export function validate(
   schema: ZodSchema,
-  dataSource: "body" | "query" | "params" = "body"
+  dataSource: "body" | "query" | "params" = "body",
+  options: ValidateOptions = {}
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      const dataToValidate = req[dataSource];
+      const { sanitize = true, sanitizeOptions = {} } = options;
+      let dataToValidate = req[dataSource];
+
+      // Sanitize input data before validation
+      if (sanitize && dataToValidate) {
+        dataToValidate = sanitizeObject(dataToValidate, {
+          stripHtml: true,
+          trimWhitespace: true,
+          maxLength: 10000,
+          ...sanitizeOptions,
+        });
+      }
+
       const validatedData = schema.parse(dataToValidate);
 
-      // Store validated data in request for use in route handlers
+      // Store validated and sanitized data in request for use in route handlers
       req.validatedData = validatedData;
 
       next();
@@ -37,22 +63,22 @@ export function validate(
 }
 
 /**
- * Utility function to validate request body
+ * Utility function to validate request body with optional sanitization
  */
-export function validateBody(schema: ZodSchema) {
-  return validate(schema, "body");
+export function validateBody(schema: ZodSchema, options?: ValidateOptions) {
+  return validate(schema, "body", options);
 }
 
 /**
- * Utility function to validate query parameters
+ * Utility function to validate query parameters with optional sanitization
  */
-export function validateQuery(schema: ZodSchema) {
-  return validate(schema, "query");
+export function validateQuery(schema: ZodSchema, options?: ValidateOptions) {
+  return validate(schema, "query", options);
 }
 
 /**
- * Utility function to validate route parameters
+ * Utility function to validate route parameters with optional sanitization
  */
-export function validateParams(schema: ZodSchema) {
-  return validate(schema, "params");
+export function validateParams(schema: ZodSchema, options?: ValidateOptions) {
+  return validate(schema, "params", options);
 }

@@ -35,4 +35,7 @@ export const config = {
 
   // Route guards
   enableRouteGuards: process.env.ENABLE_ROUTE_GUARDS === "true",
+
+  // TMDB API
+  tmdbApiKey: process.env.TMDB_API_KEY || "",
 } as const;
