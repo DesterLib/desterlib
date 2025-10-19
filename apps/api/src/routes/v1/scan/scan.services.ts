@@ -11,6 +11,7 @@ import type {
 import prisma from "@/lib/database/prisma";
 import { MediaType } from "@/lib/database";
 import { wsManager } from "@/lib/websocket";
+import { assignGenresToMedia } from "@/lib/services/genreService";
 
 /**
  * Rate limiter for TMDB API calls
@@ -227,40 +228,15 @@ async function saveMediaToDatabase(
       });
     }
 
-    // Handle genres if they exist in metadata
+    // Handle genres with automatic deduplication
     if (extendedMetadata.genres && extendedMetadata.genres.length > 0) {
-      for (const genreData of extendedMetadata.genres) {
-        // Create slug from genre name (lowercase, replace spaces with hyphens)
-        const slug = genreData.name.toLowerCase().replace(/\s+/g, "-");
+      const result = await assignGenresToMedia(
+        media.id,
+        extendedMetadata.genres
+      );
 
-        // Create or get genre
-        const genre = await prisma.genre.upsert({
-          where: { slug },
-          update: { name: genreData.name },
-          create: {
-            id: genreData.id.toString(),
-            name: genreData.name,
-            slug,
-          },
-        });
-
-        // Link genre to media
-        await prisma.mediaGenre.upsert({
-          where: {
-            mediaId_genreId: {
-              mediaId: media.id,
-              genreId: genre.id,
-            },
-          },
-          update: {},
-          create: {
-            mediaId: media.id,
-            genreId: genre.id,
-          },
-        });
-      }
       logger.debug(
-        `✓ Linked ${extendedMetadata.genres.length} genre(s) to ${media.title}`
+        `✓ Genres for ${media.title}: ${result.linked} linked${result.duplicatesAvoided > 0 ? `, ${result.duplicatesAvoided} duplicates avoided` : ""}`
       );
     }
 
@@ -315,6 +291,8 @@ async function saveMediaToDatabase(
           },
         });
       }
+
+      logger.info(`✓ Saved ${media.title}`);
     } else {
       // TV Show
       const tvShow = await prisma.tVShow.upsert({
@@ -523,6 +501,7 @@ export const scanServices = {
       mediaType?: "movie" | "tv";
       fileExtensions?: string[];
       libraryName?: string;
+      rescan?: boolean;
     }
   ) => {
     const {
@@ -531,6 +510,7 @@ export const scanServices = {
       mediaType = "movie",
       fileExtensions = [".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v"],
       libraryName,
+      rescan = false,
     } = options;
 
     if (!tmdbApiKey) {
@@ -695,8 +675,79 @@ export const scanServices = {
       libraryId: library.id,
     });
 
+    // If rescan is false, check for existing metadata in database
+    const existingMetadataMap = new Map<string, TmdbMetadata>();
+    if (!rescan) {
+      logger.info("🔍 Checking for existing metadata in database...");
+
+      // Get all TMDB IDs from the media entries
+      const tmdbIdsToCheck = mediaEntries
+        .filter((e) => e.extractedIds.tmdbId)
+        .map((e) => e.extractedIds.tmdbId!);
+
+      if (tmdbIdsToCheck.length > 0) {
+        // Query the database for existing media with these TMDB IDs
+        // TMDB IDs are stored in the ExternalId table
+        const existingExternalIds = await prisma.externalId.findMany({
+          where: {
+            source: "TMDB",
+            externalId: {
+              in: tmdbIdsToCheck,
+            },
+            media: {
+              libraries: {
+                some: {
+                  libraryId: library.id,
+                },
+              },
+            },
+          },
+          select: {
+            externalId: true,
+            media: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                posterUrl: true,
+                backdropUrl: true,
+                releaseDate: true,
+                rating: true,
+              },
+            },
+          },
+        });
+
+        // Store existing metadata for these TMDB IDs
+        existingExternalIds.forEach((extId) => {
+          const { media } = extId;
+          // Convert database media to TMDB metadata format
+          const tmdbMetadata: TmdbMetadata = {
+            id: parseInt(extId.externalId),
+            title: media.title,
+            name: media.title,
+            overview: media.description || undefined,
+            poster_path: media.posterUrl || undefined,
+            backdrop_path: media.backdropUrl || undefined,
+            release_date: media.releaseDate?.toISOString().split("T")[0],
+            first_air_date: media.releaseDate?.toISOString().split("T")[0],
+            vote_average: media.rating || undefined,
+          };
+          existingMetadataMap.set(extId.externalId, tmdbMetadata);
+          // Also add to metadata cache for other entries to use
+          metadataCache.set(extId.externalId, tmdbMetadata);
+        });
+
+        logger.info(
+          `Found ${existingExternalIds.length} items with existing metadata`
+        );
+      }
+    }
+
     const metadataFetchPromises: Promise<void>[] = [];
     let metadataFetched = 0;
+    let metadataFromCache = 0;
+    let metadataFromTMDB = 0;
     const totalMetadataToFetch = mediaEntries.filter(
       (e) => e.extractedIds.tmdbId || e.extractedIds.title
     ).length;
@@ -707,10 +758,18 @@ export const scanServices = {
       // Fetch metadata if TMDB ID exists
       if (extractedIds.tmdbId) {
         const fetchPromise = rateLimiter.add(async () => {
-          // Check cache first
+          // Check cache first (includes both TMDB cache and database cache)
           if (metadataCache.has(extractedIds.tmdbId!)) {
             mediaEntry.metadata = metadataCache.get(extractedIds.tmdbId!)!;
             metadataFetched++;
+
+            // Log if this came from database
+            if (existingMetadataMap.has(extractedIds.tmdbId!)) {
+              metadataFromCache++;
+              logger.debug(
+                `⏭️  Using existing metadata for ${mediaEntry.name} (use rescan=true to re-fetch)`
+              );
+            }
             return;
           }
 
@@ -731,6 +790,7 @@ export const scanServices = {
               metadataCache.set(extractedIds.tmdbId!, typedMetadata);
               mediaEntry.metadata = typedMetadata;
               metadataFetched++;
+              metadataFromTMDB++;
 
               // Send progress update every 5 items or at 100%
               if (
@@ -801,6 +861,7 @@ export const scanServices = {
                   metadataCache.set(foundId, typedMetadata);
                   mediaEntry.metadata = typedMetadata;
                   metadataFetched++;
+                  metadataFromTMDB++;
 
                   // Send progress update every 5 items or at 100%
                   if (
@@ -842,98 +903,100 @@ export const scanServices = {
 
     // Wait for all metadata fetches to complete
     await Promise.allSettled(metadataFetchPromises);
-    logger.info("\n✓ Metadata fetching complete\n");
-
-    // Phase 3: Fetch episode metadata for TV shows (with rate limiting)
-    logger.info("📺 Phase 3: Fetching episode metadata...");
-
-    const episodesToFetch = mediaEntries.filter(
-      (e) =>
-        !e.isDirectory &&
-        e.extractedIds.tmdbId &&
-        e.extractedIds.season &&
-        e.extractedIds.episode &&
-        mediaType === "tv"
+    logger.info(
+      `\n✓ Metadata fetching complete (${metadataFromCache} from cache, ${metadataFromTMDB} from TMDB)\n`
     );
 
-    wsManager.sendScanProgress({
-      phase: "fetching-episodes",
-      progress: 50,
-      current: 0,
-      total: episodesToFetch.length,
-      message: `Fetching episode metadata (${episodesToFetch.length} episodes)...`,
-      libraryId: library.id,
-    });
+    // Phase 3: Fetch episode metadata for TV shows (with rate limiting)
+    if (mediaType === "tv") {
+      logger.info("📺 Phase 3: Fetching episode metadata...");
 
-    const episodeFetchPromises: Promise<void>[] = [];
-    let episodesFetched = 0;
+      const episodesToFetch = mediaEntries.filter(
+        (e) =>
+          !e.isDirectory &&
+          e.extractedIds.tmdbId &&
+          e.extractedIds.season &&
+          e.extractedIds.episode
+      );
 
-    for (const mediaEntry of mediaEntries) {
-      const { extractedIds, isDirectory } = mediaEntry;
+      wsManager.sendScanProgress({
+        phase: "fetching-episodes",
+        progress: 50,
+        current: 0,
+        total: episodesToFetch.length,
+        message: `Fetching episode metadata (${episodesToFetch.length} episodes)...`,
+        libraryId: library.id,
+      });
 
-      // Only fetch episode metadata for files (not directories) with season/episode info
-      if (
-        !isDirectory &&
-        extractedIds.tmdbId &&
-        extractedIds.season &&
-        extractedIds.episode &&
-        mediaType === "tv"
-      ) {
-        const episodeCacheKey = `${extractedIds.tmdbId}-S${extractedIds.season}E${extractedIds.episode}`;
+      const episodeFetchPromises: Promise<void>[] = [];
+      let episodesFetched = 0;
 
-        // Skip if already cached
-        if (episodeMetadataCache.has(episodeCacheKey)) {
-          continue;
-        }
+      for (const mediaEntry of mediaEntries) {
+        const { extractedIds, isDirectory } = mediaEntry;
 
-        const fetchPromise = rateLimiter.add(async () => {
-          try {
-            const episodeMetadata = await tmdbServices.getEpisode(
-              extractedIds.tmdbId!,
-              extractedIds.season!,
-              extractedIds.episode!,
-              { apiKey: tmdbApiKey }
-            );
+        // Only fetch episode metadata for files (not directories) with season/episode info
+        if (
+          !isDirectory &&
+          extractedIds.tmdbId &&
+          extractedIds.season &&
+          extractedIds.episode
+        ) {
+          const episodeCacheKey = `${extractedIds.tmdbId}-S${extractedIds.season}E${extractedIds.episode}`;
 
-            if (episodeMetadata) {
-              episodeMetadataCache.set(episodeCacheKey, episodeMetadata);
-              episodesFetched++;
-
-              // Send progress update every 3 items or at 100%
-              if (
-                episodesFetched % 3 === 0 ||
-                episodesFetched === episodesToFetch.length
-              ) {
-                const progress =
-                  50 +
-                  Math.floor((episodesFetched / episodesToFetch.length) * 25);
-                wsManager.sendScanProgress({
-                  phase: "fetching-episodes",
-                  progress,
-                  current: episodesFetched,
-                  total: episodesToFetch.length,
-                  message: `Fetching episodes: ${episodesFetched}/${episodesToFetch.length}`,
-                  libraryId: library.id,
-                });
-              }
-
-              logger.info(
-                `✓ Fetched episode: S${extractedIds.season}E${extractedIds.episode} - ${episodeMetadata.name}`
-              );
-            }
-          } catch (error) {
-            logger.warn(
-              `Could not fetch episode S${extractedIds.season}E${extractedIds.episode}: ${error instanceof Error ? error.message : error}`
-            );
-            episodesFetched++;
+          // Skip if already cached
+          if (episodeMetadataCache.has(episodeCacheKey)) {
+            continue;
           }
-        });
-        episodeFetchPromises.push(fetchPromise);
-      }
-    }
 
-    await Promise.allSettled(episodeFetchPromises);
-    logger.info("\n✓ Episode metadata fetching complete\n");
+          const fetchPromise = rateLimiter.add(async () => {
+            try {
+              const episodeMetadata = await tmdbServices.getEpisode(
+                extractedIds.tmdbId!,
+                extractedIds.season!,
+                extractedIds.episode!,
+                { apiKey: tmdbApiKey }
+              );
+
+              if (episodeMetadata) {
+                episodeMetadataCache.set(episodeCacheKey, episodeMetadata);
+                episodesFetched++;
+
+                // Send progress update every 3 items or at 100%
+                if (
+                  episodesFetched % 3 === 0 ||
+                  episodesFetched === episodesToFetch.length
+                ) {
+                  const progress =
+                    50 +
+                    Math.floor((episodesFetched / episodesToFetch.length) * 25);
+                  wsManager.sendScanProgress({
+                    phase: "fetching-episodes",
+                    progress,
+                    current: episodesFetched,
+                    total: episodesToFetch.length,
+                    message: `Fetching episodes: ${episodesFetched}/${episodesToFetch.length}`,
+                    libraryId: library.id,
+                  });
+                }
+
+                logger.info(
+                  `✓ Fetched episode: S${extractedIds.season}E${extractedIds.episode} - ${episodeMetadata.name}`
+                );
+              }
+            } catch (error) {
+              logger.warn(
+                `Could not fetch episode S${extractedIds.season}E${extractedIds.episode}: ${error instanceof Error ? error.message : error}`
+              );
+              episodesFetched++;
+            }
+          });
+          episodeFetchPromises.push(fetchPromise);
+        }
+      }
+
+      await Promise.allSettled(episodeFetchPromises);
+      logger.info("\n✓ Episode metadata fetching complete\n");
+    }
 
     // Phase 4: Save to database
     logger.info("💾 Phase 4: Saving to database...");
@@ -994,6 +1057,16 @@ export const scanServices = {
       message: `Scan complete! Saved ${savedCount} items to library "${library.name}"`,
     });
 
-    return mediaEntries;
+    return {
+      libraryId: library.id,
+      libraryName: library.name,
+      totalFiles: mediaEntries.length,
+      totalSaved: savedCount,
+      cacheStats: {
+        metadataFromCache,
+        metadataFromTMDB,
+        totalMetadataFetched: metadataFetched,
+      },
+    };
   },
 };

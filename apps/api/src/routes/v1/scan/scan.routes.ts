@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import { scanPathController } from "./scan.controller";
+import { scanControllers } from "./scan.controller";
 import { validateBody } from "../../../lib/middleware";
 import { scanPathSchema } from "./scan.schema";
 
@@ -54,6 +54,17 @@ const router: Router = express.Router();
  *                     description: File extensions to include in the scan
  *                     default: [".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v"]
  *                     example: [".mkv", ".mp4", ".avi"]
+ *                   libraryName:
+ *                     type: string
+ *                     description: Name for the library. If not provided, uses "Library - {path}"
+ *                     minLength: 1
+ *                     maxLength: 100
+ *                     example: "My Anime Library"
+ *                   rescan:
+ *                     type: boolean
+ *                     description: If true, re-fetches metadata from TMDB even if it already exists in the database. If false or omitted, skips items that already have metadata.
+ *                     default: false
+ *                     example: false
  *     responses:
  *       200:
  *         description: Successful scan
@@ -65,63 +76,41 @@ const router: Router = express.Router();
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 path:
+ *                 message:
  *                   type: string
- *                   example: "/Volumes/External/Library/Media/Shows/Anime"
- *                 results:
+ *                   example: "Scan completed successfully"
+ *                 libraryId:
+ *                   type: string
+ *                   description: The ID of the library that was scanned
+ *                   example: "clxxxx1234567890abcdefgh"
+ *                 libraryName:
+ *                   type: string
+ *                   description: The name of the library
+ *                   example: "My Anime Library"
+ *                 totalFiles:
+ *                   type: number
+ *                   description: Total number of media files discovered during scan
+ *                   example: 15
+ *                 totalSaved:
+ *                   type: number
+ *                   description: Total number of media files successfully saved to the database
+ *                   example: 14
+ *                 cacheStats:
  *                   type: object
+ *                   description: Cache statistics showing metadata reuse
  *                   properties:
- *                     totalFiles:
+ *                     metadataFromCache:
  *                       type: number
- *                       description: Total number of files and directories found
+ *                       description: Number of items that reused existing metadata from database
+ *                       example: 10
+ *                     metadataFromTMDB:
+ *                       type: number
+ *                       description: Number of items that fetched fresh metadata from TMDB
+ *                       example: 5
+ *                     totalMetadataFetched:
+ *                       type: number
+ *                       description: Total number of items with metadata
  *                       example: 15
- *                     entries:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           path:
- *                             type: string
- *                             description: Full path to the file or directory
- *                             example: "/Volumes/External/Library/Media/Shows/Anime/Delico's Nursery {tmdb-232252}"
- *                           name:
- *                             type: string
- *                             description: File or directory name
- *                             example: "Delico's Nursery {tmdb-232252}"
- *                           isDirectory:
- *                             type: boolean
- *                             description: Whether the entry is a directory
- *                             example: true
- *                           size:
- *                             type: number
- *                             description: File size in bytes (or directory entry size)
- *                             example: 122964426
- *                           modified:
- *                             type: string
- *                             format: date-time
- *                             description: Last modified timestamp
- *                             example: "2025-09-15T20:14:12.076Z"
- *                           extractedIds:
- *                             type: object
- *                             description: IDs extracted from filename or directory name
- *                             properties:
- *                               tmdbId:
- *                                 type: string
- *                                 example: "232252"
- *                               imdbId:
- *                                 type: string
- *                               tvdbId:
- *                                 type: string
- *                               year:
- *                                 type: string
- *                               title:
- *                                 type: string
- *                                 example: "Delico's Nursery"
- *                           metadata:
- *                             type: object
- *                             description: |
- *                               TMDB metadata (only present if a TMDB ID was found and metadata was successfully fetched).
- *                               Includes title, overview, poster_path, backdrop_path, vote_average, release_date, and credits.
  *       400:
  *         description: Bad request - Invalid path, validation error, or missing TMDB API key
  *         content:
@@ -149,6 +138,6 @@ const router: Router = express.Router();
  *                   type: string
  *                   example: "Failed to scan path"
  */
-router.post("/path", validateBody(scanPathSchema), scanPathController);
+router.post("/path", validateBody(scanPathSchema), scanControllers.post);
 
 export default router;

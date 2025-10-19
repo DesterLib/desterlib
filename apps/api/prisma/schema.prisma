@@ -202,8 +202,8 @@ model MediaPerson {
 
 model Genre {
   id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
+  name        String   @unique // Canonical normalized name (e.g., "Science Fiction")
+  slug        String   @unique // URL-friendly slug (e.g., "science-fiction")
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -211,6 +211,7 @@ model Genre {
   media MediaGenre[]
 
   @@index([slug])
+  @@index([name])
 }
 
 // ────────────────────────────

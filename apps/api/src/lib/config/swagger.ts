@@ -8,7 +8,8 @@ const options = {
     info: {
       title: "DesterLib API",
       version: "1.0.0",
-      description: "API documentation for DesterLib",
+      description:
+        "API documentation for DesterLib - A comprehensive media library management system",
       contact: {
         name: "DesterLib Team",
         url: "https://t.me/Dester_Community",
@@ -18,6 +19,28 @@ const options = {
       {
         url: `http://localhost:${config.port}`,
         description: "Development server",
+      },
+    ],
+    tags: [
+      {
+        name: "Health",
+        description: "Health check and API status endpoints",
+      },
+      {
+        name: "Scan",
+        description: "Media scanning and metadata fetching operations",
+      },
+      {
+        name: "Library",
+        description: "Library management endpoints",
+      },
+      {
+        name: "Movies",
+        description: "Movie catalog and retrieval endpoints",
+      },
+      {
+        name: "TV Shows",
+        description: "TV show catalog and retrieval endpoints",
       },
     ],
     components: {
