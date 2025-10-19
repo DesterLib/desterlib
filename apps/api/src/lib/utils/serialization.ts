@@ -1,6 +1,28 @@
 /**
- * Serialization utilities for handling special types like BigInt
+ * Serialization utilities for handling special types like BigInt and cleaning URLs
  */
+
+/**
+ * Cleans TMDB image URLs that might have repeated prefixes
+ */
+export function cleanTmdbImageUrl(
+  url: string | null | undefined
+): string | null {
+  if (!url) return null;
+
+  // Check for repeated TMDB prefixes and clean them up
+  const tmdbBaseUrl = "https://image.tmdb.org/t/p/original";
+  if (url.includes(tmdbBaseUrl)) {
+    // Extract the actual path part after the last occurrence of the base URL
+    const lastIndex = url.lastIndexOf(tmdbBaseUrl);
+    if (lastIndex >= 0) {
+      const actualPath = url.substring(lastIndex + tmdbBaseUrl.length);
+      return `${tmdbBaseUrl}${actualPath}`;
+    }
+  }
+
+  return url;
+}
 
 /**
  * Recursively converts BigInt values to strings in an object
@@ -29,7 +51,16 @@ export function serializeBigInt<T>(obj: T): T {
   if (typeof obj === "object") {
     const serialized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
-      serialized[key] = serializeBigInt(value);
+      // Clean TMDB image URLs for posterUrl and backdropUrl fields
+      if (
+        (key === "posterUrl" || key === "backdropUrl" || key === "stillPath") &&
+        typeof value === "string"
+      ) {
+        serialized[key] = cleanTmdbImageUrl(value);
+      } else {
+        // Recursively process nested objects and arrays (this will also clean URLs in nested objects)
+        serialized[key] = serializeBigInt(value);
+      }
     }
     return serialized as T;
   }

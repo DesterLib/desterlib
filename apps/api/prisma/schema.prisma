@@ -77,11 +77,12 @@ model TVShow {
 }
 
 model Season {
-  id       String    @id @default(cuid())
-  number   Int
-  episodes Episode[]
-  tvShowId String
-  tvShow   TVShow    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  number    Int
+  posterUrl String?   // Season poster image URL
+  episodes  Episode[]
+  tvShowId  String
+  tvShow    TVShow    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
 
   @@unique([tvShowId, number])
   @@index([tvShowId])
@@ -94,6 +95,7 @@ model Episode {
   number         Int
   duration       Int?
   airDate        DateTime?
+  stillPath      String?   // Episode still/screenshot image URL
   filePath       String?   @unique // File path on disk
   fileSize       BigInt? // File size in bytes
   fileModifiedAt DateTime? // Last modified time of file

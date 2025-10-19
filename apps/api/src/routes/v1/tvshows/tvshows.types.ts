@@ -2,7 +2,7 @@
  * TV Show types and interfaces
  */
 
-import { TVShow, Media } from "../../../../generated/prisma";
+import { TVShow, Media, Season, Episode } from "../../../../generated/prisma";
 
 /**
  * TV Show with its associated media information
@@ -12,9 +12,24 @@ export interface TVShowWithMedia extends TVShow {
 }
 
 /**
- * TV Show response type (same as TVShowWithMedia but explicitly for API responses)
+ * Season with episodes
  */
-export type TVShowResponse = TVShowWithMedia;
+export interface SeasonWithEpisodes extends Season {
+  episodes: Episode[];
+}
+
+/**
+ * TV Show with seasons and media
+ */
+export interface TVShowWithSeasonsAndMedia extends TVShow {
+  media: Media;
+  seasons: SeasonWithEpisodes[];
+}
+
+/**
+ * TV Show response type (includes seasons and episodes for detail view)
+ */
+export type TVShowResponse = TVShowWithSeasonsAndMedia;
 
 /**
  * TV Shows list response type

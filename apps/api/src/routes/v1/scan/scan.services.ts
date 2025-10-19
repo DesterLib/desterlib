@@ -14,6 +14,51 @@ import { wsManager } from "@/lib/websocket";
 import { assignGenresToMedia } from "@/lib/services/genreService";
 
 /**
+ * Helper function to construct TMDB image URL properly
+ * Handles cases where the path might already be a full URL or be malformed with repeated prefixes
+ */
+function getTmdbImageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+
+  // If it's already a full URL, check if it's malformed with repeated prefixes
+  if (path.startsWith("http")) {
+    // Check for repeated TMDB prefixes and clean them up
+    const tmdbBaseUrl = "https://image.tmdb.org/t/p/original";
+    if (path.includes(tmdbBaseUrl)) {
+      // Extract the actual path part after the last occurrence of the base URL
+      const lastIndex = path.lastIndexOf(tmdbBaseUrl);
+      if (lastIndex >= 0) {
+        const actualPath = path.substring(lastIndex + tmdbBaseUrl.length);
+        return `${tmdbBaseUrl}${actualPath}`;
+      }
+    }
+    // If it's a valid URL without issues, return as-is
+    return path;
+  }
+
+  // Ensure path starts with / if it doesn't
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `https://image.tmdb.org/t/p/original${cleanPath}`;
+}
+
+/**
+ * Helper function to extract just the path from a TMDB URL or return the original path
+ */
+function extractTmdbPath(
+  fullUrlOrPath: string | null | undefined
+): string | null {
+  if (!fullUrlOrPath) return null;
+
+  // If it's a full TMDB URL, extract just the path part
+  if (fullUrlOrPath.includes("image.tmdb.org/t/p/original")) {
+    return fullUrlOrPath.split("image.tmdb.org/t/p/original")[1] || null;
+  }
+
+  // Otherwise return as-is (should be just a path)
+  return fullUrlOrPath.startsWith("/") ? fullUrlOrPath : `/${fullUrlOrPath}`;
+}
+
+/**
  * Rate limiter for TMDB API calls
  * TMDB allows ~40 requests per 10 seconds
  */
@@ -142,12 +187,8 @@ async function saveMediaToDatabase(
         data: {
           title: metadata.title || metadata.name || "Unknown",
           description: metadata.overview,
-          posterUrl: metadata.poster_path
-            ? `https://image.tmdb.org/t/p/original${metadata.poster_path}`
-            : null,
-          backdropUrl: metadata.backdrop_path
-            ? `https://image.tmdb.org/t/p/original${metadata.backdrop_path}`
-            : null,
+          posterUrl: getTmdbImageUrl(metadata.poster_path),
+          backdropUrl: getTmdbImageUrl(metadata.backdrop_path),
           releaseDate: metadata.release_date
             ? new Date(metadata.release_date)
             : metadata.first_air_date
@@ -163,12 +204,8 @@ async function saveMediaToDatabase(
           title: metadata.title || metadata.name || "Unknown",
           type: mediaType === "tv" ? MediaType.TV_SHOW : MediaType.MOVIE,
           description: metadata.overview,
-          posterUrl: metadata.poster_path
-            ? `https://image.tmdb.org/t/p/original${metadata.poster_path}`
-            : null,
-          backdropUrl: metadata.backdrop_path
-            ? `https://image.tmdb.org/t/p/original${metadata.backdrop_path}`
-            : null,
+          posterUrl: getTmdbImageUrl(metadata.poster_path),
+          backdropUrl: getTmdbImageUrl(metadata.backdrop_path),
           releaseDate: metadata.release_date
             ? new Date(metadata.release_date)
             : metadata.first_air_date
@@ -331,6 +368,7 @@ async function saveMediaToDatabase(
           let episodeTitle = `Episode ${episodeNumber}`;
           let episodeDuration: number | null = null;
           let episodeAirDate: Date | null = null;
+          let episodeStillPath: string | null = null;
 
           if (tmdbApiKey && mediaEntry.extractedIds.tmdbId) {
             const episodeCacheKey = `${mediaEntry.extractedIds.tmdbId}-S${seasonNumber}E${episodeNumber}`;
@@ -344,6 +382,7 @@ async function saveMediaToDatabase(
                 episodeAirDate = cachedEpisode.air_date
                   ? new Date(cachedEpisode.air_date)
                   : null;
+                episodeStillPath = getTmdbImageUrl(cachedEpisode.still_path);
                 logger.debug(
                   `✓ Using cached episode metadata for S${seasonNumber}E${episodeNumber}`
                 );
@@ -365,6 +404,9 @@ async function saveMediaToDatabase(
                   episodeAirDate = episodeMetadata.air_date
                     ? new Date(episodeMetadata.air_date)
                     : null;
+                  episodeStillPath = getTmdbImageUrl(
+                    episodeMetadata.still_path
+                  );
                 }
               } catch (error) {
                 logger.warn(
@@ -386,6 +428,7 @@ async function saveMediaToDatabase(
               fileTitle: fileTitleExtracted || null,
               duration: episodeDuration,
               airDate: episodeAirDate,
+              stillPath: episodeStillPath,
               filePath: mediaEntry.path,
               fileSize: BigInt(mediaEntry.size),
               fileModifiedAt: mediaEntry.modified,
@@ -397,6 +440,7 @@ async function saveMediaToDatabase(
               fileTitle: fileTitleExtracted || null,
               duration: episodeDuration,
               airDate: episodeAirDate,
+              stillPath: episodeStillPath,
               filePath: mediaEntry.path,
               fileSize: BigInt(mediaEntry.size),
               fileModifiedAt: mediaEntry.modified,
@@ -727,8 +771,8 @@ export const scanServices = {
             title: media.title,
             name: media.title,
             overview: media.description || undefined,
-            poster_path: media.posterUrl || undefined,
-            backdrop_path: media.backdropUrl || undefined,
+            poster_path: extractTmdbPath(media.posterUrl) || undefined,
+            backdrop_path: extractTmdbPath(media.backdropUrl) || undefined,
             release_date: media.releaseDate?.toISOString().split("T")[0],
             first_air_date: media.releaseDate?.toISOString().split("T")[0],
             vote_average: media.rating || undefined,

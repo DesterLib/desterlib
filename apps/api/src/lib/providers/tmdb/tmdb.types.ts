@@ -4,5 +4,6 @@ export interface TmdbEpisodeMetadata {
   name?: string;
   runtime?: number;
   air_date?: string;
+  still_path?: string;
   [key: string]: unknown;
 }
