@@ -15,41 +15,49 @@ const limiter = rateLimit({
 
 // Middleware setup function
 export function setupMiddleware(app: express.Application) {
+  // Only trust loopback proxies to satisfy express-rate-limit validation
+  app.set("trust proxy", "loopback");
   // Security & compression
   app.use(
     helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          imgSrc: ["'self'", "data:", "https://image.tmdb.org"],
-          scriptSrc: ["'self'"],
-          styleSrc: [
-            "'self'",
-            "'unsafe-inline'",
-            "https://fonts.googleapis.com",
-          ],
-          fontSrc: ["'self'", "https://fonts.gstatic.com"],
-          connectSrc: ["'self'"],
-        },
-      },
+      // Disable HSTS in development to prevent HTTPS forcing
+      hsts: config.nodeEnv === "production" ? undefined : false,
+      contentSecurityPolicy: false, // Disable CSP to prevent upgrade-insecure-requests
     })
   );
   app.use(compression());
   app.use(limiter);
 
-  // CORS
+  // CORS configuration
   app.use(
     cors({
-      origin:
-        config.nodeEnv === "production"
-          ? config.frontendUrl
-          : [
-              "http://localhost:3000",
-              "http://localhost:3001",
-              "http://localhost:5173", // Vite dev server
-              "http://localhost:4173", // Vite preview
-            ],
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        const allowedOrigins = [
+          config.frontendUrl,
+          "http://localhost:3000",
+          "http://127.0.0.1:3000",
+          "http://localhost:3001",
+          "http://127.0.0.1:3001",
+        ];
+
+        // In development, also allow any localhost origin
+        if (config.nodeEnv === "development" && origin.includes("localhost")) {
+          return callback(null, true);
+        }
+
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+
+        return callback(new Error("Not allowed by CORS"));
+      },
       credentials: true,
+      optionsSuccessStatus: 200,
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     })
   );
 

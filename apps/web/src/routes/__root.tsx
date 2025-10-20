@@ -2,7 +2,7 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { setFocus } from "@noriginmedia/norigin-spatial-navigation";
 import { useEffect } from "react";
-import Header from "../components/header";
+import Header from "../components/custom/header";
 import { useConditionalFocusable } from "../hooks/general/useConditionalFocusable";
 
 const RootLayout = () => {
@@ -24,7 +24,7 @@ const RootLayout = () => {
   }, [isSpatialNavigationEnabled]);
 
   return (
-    <div ref={ref} className="min-h-screen">
+    <div ref={ref} className="min-h-screen bg-background text-foreground">
       <Header />
       <Outlet />
       <TanStackRouterDevtools />

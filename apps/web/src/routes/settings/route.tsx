@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Icon } from "@repo/ui/components/icon";
+import { Icon } from "@/components/custom/icon";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
@@ -42,12 +42,13 @@ function RouteComponent() {
       </div>
       <nav className="flex flex-col gap-4 max-w-sm">
         <SettingsLink
-          to="/settings/library"
-          label="Library"
+          to="/settings/libraries"
+          label="Libraries"
           icon="folder_managed"
         />
         <SettingsLink to="/settings/library" label="General" icon="settings" />
       </nav>
+      <Outlet />
     </div>
   );
 }

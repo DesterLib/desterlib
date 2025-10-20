@@ -1,4 +1,4 @@
-import { useConditionalFocusable } from "../hooks/general/useConditionalFocusable";
+import { useConditionalFocusable } from "../../hooks/general/useConditionalFocusable";
 
 interface MediaCardProps {
   focusKey?: string;

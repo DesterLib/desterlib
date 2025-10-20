@@ -1,6 +1,6 @@
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { cn } from "@repo/ui/utils";
-import { useConditionalFocusable } from "../hooks/general/useConditionalFocusable";
+import { useConditionalFocusable } from "../../hooks/general/useConditionalFocusable";
+import { cn } from "@/lib/utils";
 
 const HeaderLink = ({
   to,

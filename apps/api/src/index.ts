@@ -42,7 +42,7 @@ process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", gracefulShutdown);
 
 // Start server
-httpServer.listen(config.port, () => {
+httpServer.listen(config.port, "0.0.0.0", () => {
   logger.info(`🚀 Server running on port ${config.port}`);
   logger.info(`📊 Health check: http://localhost:${config.port}/health`);
   logger.info(`📚 API Documentation: http://localhost:${config.port}/api/docs`);

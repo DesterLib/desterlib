@@ -67,7 +67,6 @@ const availableScopes = detectScope();
 const hardcodedScopes = [
   { name: "web", value: "web" },
   { name: "api", value: "api" },
-  { name: "ui", value: "ui" },
   { name: "eslint-config", value: "eslint-config" },
   { name: "typescript-config", value: "typescript-config" },
   { name: "root", value: "root" },

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import MediaCard from "../components/mediaCard";
+import MediaCard from "../components/custom/mediaCard";
 import { useMovies } from "../hooks/api/useMovies";
 import { useTVShows } from "../hooks/api/useTVShows";
 
@@ -21,17 +21,24 @@ function Index() {
     error: tvShowsError,
   } = useTVShows();
 
+  // Always show something, even if APIs fail
+  const showMovies = !moviesLoading && !moviesError && movies;
+  const showTVShows = !tvShowsLoading && !tvShowsError && tvShows;
+
   return (
     <div className="max-w-[1440px] mx-auto px-6 flex gap-16 flex-col pt-[120px]">
       <div className="flex flex-col gap-4">
         <h2 className="text-2xl">Movies</h2>
-        {moviesLoading && <p>Loading movies...</p>}
+        {moviesLoading && <p className="text-foreground">Loading movies...</p>}
         {moviesError && (
-          <p className="text-red-500">
-            Error loading movies: {moviesError.message}
-          </p>
+          <div className="text-red-500 bg-red-50 p-4 rounded">
+            <p>Error loading movies: {moviesError.message}</p>
+            <p className="text-sm mt-2">
+              This might be due to API server not running.
+            </p>
+          </div>
         )}
-        {!moviesLoading && !moviesError && movies && (
+        {showMovies ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-12 gap-x-6">
             {movies.map((movie) => (
               <MediaCard
@@ -50,17 +57,26 @@ function Index() {
               />
             ))}
           </div>
+        ) : (
+          <div className="text-foreground/60 p-8 text-center">
+            No movies available. Make sure your API server is running.
+          </div>
         )}
       </div>
       <div className="flex flex-col gap-4">
         <h2 className="text-2xl">TV Shows</h2>
-        {tvShowsLoading && <p>Loading TV shows...</p>}
-        {tvShowsError && (
-          <p className="text-red-500">
-            Error loading TV shows: {tvShowsError.message}
-          </p>
+        {tvShowsLoading && (
+          <p className="text-foreground">Loading TV shows...</p>
         )}
-        {!tvShowsLoading && !tvShowsError && tvShows && (
+        {tvShowsError && (
+          <div className="text-red-500 bg-red-50 p-4 rounded">
+            <p>Error loading TV shows: {tvShowsError.message}</p>
+            <p className="text-sm mt-2">
+              This might be due to API server not running.
+            </p>
+          </div>
+        )}
+        {showTVShows ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-12 gap-x-6">
             {tvShows.map((tvShow) => (
               <MediaCard
@@ -82,6 +98,10 @@ function Index() {
                 onClick={() => navigate({ to: `/tvshow/${tvShow.id}` })}
               />
             ))}
+          </div>
+        ) : (
+          <div className="text-foreground/60 p-8 text-center">
+            No TV shows available. Make sure your API server is running.
           </div>
         )}
       </div>

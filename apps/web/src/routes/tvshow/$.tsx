@@ -1,8 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTVShowById } from "@/hooks/api/useTVShows";
-import { Icon } from "@repo/ui/components/icon";
-import { Button } from "@repo/ui/components/button";
 import { useState } from "react";
+import {
+  playVideoInFlutter,
+  constructStreamingUrl,
+  isFlutterWebView,
+} from "@/utils/flutterBridge";
+import type { Episode } from "@/types/api";
+import { Icon } from "@/components/custom/icon";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/tvshow/$")({
   component: RouteComponent,
@@ -75,6 +81,76 @@ function RouteComponent() {
     setExpandedSeason(expandedSeason === seasonNumber ? null : seasonNumber);
   };
 
+  // Find the latest episode to play
+  const getLatestEpisode = (): Episode | null => {
+    if (!tvShow.seasons || tvShow.seasons.length === 0) return null;
+
+    // Get all episodes from all seasons
+    const allEpisodes = tvShow.seasons.flatMap(
+      (season) => season.episodes || []
+    );
+
+    // Sort by season number and episode number, take the last one
+    return (
+      allEpisodes
+        .sort((a, b) => {
+          const seasonA =
+            tvShow.seasons?.find((s) => s.episodes?.includes(a))?.number || 0;
+          const seasonB =
+            tvShow.seasons?.find((s) => s.episodes?.includes(b))?.number || 0;
+          if (seasonA !== seasonB) return seasonA - seasonB;
+          return a.number - b.number;
+        })
+        .slice(-1)[0] || null
+    );
+  };
+
+  const handlePlayEpisode = async (episode: Episode, seasonNumber: number) => {
+    if (!episode.id) {
+      console.error("Episode ID not available");
+      return;
+    }
+
+    const streamingUrl = constructStreamingUrl(episode.id);
+    if (!streamingUrl) {
+      console.error("Could not construct streaming URL");
+      return;
+    }
+
+    try {
+      await playVideoInFlutter({
+        url: streamingUrl,
+        title: tvShow.media.title,
+        season: seasonNumber,
+        episode: episode.number,
+        episodeTitle: episode.title,
+      });
+    } catch (error) {
+      console.error("Failed to play episode:", error);
+      // TODO: Show user-friendly error message
+    }
+  };
+
+  const handlePlayLatestEpisode = async () => {
+    const latestEpisode = getLatestEpisode();
+    if (!latestEpisode) {
+      console.error("No episodes available");
+      return;
+    }
+
+    // Find which season this episode belongs to
+    const episodeSeason = tvShow.seasons?.find((season) =>
+      season.episodes?.some((ep) => ep.id === latestEpisode.id)
+    );
+
+    if (!episodeSeason) {
+      console.error("Could not find season for latest episode");
+      return;
+    }
+
+    await handlePlayEpisode(latestEpisode, episodeSeason.number);
+  };
+
   // Sort seasons by number
   const sortedSeasons = [...(tvShow.seasons || [])].sort(
     (a, b) => a.number - b.number
@@ -138,33 +214,25 @@ function RouteComponent() {
           <div className="flex flex-col gap-6 lg:w-1/3">
             {/* Play Button */}
             <Button
-              variant="primary"
-              icon="play_arrow"
-              iconSize={28}
-              iconFilled
-              iconClassName="text-black"
+              variant="default"
+              onClick={handlePlayLatestEpisode}
+              disabled={
+                !getLatestEpisode() ||
+                (!isFlutterWebView() && !getLatestEpisode()?.filePath)
+              }
             >
+              <Icon name="play_arrow" size={28} />
               Play Latest Episode
             </Button>
 
             {/* Secondary Actions */}
             <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                size="md"
-                fullWidth
-                icon="favorite"
-                iconSize={20}
-              >
+              <Button variant="secondary" size="default">
+                <Icon name="favorite" size={20} />
                 Add to List
               </Button>
-              <Button
-                variant="secondary"
-                size="md"
-                fullWidth
-                icon="library_add"
-                iconSize={20}
-              >
+              <Button variant="secondary" size="default">
+                <Icon name="library_add" size={20} />
                 Library
               </Button>
             </div>
@@ -316,13 +384,20 @@ function RouteComponent() {
                                     </div>
                                     <Button
                                       variant="secondary"
-                                      size="sm"
-                                      icon="play_arrow"
-                                      iconSize={16}
-                                      iconFilled
-                                      className="!w-10 !h-10 !p-0 !rounded-full mr-4"
+                                      size="icon"
+                                      onClick={() =>
+                                        handlePlayEpisode(
+                                          episode,
+                                          season.number
+                                        )
+                                      }
+                                      disabled={
+                                        !episode.filePath ||
+                                        (!isFlutterWebView() &&
+                                          !episode.filePath)
+                                      }
                                     >
-                                      {null}
+                                      <Icon name="play_arrow" size={16} />
                                     </Button>
                                   </div>
                                 ))}

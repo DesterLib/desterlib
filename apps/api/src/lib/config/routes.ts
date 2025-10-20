@@ -14,11 +14,11 @@ export function setupRoutes(app: express.Application) {
   // Main routes (health, api info)
   app.use("/", mainRoutes);
 
-  // Serve static files from the built web app
-  const webDistPath = path.join(process.cwd(), "../web/dist");
-  app.use(express.static(webDistPath));
+  // Serve static files from the built web app (robust across dev/build)
+  const webDistPath = path.resolve(__dirname, "../../../../web/dist");
+  app.use(express.static(webDistPath, { index: false }));
 
-  // Fallback to index.html for client-side routing (SPA) - this must be last
+  // SPA fallback to index.html (must be last)
   app.get("*", (req, res) => {
     // Skip API routes and health check for fallback
     if (req.path.startsWith("/api/") || req.path === "/health") {

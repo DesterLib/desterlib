@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMovieById } from "@/hooks/api/useMovies";
-import { Icon } from "@repo/ui/components/icon";
-import { Button } from "@repo/ui/components/button";
+import {
+  playVideoInFlutter,
+  constructStreamingUrl,
+  isFlutterWebView,
+} from "@/utils/flutterBridge";
+import { Icon } from "@/components/custom/icon";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/movie/$")({
   component: RouteComponent,
@@ -69,6 +74,29 @@ function RouteComponent() {
     return `${gb.toFixed(2)} GB`;
   };
 
+  const handlePlayMovie = async () => {
+    if (!movie.id) {
+      console.error("Movie ID not available");
+      return;
+    }
+
+    const streamingUrl = constructStreamingUrl(movie.id);
+    if (!streamingUrl) {
+      console.error("Could not construct streaming URL");
+      return;
+    }
+
+    try {
+      await playVideoInFlutter({
+        url: streamingUrl,
+        title: movie.media.title,
+      });
+    } catch (error) {
+      console.error("Failed to play movie:", error);
+      // TODO: Show user-friendly error message
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -91,7 +119,7 @@ function RouteComponent() {
         {/* Hero Content */}
         <div className="absolute bottom-0 left-0 right-0 p-6 max-w-7xl mx-auto">
           <div className="flex flex-col gap-4">
-            <h1 className="text-6xl md:text-7xl font-bold text-white">
+            <h1 className="text-2xl md:text-5xl xl:text-7xl font-bold text-white">
               {movie.media.title}
             </h1>
             <div className="flex items-center gap-3">
@@ -100,7 +128,12 @@ function RouteComponent() {
               </div>
               {movie.media.rating && (
                 <div className="flex items-center gap-1 text-sm bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                  <Icon name="star" size={16} className="text-yellow-400" />
+                  <Icon
+                    name="star"
+                    size={16}
+                    filled
+                    className="text-yellow-400"
+                  />
                   <span>{movie.media.rating.toFixed(1)}</span>
                 </div>
               )}
@@ -126,37 +159,23 @@ function RouteComponent() {
           <div className="flex flex-col gap-6 lg:w-1/3">
             {/* Play Button */}
             <Button
-              variant="primary"
-              icon="play_arrow"
-              iconSize={28}
-              iconFilled
-              iconClassName="text-black"
+              variant="default"
+              size="default"
+              onClick={handlePlayMovie}
+              disabled={
+                !movie.filePath || (!isFlutterWebView() && !movie.filePath)
+              }
             >
+              <Icon name="play_arrow" size={28} />
               Play Movie
             </Button>
 
             {/* Secondary Actions */}
             <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                size="md"
-                fullWidth
-                icon="favorite"
-                iconSize={20}
-              >
+              <Button variant="secondary" size="default">
+                <Icon name="favorite" size={20} />
                 Add to List
               </Button>
-              {movie.trailerUrl && (
-                <Button
-                  variant="secondary"
-                  size="md"
-                  fullWidth
-                  icon="play_circle"
-                  iconSize={20}
-                >
-                  Trailer
-                </Button>
-              )}
             </div>
 
             {/* Movie Info */}

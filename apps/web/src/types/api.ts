@@ -105,6 +105,22 @@ export interface ExternalId {
   updatedAt: string;
 }
 
+export interface Library {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  isLibrary: boolean;
+  libraryPath: string | null;
+  libraryType: MediaType | null;
+  createdAt: string;
+  updatedAt: string;
+  parentId: string | null;
+  mediaCount: number;
+}
+
 // Response Types with Relations
 export interface MovieWithMedia extends Movie {
   media: Media;
@@ -129,3 +145,29 @@ export type MoviesListResponse = MovieWithMedia[];
 
 export type TVShowResponse = TVShowWithSeasonsAndMedia;
 export type TVShowsListResponse = TVShowWithMedia[];
+
+export type LibraryListResponse = Library[];
+
+export interface LibraryUpdateRequest {
+  id: string;
+  name?: string;
+  description?: string;
+  posterUrl?: string;
+  backdropUrl?: string;
+  libraryPath?: string;
+  libraryType?: MediaType;
+}
+
+export interface LibraryUpdateResponse {
+  success: boolean;
+  library: Library;
+  message: string;
+}
+
+export interface LibraryDeleteResponse {
+  success: boolean;
+  libraryId: string;
+  libraryName: string;
+  mediaDeleted: number;
+  message: string;
+}
