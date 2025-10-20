@@ -8,12 +8,11 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: desterlib_dev
+      POSTGRES_DB: desterlib_prod
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -29,25 +28,25 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - apps/api/.env
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/desterlib_dev?schema=public
-      NODE_ENV: development
+      # Database connection variables for the startup script
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: desterlib_prod
+      # Application environment
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/desterlib_prod?schema=public
+      NODE_ENV: production
+      PORT: 3001
+      FRONTEND_URL: http://localhost:3001
     ports:
-      - "3001:3001"
-    volumes:
-      - ./apps/api:/app/apps/api
-      - ./apps/web:/app/apps/web
-      - /app/node_modules
-    working_dir: /app
-    command: >
-      sh -c "
-        cd /app &&
-        pnpm install &&
-        npx prisma generate &&
-        npx prisma db push &&
-        pnpm build --filter=web &&
-        pnpm dev --filter=api
-      "
+      - "0.0.0.0:3001:3001"
+    # Production: no volume mounts, uses built container
+    volumes: []
+    # Use the default CMD from Dockerfile which runs the startup script
 
 volumes:
   postgres_data:

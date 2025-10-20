@@ -1,7 +1,17 @@
 import { Icon } from "@/components/custom/icon";
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+} from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings")({
+  beforeLoad: () => {
+    throw redirect({
+      to: "/settings/libraries",
+    });
+  },
   component: RouteComponent,
 });
 

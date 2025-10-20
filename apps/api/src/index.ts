@@ -1,6 +1,5 @@
 import express from "express";
 import { createServer } from "http";
-import dotenv from "dotenv";
 import { config } from "./config/env";
 import {
   setupMiddleware,
@@ -10,9 +9,6 @@ import {
 } from "./lib";
 import { logger } from "./lib/utils";
 import { wsManager } from "./lib/websocket";
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);

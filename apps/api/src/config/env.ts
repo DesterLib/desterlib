@@ -1,17 +1,31 @@
+/* eslint-disable turbo/no-undeclared-env-vars */
 import dotenv from "dotenv";
 import path from "path";
 
-// Load environment variables based on NODE_ENV
-const nodeEnv = process.env.NODE_ENV || "development";
-const envFile = `.env.${nodeEnv}`;
+// Load environment variables from single .env file in project root
+// Try multiple possible locations for the .env file
+const possiblePaths = [
+  // From project root (when running from project root)
+  path.resolve(process.cwd(), ".env"),
+  // From API directory (when running from apps/api)
+  path.resolve(__dirname, "../../../../../.env"),
+  // API-specific .env file
+  path.resolve(__dirname, "../.env"),
+  // Absolute path fallback
+  ".env",
+];
 
-// Try to load environment-specific file
-const envPath = path.resolve(process.cwd(), envFile);
-dotenv.config({ path: envPath });
-
-// If no environment-specific file found, try default .env
-if (!process.env.DATABASE_URL) {
-  dotenv.config();
+for (const envPath of possiblePaths) {
+  try {
+    dotenv.config({ path: envPath });
+    // Check if we loaded DATABASE_URL to confirm success
+    if (process.env.DATABASE_URL) {
+      break;
+    }
+  } catch {
+    // Continue trying other paths
+    continue;
+  }
 }
 
 // Validate required environment variables before creating config
