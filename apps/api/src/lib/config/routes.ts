@@ -14,8 +14,9 @@ export function setupRoutes(app: express.Application) {
   // Main routes (health, api info)
   app.use("/", mainRoutes);
 
-  // Serve static files from the built web app (robust across dev/build)
-  const webDistPath = path.resolve(__dirname, "../../../../web/dist");
+  // Serve static files from the built web app (robust across dev/build/production)
+  const webDistPath = path.resolve(process.cwd(), "apps/web/dist");
+  console.log("Serving static files from:", webDistPath);
   app.use(express.static(webDistPath, { index: false }));
 
   // SPA fallback to index.html (must be last)
