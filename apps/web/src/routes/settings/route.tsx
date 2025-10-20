@@ -40,15 +40,23 @@ function RouteComponent() {
       <div className="flex flex-col gap-4">
         <h1 className="text-xl">Settings</h1>
       </div>
-      <nav className="flex flex-col gap-4 max-w-sm">
-        <SettingsLink
-          to="/settings/libraries"
-          label="Libraries"
-          icon="folder_managed"
-        />
-        <SettingsLink to="/settings/library" label="General" icon="settings" />
-      </nav>
-      <Outlet />
+      <section className="flex gap-6">
+        <nav className="flex flex-col gap-4 max-w-[200px] w-full">
+          <SettingsLink
+            to="/settings/libraries"
+            label="Libraries"
+            icon="folder_managed"
+          />
+          <SettingsLink
+            to="/settings/library"
+            label="General"
+            icon="settings"
+          />
+        </nav>
+        <div className="w-full flex-1">
+          <Outlet />
+        </div>
+      </section>
     </div>
   );
 }

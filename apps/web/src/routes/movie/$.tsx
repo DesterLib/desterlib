@@ -156,7 +156,7 @@ function RouteComponent() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column - Actions */}
-          <div className="flex flex-col gap-6 lg:w-1/3">
+          <div className="flex flex-col gap-3 lg:w-1/3">
             {/* Play Button */}
             <Button
               variant="default"
@@ -166,20 +166,20 @@ function RouteComponent() {
                 !movie.filePath || (!isFlutterWebView() && !movie.filePath)
               }
             >
-              <Icon name="play_arrow" size={28} />
+              <Icon name="play_arrow" size={28} filled />
               Play Movie
             </Button>
 
             {/* Secondary Actions */}
             <div className="flex gap-3">
-              <Button variant="secondary" size="default">
+              <Button variant="secondary" size="default" disabled>
                 <Icon name="favorite" size={20} />
                 Add to List
               </Button>
             </div>
 
             {/* Movie Info */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-border/20">
               <h3 className="text-lg font-semibold mb-4">Movie Details</h3>
               <div className="space-y-3">
                 {movie.media.releaseDate && (

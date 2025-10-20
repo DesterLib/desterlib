@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TvshowSplatRouteImport } from './routes/tvshow/$'
+import { Route as SettingsLibrariesRouteImport } from './routes/settings/libraries'
 import { Route as MovieSplatRouteImport } from './routes/movie/$'
 
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
@@ -29,6 +30,11 @@ const TvshowSplatRoute = TvshowSplatRouteImport.update({
   path: '/tvshow/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsLibrariesRoute = SettingsLibrariesRouteImport.update({
+  id: '/libraries',
+  path: '/libraries',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const MovieSplatRoute = MovieSplatRouteImport.update({
   id: '/movie/$',
   path: '/movie/$',
@@ -37,34 +43,48 @@ const MovieSplatRoute = MovieSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRouteRoute
+  '/settings': typeof SettingsRouteRouteWithChildren
   '/movie/$': typeof MovieSplatRoute
+  '/settings/libraries': typeof SettingsLibrariesRoute
   '/tvshow/$': typeof TvshowSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRouteRoute
+  '/settings': typeof SettingsRouteRouteWithChildren
   '/movie/$': typeof MovieSplatRoute
+  '/settings/libraries': typeof SettingsLibrariesRoute
   '/tvshow/$': typeof TvshowSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRouteRoute
+  '/settings': typeof SettingsRouteRouteWithChildren
   '/movie/$': typeof MovieSplatRoute
+  '/settings/libraries': typeof SettingsLibrariesRoute
   '/tvshow/$': typeof TvshowSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings' | '/movie/$' | '/tvshow/$'
+  fullPaths:
+    | '/'
+    | '/settings'
+    | '/movie/$'
+    | '/settings/libraries'
+    | '/tvshow/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings' | '/movie/$' | '/tvshow/$'
-  id: '__root__' | '/' | '/settings' | '/movie/$' | '/tvshow/$'
+  to: '/' | '/settings' | '/movie/$' | '/settings/libraries' | '/tvshow/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/settings'
+    | '/movie/$'
+    | '/settings/libraries'
+    | '/tvshow/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  SettingsRouteRoute: typeof SettingsRouteRoute
+  SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   MovieSplatRoute: typeof MovieSplatRoute
   TvshowSplatRoute: typeof TvshowSplatRoute
 }
@@ -92,6 +112,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TvshowSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/libraries': {
+      id: '/settings/libraries'
+      path: '/libraries'
+      fullPath: '/settings/libraries'
+      preLoaderRoute: typeof SettingsLibrariesRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/movie/$': {
       id: '/movie/$'
       path: '/movie/$'
@@ -102,9 +129,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SettingsRouteRouteChildren {
+  SettingsLibrariesRoute: typeof SettingsLibrariesRoute
+}
+
+const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
+  SettingsLibrariesRoute: SettingsLibrariesRoute,
+}
+
+const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
+  SettingsRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  SettingsRouteRoute: SettingsRouteRoute,
+  SettingsRouteRoute: SettingsRouteRouteWithChildren,
   MovieSplatRoute: MovieSplatRoute,
   TvshowSplatRoute: TvshowSplatRoute,
 }

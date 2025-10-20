@@ -55,7 +55,7 @@ const Header = () => {
 
   const { pathname } = useLocation();
   return (
-    <header className="bg-background-secondary border border-white/10 text-foreground p-1 fixed top-6 left-0 right-0 z-10 w-fit mx-auto rounded-[50px]">
+    <header className="bg-background border border-white/10 text-foreground p-1 fixed top-6 left-0 right-0 z-10 w-fit mx-auto rounded-[50px]">
       <nav ref={navRef} className="mx-auto flex gap-1 items-center w-fit">
         <HeaderLink
           to="/"
