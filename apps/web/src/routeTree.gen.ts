@@ -13,6 +13,7 @@ import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TvshowSplatRouteImport } from './routes/tvshow/$'
 import { Route as SettingsLibrariesRouteImport } from './routes/settings/libraries'
+import { Route as SettingsGeneralRouteImport } from './routes/settings/general'
 import { Route as MovieSplatRouteImport } from './routes/movie/$'
 
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
@@ -35,6 +36,11 @@ const SettingsLibrariesRoute = SettingsLibrariesRouteImport.update({
   path: '/libraries',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsGeneralRoute = SettingsGeneralRouteImport.update({
+  id: '/general',
+  path: '/general',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const MovieSplatRoute = MovieSplatRouteImport.update({
   id: '/movie/$',
   path: '/movie/$',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
   '/movie/$': typeof MovieSplatRoute
+  '/settings/general': typeof SettingsGeneralRoute
   '/settings/libraries': typeof SettingsLibrariesRoute
   '/tvshow/$': typeof TvshowSplatRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
   '/movie/$': typeof MovieSplatRoute
+  '/settings/general': typeof SettingsGeneralRoute
   '/settings/libraries': typeof SettingsLibrariesRoute
   '/tvshow/$': typeof TvshowSplatRoute
 }
@@ -60,6 +68,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
   '/movie/$': typeof MovieSplatRoute
+  '/settings/general': typeof SettingsGeneralRoute
   '/settings/libraries': typeof SettingsLibrariesRoute
   '/tvshow/$': typeof TvshowSplatRoute
 }
@@ -69,15 +78,23 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/movie/$'
+    | '/settings/general'
     | '/settings/libraries'
     | '/tvshow/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings' | '/movie/$' | '/settings/libraries' | '/tvshow/$'
+  to:
+    | '/'
+    | '/settings'
+    | '/movie/$'
+    | '/settings/general'
+    | '/settings/libraries'
+    | '/tvshow/$'
   id:
     | '__root__'
     | '/'
     | '/settings'
     | '/movie/$'
+    | '/settings/general'
     | '/settings/libraries'
     | '/tvshow/$'
   fileRoutesById: FileRoutesById
@@ -119,6 +136,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsLibrariesRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/general': {
+      id: '/settings/general'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof SettingsGeneralRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/movie/$': {
       id: '/movie/$'
       path: '/movie/$'
@@ -130,10 +154,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface SettingsRouteRouteChildren {
+  SettingsGeneralRoute: typeof SettingsGeneralRoute
   SettingsLibrariesRoute: typeof SettingsLibrariesRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
+  SettingsGeneralRoute: SettingsGeneralRoute,
   SettingsLibrariesRoute: SettingsLibrariesRoute,
 }
 

@@ -14,9 +14,6 @@ export const useLibraries = (filters?: {
   return useQuery<LibraryListResponse>({
     queryKey: ["libraries", filters],
     queryFn: async () => {
-      // Small delay to ensure React is fully initialized
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
       try {
         const params = new URLSearchParams();
         if (filters?.isLibrary !== undefined) {
@@ -32,11 +29,16 @@ export const useLibraries = (filters?: {
         return response.data;
       } catch (error) {
         console.error("Error fetching libraries:", error);
+        // Return empty array as fallback to prevent component crashes
         throw error;
       }
     },
     enabled: true,
     retry: 1,
+    retryDelay: 1000,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
   });
 };
 

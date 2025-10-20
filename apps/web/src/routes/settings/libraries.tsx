@@ -94,8 +94,9 @@ function RouteComponent() {
 
   const [editingLibrary, setEditingLibrary] = useState<Library | null>(null);
   const [deletingLibrary, setDeletingLibrary] = useState<Library | null>(null);
+  const [creatingLibrary, setCreatingLibrary] = useState(false);
 
-  const form = useForm({
+  const updateForm = useForm({
     defaultValues: {
       name: "",
       description: "",
@@ -107,7 +108,6 @@ function RouteComponent() {
     onSubmit: async ({ value }) => {
       if (!editingLibrary) return;
 
-      // Validate using zod
       try {
         const validatedData = libraryUpdateSchema.parse(value);
         await updateLibrary.mutateAsync({
@@ -125,14 +125,40 @@ function RouteComponent() {
     },
   });
 
+  const createForm = useForm({
+    defaultValues: {
+      name: "",
+      description: "",
+      posterUrl: "",
+      backdropUrl: "",
+      libraryPath: "",
+      libraryType: undefined as MediaType | undefined,
+    } as LibraryUpdateForm,
+    onSubmit: async ({ value }) => {
+      try {
+        const validatedData = libraryUpdateSchema.parse(value);
+        // TODO: Implement create library API call when endpoint is available
+        console.log("Would create library with data:", validatedData);
+        setCreatingLibrary(false);
+      } catch (error) {
+        console.error("Failed to create library:", error);
+      }
+    },
+  });
+
   const handleEdit = (library: Library) => {
     setEditingLibrary(library);
-    form.setFieldValue("name", library.name);
-    form.setFieldValue("description", library.description || "");
-    form.setFieldValue("posterUrl", library.posterUrl || "");
-    form.setFieldValue("backdropUrl", library.backdropUrl || "");
-    form.setFieldValue("libraryPath", library.libraryPath || "");
-    form.setFieldValue("libraryType", library.libraryType || undefined);
+    updateForm.setFieldValue("name", library.name);
+    updateForm.setFieldValue("description", library.description || "");
+    updateForm.setFieldValue("posterUrl", library.posterUrl || "");
+    updateForm.setFieldValue("backdropUrl", library.backdropUrl || "");
+    updateForm.setFieldValue("libraryPath", library.libraryPath || "");
+    updateForm.setFieldValue("libraryType", library.libraryType || undefined);
+  };
+
+  const handleCreateNew = () => {
+    setCreatingLibrary(true);
+    createForm.reset();
   };
 
   const handleDelete = async () => {
@@ -147,54 +173,83 @@ function RouteComponent() {
   };
 
   if (isLoading) {
-    return <div className="p-6">Loading libraries...</div>;
+    return (
+      <div className="flex-1 p-6">
+        <div className="flex items-center justify-center py-16">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <span>Loading libraries...</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="p-6 text-red-600">
-        Error loading libraries: {error.message}
+      <div className="flex-1 p-6">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
+            <Icon name="warning" size={32} className="text-destructive" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Error loading libraries
+          </h3>
+          <p className="text-destructive max-w-sm">{error.message}</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex-1 p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold mb-2">Libraries</h2>
-        <p className="text-muted-foreground">
-          Manage your media libraries. You can update library information and
-          delete unused libraries.
-        </p>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-semibold mb-2 text-foreground">
+              Libraries
+            </h2>
+            <p className="text-muted-foreground">
+              Manage your media libraries. You can update library information
+              and delete unused libraries.
+            </p>
+          </div>
+          {libraries && libraries.length > 0 && (
+            <Button onClick={handleCreateNew} className="gap-2">
+              <Icon name="add" size={20} />
+              Create Library
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6">
         {libraries?.map((library) => (
           <div
             key={library.id}
-            className="group relative bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/20 transition-all duration-200 hover:-translate-y-1"
+            className="group relative bg-card border-2 border-border rounded-2xl p-6 transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
           >
             {/* Header with icon and title */}
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary">
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start gap-4">
+                <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-primary/5 border border-primary/10 text-primary flex-shrink-0">
                   {getMediaTypeIcon(library.libraryType)}
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-foreground mb-1">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-semibold text-foreground mb-2 leading-tight">
                     {library.name}
                   </h3>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Badge
                       variant={library.isLibrary ? "default" : "secondary"}
-                      className="text-xs"
+                      className="text-xs font-medium"
                     >
                       {library.isLibrary ? "Library" : "Collection"}
                     </Badge>
                     {library.libraryType && (
                       <Badge
                         variant="outline"
-                        className="text-xs flex items-center gap-1"
+                        className="text-xs flex items-center gap-1.5 border-primary/20"
                       >
                         {getMediaTypeIcon(library.libraryType)}
                         {library.libraryType.replace("_", " ")}
@@ -204,44 +259,49 @@ function RouteComponent() {
                 </div>
               </div>
 
-              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 ml-4">
                 <Button
                   variant="secondary"
                   size="icon"
                   onClick={() => handleEdit(library)}
                   title="Edit library"
+                  className="h-10 w-10 hover:bg-primary/5 hover:border-primary/20"
                 >
-                  <Icon name="edit" size={20} />
+                  <Icon name="edit" size={18} />
                 </Button>
                 <Button
                   variant="secondary"
                   size="icon"
                   onClick={() => setDeletingLibrary(library)}
-                  className="hover:bg-destructive/10 hover:text-destructive"
+                  className="h-10 w-10 hover:bg-destructive/5 hover:border-destructive/20 hover:text-destructive"
                   title="Delete library"
                 >
-                  <Icon name="delete" size={20} />
+                  <Icon name="delete" size={18} />
                 </Button>
               </div>
             </div>
 
             {/* Description */}
             {library.description && (
-              <p className="text-muted-foreground mb-4 leading-relaxed">
-                {library.description}
-              </p>
+              <div className="mb-6">
+                <p className="text-muted-foreground leading-relaxed text-sm">
+                  {library.description}
+                </p>
+              </div>
             )}
 
             {/* Stats and info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
-              <div className="flex items-center gap-3">
-                <Icon
-                  name="video_library"
-                  size={20}
-                  className="text-muted-foreground"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-border/50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/5 border border-primary/10">
+                  <Icon
+                    name="video_library"
+                    size={18}
+                    className="text-primary"
+                  />
+                </div>
                 <div>
-                  <div className="text-sm font-medium text-foreground">
+                  <div className="text-sm font-semibold text-foreground">
                     {formatMediaCount(library.mediaCount)}
                   </div>
                   <div className="text-xs text-muted-foreground">
@@ -251,14 +311,16 @@ function RouteComponent() {
               </div>
 
               {library.libraryPath && (
-                <div className="flex items-center gap-3">
-                  <Icon
-                    name="folder_open"
-                    size={20}
-                    className="text-muted-foreground"
-                  />
-                  <div>
-                    <div className="text-sm font-medium text-foreground truncate">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/5 border border-primary/10">
+                    <Icon
+                      name="folder_open"
+                      size={18}
+                      className="text-primary"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-foreground truncate">
                       {library.libraryPath.split("/").pop() ||
                         library.libraryPath}
                     </div>
@@ -269,14 +331,16 @@ function RouteComponent() {
                 </div>
               )}
 
-              <div className="flex items-center gap-3">
-                <Icon
-                  name="calendar_today"
-                  size={20}
-                  className="text-muted-foreground"
-                />
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/5 border border-primary/10">
+                  <Icon
+                    name="calendar_today"
+                    size={18}
+                    className="text-primary"
+                  />
+                </div>
                 <div>
-                  <div className="text-sm font-medium text-foreground">
+                  <div className="text-sm font-semibold text-foreground">
                     {new Date(library.createdAt).toLocaleDateString()}
                   </div>
                   <div className="text-xs text-muted-foreground">Created</div>
@@ -287,21 +351,21 @@ function RouteComponent() {
         ))}
 
         {libraries?.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-              <Icon
-                name="library_books"
-                size={32}
-                className="text-muted-foreground"
-              />
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/5 border border-primary/10 mb-6">
+              <Icon name="library_books" size={40} className="text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
+            <h3 className="text-2xl font-semibold text-foreground mb-3">
               No libraries found
             </h3>
-            <p className="text-muted-foreground max-w-sm">
+            <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
               You don't have any libraries set up yet. Create your first library
               to get started managing your media collection.
             </p>
+            <Button onClick={handleCreateNew} size="lg" className="gap-2">
+              <Icon name="add" size={20} />
+              Create Your First Library
+            </Button>
           </div>
         )}
       </div>
@@ -313,7 +377,9 @@ function RouteComponent() {
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Library</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Edit Library
+            </DialogTitle>
             <DialogDescription>
               Update the library information below.
             </DialogDescription>
@@ -323,11 +389,11 @@ function RouteComponent() {
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              form.handleSubmit();
+              updateForm.handleSubmit();
             }}
             className="space-y-4"
           >
-            <form.Field
+            <updateForm.Field
               name="name"
               validators={{
                 onChange: ({ value }) => {
@@ -363,9 +429,9 @@ function RouteComponent() {
                   </FieldError>
                 </Field>
               )}
-            </form.Field>
+            </updateForm.Field>
 
-            <form.Field
+            <updateForm.Field
               name="description"
               validators={{
                 onChange: ({ value }) => {
@@ -402,9 +468,9 @@ function RouteComponent() {
                   </FieldError>
                 </Field>
               )}
-            </form.Field>
+            </updateForm.Field>
 
-            <form.Field name="libraryType">
+            <updateForm.Field name="libraryType">
               {(field) => (
                 <Field>
                   <FieldLabel>Library Type</FieldLabel>
@@ -432,9 +498,9 @@ function RouteComponent() {
                   </FieldContent>
                 </Field>
               )}
-            </form.Field>
+            </updateForm.Field>
 
-            <form.Field
+            <updateForm.Field
               name="posterUrl"
               validators={{
                 onChange: ({ value }) => {
@@ -472,9 +538,9 @@ function RouteComponent() {
                   </FieldError>
                 </Field>
               )}
-            </form.Field>
+            </updateForm.Field>
 
-            <form.Field
+            <updateForm.Field
               name="backdropUrl"
               validators={{
                 onChange: ({ value }) => {
@@ -512,9 +578,9 @@ function RouteComponent() {
                   </FieldError>
                 </Field>
               )}
-            </form.Field>
+            </updateForm.Field>
 
-            <form.Field
+            <updateForm.Field
               name="libraryPath"
               validators={{
                 onChange: ({ value }) => {
@@ -554,7 +620,7 @@ function RouteComponent() {
                   </FieldError>
                 </Field>
               )}
-            </form.Field>
+            </updateForm.Field>
 
             <DialogFooter>
               <Button
@@ -579,7 +645,9 @@ function RouteComponent() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Library</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Delete Library
+            </DialogTitle>
             <DialogDescription>
               Are you sure you want to delete "{deletingLibrary?.name}"? This
               action cannot be undone.
@@ -603,6 +671,152 @@ function RouteComponent() {
               {deleteLibrary.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Library Dialog */}
+      <Dialog
+        open={creatingLibrary}
+        onOpenChange={(open) => !open && setCreatingLibrary(false)}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              Create New Library
+            </DialogTitle>
+            <DialogDescription>
+              Create a new library to organize your media.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              createForm.handleSubmit();
+            }}
+            className="space-y-4"
+          >
+            <createForm.Field
+              name="name"
+              validators={{
+                onChange: ({ value }) => {
+                  try {
+                    libraryUpdateSchema.shape.name.parse(value);
+                    return undefined;
+                  } catch (error) {
+                    if (error instanceof z.ZodError) {
+                      return error.issues[0]?.message || "Invalid name";
+                    }
+                    return "Invalid name";
+                  }
+                },
+              }}
+            >
+              {(field) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="My Library"
+                      aria-invalid={field.state.meta.errors.length > 0}
+                    />
+                  </FieldContent>
+                  <FieldError>
+                    {field.state.meta.errors.map((error, index) => (
+                      <div key={index}>{error}</div>
+                    ))}
+                  </FieldError>
+                </Field>
+              )}
+            </createForm.Field>
+
+            <createForm.Field
+              name="description"
+              validators={{
+                onChange: ({ value }) => {
+                  try {
+                    libraryUpdateSchema.shape.description.parse(value);
+                    return undefined;
+                  } catch (error) {
+                    if (error instanceof z.ZodError) {
+                      return error.issues[0]?.message || "Invalid description";
+                    }
+                    return "Invalid description";
+                  }
+                },
+              }}
+            >
+              {(field) => (
+                <Field>
+                  <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+                  <FieldContent>
+                    <Textarea
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      rows={3}
+                      placeholder="Optional description for your library"
+                      aria-invalid={field.state.meta.errors.length > 0}
+                    />
+                  </FieldContent>
+                  <FieldError>
+                    {field.state.meta.errors.map((error, index) => (
+                      <div key={index}>{error}</div>
+                    ))}
+                  </FieldError>
+                </Field>
+              )}
+            </createForm.Field>
+
+            <createForm.Field name="libraryType">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Library Type</FieldLabel>
+                  <FieldContent>
+                    <Select
+                      value={field.state.value || "none"}
+                      onValueChange={(value) =>
+                        field.handleChange(
+                          value === "none" ? undefined : (value as MediaType)
+                        )
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select library type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {MEDIA_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type.replace("_", " ")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FieldContent>
+                </Field>
+              )}
+            </createForm.Field>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreatingLibrary(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Create Library</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

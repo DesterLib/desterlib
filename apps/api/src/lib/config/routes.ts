@@ -4,12 +4,13 @@ import fs from "fs";
 import mainRoutes from "../../routes";
 import v1Routes from "../../routes/v1";
 import { swaggerUi, specs } from "./swagger";
+import { config } from "../../config/env";
 
 function findWebDistPath(): string {
   const possiblePaths = [
     path.resolve(process.cwd(), "apps/web/dist"),
     path.resolve(process.cwd(), "../web/dist"),
-    path.resolve("/app/apps/web/dist"), // Docker path
+    path.resolve("/app/apps/web/dist"),
   ];
 
   const webDistPath = possiblePaths.find((dirPath) => {
@@ -30,55 +31,57 @@ function findWebDistPath(): string {
 }
 
 export function setupRoutes(app: express.Application) {
-  // Swagger documentation
   app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(specs));
-
-  // API v1 routes
   app.use("/api/v1", v1Routes);
-
-  // Main routes (health, api info)
   app.use("/", mainRoutes);
+  if (config.nodeEnv !== "development") {
+    const webDistPath = findWebDistPath();
 
-  // Serve static files from the built web app
-  const webDistPath = findWebDistPath();
+    app.use(
+      express.static(webDistPath, {
+        index: false,
+        maxAge: "1y",
+        etag: true,
+        lastModified: true,
+        setHeaders: (res, filePath) => {
+          const ext = path.extname(filePath);
+          if (ext === ".js") {
+            res.setHeader("Content-Type", "application/javascript");
+          } else if (ext === ".css") {
+            res.setHeader("Content-Type", "text/css");
+          }
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.setHeader(
+            "Access-Control-Allow-Methods",
+            "GET, POST, PUT, DELETE, OPTIONS"
+          );
+          res.setHeader(
+            "Access-Control-Allow-Headers",
+            "Content-Type, Authorization"
+          );
+        },
+      })
+    );
+    app.get("*", (req, res) => {
+      if (req.path.startsWith("/api/") || req.path === "/health") {
+        return res.status(404).json({ error: "API endpoint not found" });
+      }
 
-  // Serve static files with proper caching
-  app.use(
-    express.static(webDistPath, {
-      index: false,
-      maxAge: "1y",
-      etag: true,
-      lastModified: true,
-      setHeaders: (res, filePath) => {
-        // Set proper content types
-        const ext = path.extname(filePath);
-        if (ext === ".js") {
-          res.setHeader("Content-Type", "application/javascript");
-        } else if (ext === ".css") {
-          res.setHeader("Content-Type", "text/css");
-        }
-        // CORS headers for development
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader(
-          "Access-Control-Allow-Methods",
-          "GET, POST, PUT, DELETE, OPTIONS"
-        );
-        res.setHeader(
-          "Access-Control-Allow-Headers",
-          "Content-Type, Authorization"
-        );
-      },
-    })
-  );
-
-  // SPA fallback - serve index.html for non-API routes
-  app.get("*", (req, res) => {
-    if (req.path.startsWith("/api/") || req.path === "/health") {
-      return res.status(404).json({ error: "API endpoint not found" });
-    }
-
-    res.setHeader("Content-Type", "text/html");
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.sendFile(path.join(webDistPath, "index.html"));
-  });
+      res.setHeader("Content-Type", "text/html");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.sendFile(path.join(webDistPath, "index.html"));
+    });
+  } else {
+    app.get("*", (req, res) => {
+      if (req.path.startsWith("/api/") || req.path === "/health") {
+        return res.status(404).json({ error: "API endpoint not found" });
+      }
+      res.status(200).json({
+        message: "DesterLib API is running in development mode",
+        frontend: "Please run the frontend development server separately",
+        apiDocs: "/api/docs",
+        health: "/health",
+      });
+    });
+  }
 }

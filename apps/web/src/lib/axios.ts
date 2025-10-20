@@ -1,10 +1,6 @@
 import axios from "axios";
 
-// In development, use the Vite proxy to avoid CORS issues
-// In production, use the full API URL
-const API_BASE_URL = import.meta.env.DEV
-  ? "" // Use relative URLs in dev to leverage Vite proxy
-  : import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_BASE_URL = import.meta.env.DEV ? "http://localhost:3001" : "";
 
 export const axiosClient = axios.create({
   baseURL: API_BASE_URL,
@@ -13,18 +9,14 @@ export const axiosClient = axios.create({
     Accept: "application/json",
   },
   timeout: 10000,
-  withCredentials: true, // Enable credentials for CORS
+  withCredentials: true,
 });
 
-// Request interceptor
 axiosClient.interceptors.request.use(
   (config) => {
-    console.log("Axios request URL:", config.baseURL + (config.url || ""));
-    // You can add auth tokens here if needed
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    const fullUrl = config.baseURL + (config.url || "");
+    console.log("Axios request URL:", fullUrl);
+
     return config;
   },
   (error) => {
@@ -32,21 +24,31 @@ axiosClient.interceptors.request.use(
   }
 );
 
-// Response interceptor
 axiosClient.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    // Handle errors globally
     if (error.response) {
-      // Server responded with error
-      console.error("API Error:", error.response.data);
+      console.error("API Error:", {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        url: error.config?.url,
+      });
     } else if (error.request) {
-      // Request made but no response
-      console.error("Network Error:", error.message);
+      console.error("Network Error - API server may not be running:", {
+        message: error.message,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        fullURL: (error.config?.baseURL || "") + (error.config?.url || ""),
+      });
+
+      if (import.meta.env.DEV) {
+        console.error("Make sure the API server is running on port 3001");
+      }
     } else {
-      console.error("Error:", error.message);
+      console.error("Request setup error:", error.message);
     }
     return Promise.reject(error);
   }
