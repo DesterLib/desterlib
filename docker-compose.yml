@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: desterlib-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: desterlib_prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: desterlib-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - apps/api/.env
+    environment:
+      # Database connection variables for the startup script
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: desterlib_prod
+      # Application environment
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/desterlib_prod?schema=public
+      NODE_ENV: production
+      PORT: 3001
+      FRONTEND_URL: http://localhost:3001
+    ports:
+      # Bind to all interfaces (0.0.0.0) to allow mobile app connections
+      # Mobile apps will use the host machine's IP address
+      - "0.0.0.0:3001:3001"
+    volumes:
+      # Mount your media library directory (read-only for security)
+      # The application automatically handles path mapping between host and container
+      - /Volumes/External/Library/Media:/media:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:

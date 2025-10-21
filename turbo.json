@@ -1,0 +1,69 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "tui",
+  "globalPassThroughEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "PORT",
+    "FRONTEND_URL",
+    "JWT_SECRET",
+    "JWT_EXPIRES_IN",
+    "RATE_LIMIT_WINDOW_MS",
+    "RATE_LIMIT_MAX",
+    "ENABLE_ROUTE_GUARDS",
+    "TMDB_API_KEY",
+    "VITE_API_URL"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "inputs": ["$TURBO_DEFAULT$", ".eslintrc.*", "eslint.config.*"]
+    },
+    "lint:fix": {
+      "dependsOn": ["^lint:fix"],
+      "cache": false
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"],
+      "inputs": ["$TURBO_DEFAULT$", "tsconfig.json"]
+    },
+    "format": {
+      "inputs": ["$TURBO_DEFAULT$", ".prettierrc*", "prettier.config.*"],
+      "outputs": []
+    },
+    "format:check": {
+      "inputs": ["$TURBO_DEFAULT$", ".prettierrc*", "prettier.config.*"],
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"]
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"]
+    },
+    "db:generate": {
+      "inputs": ["prisma/schema.prisma", "package.json"],
+      "outputs": ["generated/**"]
+    },
+    "db:push": {
+      "dependsOn": ["db:generate"],
+      "cache": false
+    },
+    "db:migrate": {
+      "dependsOn": ["db:generate"],
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
