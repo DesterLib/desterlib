@@ -3,6 +3,7 @@ export * from "./sanitization";
 export * from "./extractExternalId";
 export * from "./genreMapping";
 export * from "./serialization";
+export * from "./pathMapping";
 export { default as logger } from "./logger";
 
 // Auth utilities go here

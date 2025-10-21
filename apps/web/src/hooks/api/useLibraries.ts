@@ -5,6 +5,9 @@ import type {
   LibraryUpdateRequest,
   LibraryUpdateResponse,
   LibraryDeleteResponse,
+  LibraryCreateRequest,
+  ScanPathRequest,
+  ScanPathResponse,
 } from "@/types/api";
 
 export const useLibraries = (filters?: {
@@ -75,6 +78,38 @@ export const useDeleteLibrary = () => {
     },
     onSuccess: () => {
       // Invalidate and refetch libraries
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+    },
+  });
+};
+
+export const useCreateLibrary = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<ScanPathResponse, Error, LibraryCreateRequest>({
+    mutationFn: async (libraryData) => {
+      if (!libraryData.libraryPath) {
+        throw new Error(
+          "Library path is required to create and scan a library"
+        );
+      }
+
+      const scanData: ScanPathRequest = {
+        path: libraryData.libraryPath,
+        options: {
+          libraryName: libraryData.name,
+          mediaType: libraryData.libraryType === "TV_SHOW" ? "tv" : "movie",
+        },
+      };
+
+      const response = await axiosClient.post<ScanPathResponse>(
+        "/api/v1/scan/path",
+        scanData
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch libraries to get the newly created library
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
     },
   });

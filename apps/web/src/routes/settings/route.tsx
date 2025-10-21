@@ -7,6 +7,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
@@ -21,9 +22,15 @@ const SettingsLink = ({
   label: string;
   icon: string;
 }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+
   return (
     <Link
-      className="hover:bg-gray-100 h-10 px-4 rounded-xl transition-all group hover:scale-105 flex items-center justify-start"
+      className={cn(
+        "h-10 px-4 rounded-xl transition-all group flex items-center justify-start",
+        isActive ? "bg-white text-black" : "hover:bg-white/10 hover:scale-105"
+      )}
       to={to}
     >
       {icon && (
@@ -31,10 +38,18 @@ const SettingsLink = ({
           name={icon}
           size={24}
           filled
-          className="group-hover:text-black transition-colors duration-200 mr-2"
+          className={cn(
+            "transition-colors duration-200 mr-2",
+            isActive ? "text-black" : "group-hover:text-white"
+          )}
         />
       )}
-      <span className="text-base group-hover:text-black transition-colors duration-200">
+      <span
+        className={cn(
+          "text-base transition-colors duration-200",
+          isActive ? "text-black" : "group-hover:text-white"
+        )}
+      >
         {label}
       </span>
     </Link>
@@ -57,11 +72,9 @@ function RouteComponent() {
 
   return (
     <div className="max-w-[1440px] mx-auto px-6 flex gap-6 flex-col pt-[120px]">
-      <div className="flex flex-col gap-4">
-        <h1 className="text-xl">Settings</h1>
-      </div>
-      <section className="flex gap-6">
-        <nav className="flex flex-col gap-4 max-w-[280px] w-full">
+      <section className="flex gap-6 bg-card rounded-2xl">
+        <nav className="flex flex-col gap-4 max-w-[280px] w-full p-6 border-r border-border">
+          <h1 className="text-xl">Settings</h1>
           <SettingsLink
             to="/settings/libraries"
             label="Libraries"

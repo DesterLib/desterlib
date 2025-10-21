@@ -7,6 +7,7 @@ declare global {
   interface Window {
     isFlutterWebView?: boolean;
     flutterPlayVideo?: (videoData: FlutterVideoData) => Promise<void>;
+    flutterOpenSettings?: () => Promise<void>;
   }
 }
 
@@ -46,6 +47,27 @@ export const playVideoInFlutter = async (
     console.log("✅ Video playback initiated in Flutter");
   } catch (error) {
     console.error("❌ Failed to play video in Flutter:", error);
+    throw error;
+  }
+};
+
+/**
+ * Open native Flutter settings page if available, otherwise fallback to error
+ */
+export const openSettingsInFlutter = async (): Promise<void> => {
+  // Check if we're in Flutter WebView and the bridge is available
+  if (!isFlutterWebView() || !window.flutterOpenSettings) {
+    console.warn("Flutter bridge not available - cannot open settings");
+    throw new Error("Flutter bridge not available");
+  }
+
+  console.log("⚙️ Calling Flutter settings page");
+
+  try {
+    await window.flutterOpenSettings();
+    console.log("✅ Settings page opened in Flutter");
+  } catch (error) {
+    console.error("❌ Failed to open settings in Flutter:", error);
     throw error;
   }
 };

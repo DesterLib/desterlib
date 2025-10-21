@@ -1,5 +1,5 @@
 import express from "express";
-import { config } from "../../config/env";
+import { config } from "../../core/config/env";
 import { logger } from "../utils";
 
 // 404 handler

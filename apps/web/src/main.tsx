@@ -13,6 +13,7 @@ declare global {
   interface Window {
     isFlutterWebView?: boolean;
     flutterPlayVideo?: (videoData: FlutterVideoData) => Promise<void>;
+    flutterOpenSettings?: () => Promise<void>;
     __REACT_ROOT_MOUNTED__?: boolean;
   }
 }

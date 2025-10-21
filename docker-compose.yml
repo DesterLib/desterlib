@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -43,10 +41,23 @@ services:
       PORT: 3001
       FRONTEND_URL: http://localhost:3001
     ports:
+      # Bind to all interfaces (0.0.0.0) to allow mobile app connections
+      # Mobile apps will use the host machine's IP address
       - "0.0.0.0:3001:3001"
-    # Production: no volume mounts, uses built container
-    volumes: []
-    # Use the default CMD from Dockerfile which runs the startup script
+    volumes:
+      # Mount your media library directory (read-only for security)
+      # The application automatically handles path mapping between host and container
+      - /Volumes/External/Library/Media:/media:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres_data:

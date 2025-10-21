@@ -7,6 +7,15 @@ declare global {
       // Auth user property goes here
     }
   }
+
+  namespace NodeJS {
+    interface Process {
+      pkg?: {
+        entrypoint: string;
+        defaultEntrypoint: string;
+      };
+    }
+  }
 }
 
 export {};

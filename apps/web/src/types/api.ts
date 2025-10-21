@@ -148,6 +148,15 @@ export type TVShowsListResponse = TVShowWithMedia[];
 
 export type LibraryListResponse = Library[];
 
+export interface LibraryCreateRequest {
+  name: string;
+  description?: string;
+  posterUrl?: string;
+  backdropUrl?: string;
+  libraryPath?: string;
+  libraryType?: MediaType;
+}
+
 export interface LibraryUpdateRequest {
   id: string;
   name?: string;
@@ -156,6 +165,12 @@ export interface LibraryUpdateRequest {
   backdropUrl?: string;
   libraryPath?: string;
   libraryType?: MediaType;
+}
+
+export interface LibraryCreateResponse {
+  success: boolean;
+  library: Library;
+  message: string;
 }
 
 export interface LibraryUpdateResponse {
@@ -171,3 +186,83 @@ export interface LibraryDeleteResponse {
   mediaDeleted: number;
   message: string;
 }
+
+// Settings Types
+export interface UserSettings {
+  tmdbApiKey?: string;
+  port: number;
+  enableRouteGuards: boolean;
+  firstRun: boolean;
+}
+
+export interface SettingsGetResponse {
+  success: boolean;
+  settings: UserSettings;
+}
+
+export interface SettingsUpdateRequest {
+  tmdbApiKey?: string;
+  port?: number;
+  enableRouteGuards?: boolean;
+}
+
+export interface SettingsUpdateResponse {
+  success: boolean;
+  message: string;
+  settings: UserSettings;
+}
+
+export interface CompleteFirstRunResponse {
+  success: boolean;
+  message: string;
+}
+
+// Scan Types
+export interface ScanPathRequest {
+  path: string;
+  options?: {
+    maxDepth?: number;
+    mediaType?: "movie" | "tv";
+    fileExtensions?: string[];
+    libraryName?: string;
+    rescan?: boolean;
+  };
+}
+
+export interface ScanPathResponse {
+  success: boolean;
+  message: string;
+  libraryId: string;
+  libraryName: string;
+  totalFiles: number;
+  totalSaved: number;
+  cacheStats: {
+    metadataFromCache: number;
+    metadataFromTMDB: number;
+    totalMetadataFetched: number;
+  };
+}
+
+export interface ScanProgress {
+  type: "scan:progress";
+  phase: "scanning" | "fetching-metadata" | "fetching-episodes" | "saving";
+  progress: number; // 0-100
+  current: number;
+  total: number;
+  message: string;
+  libraryId?: string;
+}
+
+export interface ScanComplete {
+  type: "scan:complete";
+  libraryId: string;
+  message: string;
+}
+
+export interface ScanError {
+  type: "scan:error";
+  libraryId?: string;
+  error: string;
+}
+
+export type WebSocketMessage = ScanProgress | ScanComplete | ScanError;

@@ -1,9 +1,10 @@
 import express, { Router } from "express";
-import scanRoutes from "./scan/scan.routes";
-import libraryRoutes from "./library/library.routes";
-import moviesRoutes from "./movies/movies.routes";
-import tvshowsRoutes from "./tvshows/tvshows.routes";
-import streamRoutes from "./stream/stream.routes";
+import scanRoutes from "../../domains/scan/scan.routes";
+import libraryRoutes from "../../domains/library/library.routes";
+import moviesRoutes from "../../domains/movies/movies.routes";
+import tvshowsRoutes from "../../domains/tvshows/tvshows.routes";
+import streamRoutes from "../../domains/stream/stream.routes";
+import settingsRoutes from "../../domains/settings/settings.routes";
 
 const router: Router = express.Router();
 
@@ -21,5 +22,8 @@ router.use("/tvshows", tvshowsRoutes);
 
 // Stream routes - centralized media streaming
 router.use("/stream", streamRoutes);
+
+// Settings routes
+router.use("/settings", settingsRoutes);
 
 export default router;
