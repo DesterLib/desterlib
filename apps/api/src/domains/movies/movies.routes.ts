@@ -149,6 +149,10 @@ router.get("/", moviesControllers.getMovies);
  *                   type: string
  *                   format: date-time
  *                   nullable: true
+ *                 streamUrl:
+ *                   type: string
+ *                   description: URL to stream the movie
+ *                   example: "/api/v1/stream/clx123abc456def789"
  *                 mediaId:
  *                   type: string
  *                   example: "clx987zyx654wvu321"

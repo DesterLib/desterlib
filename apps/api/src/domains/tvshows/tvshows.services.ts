@@ -27,6 +27,20 @@ export const tvshowsServices = {
     if (!tvshow) {
       throw new Error(`TV Show with ID ${id} not found`);
     }
-    return serializeBigInt(tvshow) as TVShowResponse;
+    const serialized = serializeBigInt(tvshow) as TVShowResponse;
+
+    // Add streamUrl to each episode
+    const seasonsWithStreamUrls = serialized.seasons.map((season) => ({
+      ...season,
+      episodes: season.episodes.map((episode) => ({
+        ...episode,
+        streamUrl: `/api/v1/stream/${episode.id}`,
+      })),
+    }));
+
+    return {
+      ...serialized,
+      seasons: seasonsWithStreamUrls,
+    };
   },
 };

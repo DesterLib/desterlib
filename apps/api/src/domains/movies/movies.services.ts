@@ -12,7 +12,9 @@ export const moviesServices = {
     return serializeBigInt(movies) as MoviesListResponse;
   },
 
-  getMovieById: async (id: string): Promise<MovieResponse> => {
+  getMovieById: async (
+    id: string
+  ): Promise<MovieResponse & { streamUrl: string }> => {
     const movie = await prisma.movie.findUnique({
       where: { id },
       include: {
@@ -22,6 +24,10 @@ export const moviesServices = {
     if (!movie) {
       throw new Error(`Movie with ID ${id} not found`);
     }
-    return serializeBigInt(movie) as MovieResponse;
+    const serialized = serializeBigInt(movie) as MovieResponse;
+    return {
+      ...serialized,
+      streamUrl: `/api/v1/stream/${id}`,
+    };
   },
 };

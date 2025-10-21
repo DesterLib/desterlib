@@ -15,7 +15,6 @@ COPY turbo.json ./
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY apps/api/package.json ./apps/api/
-COPY apps/web/package.json ./apps/web/
 
 # Install dependencies (with fallback for optional deps)
 RUN pnpm install --no-frozen-lockfile
@@ -27,25 +26,8 @@ COPY . .
 WORKDIR /app/apps/api
 RUN npx prisma generate
 
-# Build the web app first
+# Build the API only
 WORKDIR /app
-RUN pnpm build --filter=web
-
-# Copy web dist files to API directory for serving
-# This ensures static files are available in the correct location for serving
-RUN mkdir -p apps/api/web && \
-    if [ -d "apps/web/dist" ]; then \
-        cp -r apps/web/dist/* apps/api/web/dist/ 2>/dev/null || \
-        cp -r apps/web/dist apps/api/web/dist; \
-    else \
-        echo "Warning: apps/web/dist directory not found after build"; \
-    fi
-
-# Verify the static files are in place for debugging
-RUN ls -la apps/api/web/dist/ && echo "Static files copied successfully" && \
-    find apps/api/web/dist -name "*.js" -o -name "*.css" -o -name "*.html" | head -10
-
-# Build the API
 RUN pnpm build --filter=api
 
 # Create startup script for database initialization
@@ -70,15 +52,6 @@ npx prisma db push --accept-data-loss
 cd /app/apps/api
 echo "Starting application..."
 echo "Current working directory: $(pwd)"
-echo "Checking for web dist directory:"
-if [ -d "web/dist" ]; then
-  echo "Web dist directory found, contents:"
-  ls -la web/dist/ | head -20
-else
-  echo "WARNING: Web dist directory not found at expected location"
-  echo "Attempting to locate web files..."
-  find /app -name "index.html" -path "*/dist/*" 2>/dev/null || echo "No web dist found"
-fi
 
 echo "Starting DesterLib API server on port ${PORT:-3001}..."
 npm start
