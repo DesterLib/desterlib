@@ -1,1 +1,1 @@
-pnpm lint && pnpm check-types
+/Users/alken/Library/pnpm/pnpm lint && /Users/alken/Library/pnpm/pnpm check-types
