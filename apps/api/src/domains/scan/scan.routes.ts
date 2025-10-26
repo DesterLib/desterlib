@@ -45,7 +45,6 @@ const router: Router = express.Router();
  *                     type: string
  *                     enum: [movie, tv]
  *                     description: Media type for TMDB API calls (movie or tv). Required for proper metadata fetching.
- *                     default: movie
  *                     example: tv
  *                   fileExtensions:
  *                     type: array

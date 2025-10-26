@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import os from "os";
 import { config } from "../../core/config/env";
 import { sanitizeInput } from "./sanitization";
 
@@ -11,6 +12,24 @@ const limiter = rateLimit({
   max: config.rateLimitMax,
   message: "Too many requests from this IP, please try again later.",
 });
+
+// Get local machine IP address for LAN access
+function getLocalIpAddress(): string {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    const iface = interfaces[name];
+    if (!iface) continue;
+    for (const addr of iface) {
+      // Skip internal and IPv6 addresses
+      if (addr.family === "IPv4" && !addr.internal) {
+        return addr.address;
+      }
+    }
+  }
+  return "127.0.0.1"; // Fallback to localhost
+}
+
+const localIp = getLocalIpAddress();
 
 export function setupMiddleware(app: express.Application) {
   // Only trust loopback proxies to satisfy express-rate-limit validation
@@ -32,15 +51,21 @@ export function setupMiddleware(app: express.Application) {
         if (!origin) return callback(null, true);
 
         const allowedOrigins = [
-          config.frontendUrl,
           "http://localhost:3000",
           "http://127.0.0.1:3000",
           "http://localhost:3001",
           "http://127.0.0.1:3001",
+          `http://${localIp}:3000`,
+          `http://${localIp}:3001`,
         ];
 
         // In development, also allow any localhost origin
         if (config.nodeEnv === "development" && origin.includes("localhost")) {
+          return callback(null, true);
+        }
+
+        // Allow the local machine IP with any port in development
+        if (config.nodeEnv === "development" && origin.includes(localIp)) {
           return callback(null, true);
         }
 
