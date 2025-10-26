@@ -7,6 +7,7 @@ import { tmdbServices } from "@/lib/providers/tmdb/tmdb.services";
 import type {
   TmdbType,
   TmdbEpisodeMetadata,
+  TmdbSeasonMetadata,
 } from "@/lib/providers/tmdb/tmdb.types";
 import prisma from "@/lib/database/prisma";
 import { MediaType } from "@/lib/database";
@@ -136,7 +137,7 @@ async function saveMediaToDatabase(
   mediaEntry: MediaEntry,
   mediaType: "movie" | "tv",
   tmdbApiKey: string,
-  episodeCache: Map<string, TmdbEpisodeMetadata>,
+  episodeCache: Map<string, TmdbSeasonMetadata>,
   libraryId: string,
   originalPath?: string
 ): Promise<void> {
@@ -371,54 +372,33 @@ async function saveMediaToDatabase(
           const episodeNumber = mediaEntry.extractedIds.episode;
           const fileTitleExtracted = mediaEntry.extractedIds.title;
 
-          // Fetch episode-specific metadata from TMDB if we have the info
+          // Extract episode-specific metadata from cached season data
           let episodeTitle = `Episode ${episodeNumber}`;
           let episodeDuration: number | null = null;
           let episodeAirDate: Date | null = null;
           let episodeStillPath: string | null = null;
 
           if (tmdbApiKey && mediaEntry.extractedIds.tmdbId) {
-            const episodeCacheKey = `${mediaEntry.extractedIds.tmdbId}-S${seasonNumber}E${episodeNumber}`;
+            const seasonCacheKey = `${mediaEntry.extractedIds.tmdbId}-S${seasonNumber}`;
 
-            // Check episode cache first
-            if (episodeCache.has(episodeCacheKey)) {
-              const cachedEpisode = episodeCache.get(episodeCacheKey);
-              if (cachedEpisode) {
-                episodeTitle = cachedEpisode.name || episodeTitle;
-                episodeDuration = cachedEpisode.runtime || null;
-                episodeAirDate = cachedEpisode.air_date
-                  ? new Date(cachedEpisode.air_date)
-                  : null;
-                episodeStillPath = getTmdbImageUrl(cachedEpisode.still_path);
-                logger.debug(
-                  `✓ Using cached episode metadata for S${seasonNumber}E${episodeNumber}`
+            // Check season cache for episode data
+            if (episodeCache.has(seasonCacheKey)) {
+              const cachedSeason = episodeCache.get(seasonCacheKey);
+              if (cachedSeason?.episodes) {
+                const episode = cachedSeason.episodes.find(
+                  (ep: TmdbEpisodeMetadata) => ep.episode_number === episodeNumber
                 );
-              }
-            } else {
-              try {
-                // Fetch specific episode data from TMDB
-                const episodeMetadata = await tmdbServices.getEpisode(
-                  mediaEntry.extractedIds.tmdbId,
-                  seasonNumber,
-                  episodeNumber,
-                  { apiKey: tmdbApiKey }
-                );
-
-                if (episodeMetadata) {
-                  episodeCache.set(episodeCacheKey, episodeMetadata);
-                  episodeTitle = episodeMetadata.name || episodeTitle;
-                  episodeDuration = episodeMetadata.runtime || null;
-                  episodeAirDate = episodeMetadata.air_date
-                    ? new Date(episodeMetadata.air_date)
+                if (episode) {
+                  episodeTitle = episode.name || episodeTitle;
+                  episodeDuration = episode.runtime || null;
+                  episodeAirDate = episode.air_date
+                    ? new Date(episode.air_date)
                     : null;
-                  episodeStillPath = getTmdbImageUrl(
-                    episodeMetadata.still_path
+                  episodeStillPath = getTmdbImageUrl(episode.still_path);
+                  logger.debug(
+                    `✓ Using cached episode metadata for S${seasonNumber}E${episodeNumber}`
                   );
                 }
-              } catch (error) {
-                logger.warn(
-                  `Could not fetch episode metadata for S${seasonNumber}E${episodeNumber}: ${error instanceof Error ? error.message : error}`
-                );
               }
             }
           }
@@ -600,7 +580,7 @@ export const scanServices = {
     const rateLimiter = createRateLimiter();
 
     const metadataCache = new Map<string, TmdbMetadata>();
-    const episodeMetadataCache = new Map<string, TmdbEpisodeMetadata>();
+    const episodeMetadataCache = new Map<string, TmdbSeasonMetadata>();
     logger.info("📁 Phase 1: Scanning directory structure...");
 
     wsManager.sendScanProgress({
@@ -766,6 +746,7 @@ export const scanServices = {
         });
 
         // Store existing metadata for these TMDB IDs
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         existingExternalIds.forEach((extId: any) => {
           const { media } = extId;
           // Convert database media to TMDB metadata format
@@ -956,93 +937,90 @@ export const scanServices = {
 
     // Phase 3: Fetch episode metadata for TV shows (with rate limiting)
     if (mediaType === "tv") {
-      logger.info("📺 Phase 3: Fetching episode metadata...");
+      logger.info("📺 Phase 3: Fetching season metadata...");
 
-      const episodesToFetch = mediaEntries.filter(
-        (e) =>
-          !e.isDirectory &&
-          e.extractedIds.tmdbId &&
-          e.extractedIds.season &&
-          e.extractedIds.episode
-      );
+      // Collect unique TV show + season combinations to fetch
+      const seasonsToFetch = new Set<string>();
+      for (const mediaEntry of mediaEntries) {
+        if (
+          !mediaEntry.isDirectory &&
+          mediaEntry.extractedIds.tmdbId &&
+          mediaEntry.extractedIds.season
+        ) {
+          const seasonKey = `${mediaEntry.extractedIds.tmdbId}-S${mediaEntry.extractedIds.season}`;
+          if (!episodeMetadataCache.has(seasonKey)) {
+            seasonsToFetch.add(seasonKey);
+          }
+        }
+      }
+
+      const uniqueSeasons = Array.from(seasonsToFetch);
 
       wsManager.sendScanProgress({
         phase: "fetching-episodes",
         progress: 50,
         current: 0,
-        total: episodesToFetch.length,
-        message: `Fetching episode metadata (${episodesToFetch.length} episodes)...`,
+        total: uniqueSeasons.length,
+        message: `Fetching season metadata (${uniqueSeasons.length} seasons)...`,
         libraryId: library.id,
       });
 
       const episodeFetchPromises: Promise<void>[] = [];
       let episodesFetched = 0;
 
-      for (const mediaEntry of mediaEntries) {
-        const { extractedIds, isDirectory } = mediaEntry;
+      for (const seasonKey of uniqueSeasons) {
+        const [tvIdStr, seasonInfoStr] = seasonKey.split("-S");
+        if (!tvIdStr || !seasonInfoStr) continue;
+        
+        const tvId = tvIdStr;
+        const seasonNumber = parseInt(seasonInfoStr, 10);
 
-        // Only fetch episode metadata for files (not directories) with season/episode info
-        if (
-          !isDirectory &&
-          extractedIds.tmdbId &&
-          extractedIds.season &&
-          extractedIds.episode
-        ) {
-          const episodeCacheKey = `${extractedIds.tmdbId}-S${extractedIds.season}E${extractedIds.episode}`;
+        const fetchPromise = rateLimiter.add(async () => {
+          try {
+            const seasonMetadata = await tmdbServices.getSeason(
+              tvId,
+              seasonNumber,
+              { apiKey: tmdbApiKey }
+            );
 
-          // Skip if already cached
-          if (episodeMetadataCache.has(episodeCacheKey)) {
-            continue;
-          }
-
-          const fetchPromise = rateLimiter.add(async () => {
-            try {
-              const episodeMetadata = await tmdbServices.getEpisode(
-                extractedIds.tmdbId!,
-                extractedIds.season!,
-                extractedIds.episode!,
-                { apiKey: tmdbApiKey }
-              );
-
-              if (episodeMetadata) {
-                episodeMetadataCache.set(episodeCacheKey, episodeMetadata);
-                episodesFetched++;
-
-                // Send progress update every 3 items or at 100%
-                if (
-                  episodesFetched % 3 === 0 ||
-                  episodesFetched === episodesToFetch.length
-                ) {
-                  const progress =
-                    50 +
-                    Math.floor((episodesFetched / episodesToFetch.length) * 25);
-                  wsManager.sendScanProgress({
-                    phase: "fetching-episodes",
-                    progress,
-                    current: episodesFetched,
-                    total: episodesToFetch.length,
-                    message: `Fetching episodes: ${episodesFetched}/${episodesToFetch.length}`,
-                    libraryId: library.id,
-                  });
-                }
-
-                logger.info(
-                  `✓ Fetched episode: S${extractedIds.season}E${extractedIds.episode} - ${episodeMetadata.name}`
-                );
-              }
-            } catch (error) {
-              logger.warn(
-                `Could not fetch episode S${extractedIds.season}E${extractedIds.episode}: ${error instanceof Error ? error.message : error}`
-              );
+            if (seasonMetadata) {
+              episodeMetadataCache.set(seasonKey, seasonMetadata);
               episodesFetched++;
+
+              // Send progress update every 3 items or at 100%
+              if (
+                episodesFetched % 3 === 0 ||
+                episodesFetched === uniqueSeasons.length
+              ) {
+                const progress =
+                  50 +
+                  Math.floor((episodesFetched / uniqueSeasons.length) * 25);
+                wsManager.sendScanProgress({
+                  phase: "fetching-episodes",
+                  progress,
+                  current: episodesFetched,
+                  total: uniqueSeasons.length,
+                  message: `Fetching seasons: ${episodesFetched}/${uniqueSeasons.length}`,
+                  libraryId: library.id,
+                });
+              }
+
+              logger.info(
+                `✓ Fetched season: S${seasonNumber} (${seasonMetadata.episodes?.length || 0} episodes)`
+              );
             }
-          });
-          episodeFetchPromises.push(fetchPromise);
-        }
+          } catch (error) {
+            logger.warn(
+              `Could not fetch season S${seasonNumber}: ${error instanceof Error ? error.message : error}`
+            );
+            episodesFetched++;
+          }
+        });
+        episodeFetchPromises.push(fetchPromise);
       }
 
       await Promise.allSettled(episodeFetchPromises);
-      logger.info("\n✓ Episode metadata fetching complete\n");
+      logger.info("\n✓ Season metadata fetching complete\n");
     }
 
     // Phase 4: Save to database

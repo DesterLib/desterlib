@@ -73,7 +73,9 @@ export const libraryControllers = {
 
       const libraries = await libraryServices.getLibraries(filters);
 
-      return res.status(200).json(libraries);
+      return res.status(200).json({
+        data: libraries,
+      });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch libraries";

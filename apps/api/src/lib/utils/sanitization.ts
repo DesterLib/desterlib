@@ -76,7 +76,7 @@ export function sanitizeString(
   }
 
   // Remove null bytes and control characters (except newlines and tabs)
-  // eslint-disable-next-line no-control-regex
+  // Using unicode escapes to represent control characters that should be filtered out
   sanitized = sanitized.replace(
     /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,
     ""

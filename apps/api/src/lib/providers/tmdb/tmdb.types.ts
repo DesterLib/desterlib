@@ -7,3 +7,10 @@ export interface TmdbEpisodeMetadata {
   still_path?: string;
   [key: string]: unknown;
 }
+
+export interface TmdbSeasonMetadata {
+  season_number?: number;
+  episodes?: TmdbEpisodeMetadata[];
+  poster_path?: string;
+  [key: string]: unknown;
+}

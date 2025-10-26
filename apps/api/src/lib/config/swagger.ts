@@ -3,6 +3,25 @@ import swaggerUi from "swagger-ui-express";
 import { config } from "../../core/config/env";
 import { logger } from "../../lib/utils";
 import path from "path";
+import os from "os";
+
+/// Get local machine IP address for LAN access
+function getLocalIpAddress(): string {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    const iface = interfaces[name];
+    if (!iface) continue;
+    for (const addr of iface) {
+      // Skip internal and IPv6 addresses
+      if (addr.family === "IPv4" && !addr.internal) {
+        return addr.address;
+      }
+    }
+  }
+  return "127.0.0.1"; // Fallback to localhost
+}
+
+const localIp = getLocalIpAddress();
 
 const options = {
   definition: {
@@ -20,11 +39,11 @@ const options = {
     servers: [
       {
         url: `http://localhost:${config.port}`,
-        description: "Development server",
+        description: "Development server (localhost)",
       },
       {
-        url: `http://0.0.0.0:${config.port}`,
-        description: "Production server (LAN accessible)",
+        url: `http://${localIp}:${config.port}`,
+        description: `LAN accessible (${localIp})`,
       },
     ],
     tags: [

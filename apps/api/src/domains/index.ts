@@ -1,4 +1,4 @@
-// Domain exports
+// Domain routes exports
 export { scanRoutes } from "./scan";
 export { libraryRoutes } from "./library";
 export { moviesRoutes } from "./movies";

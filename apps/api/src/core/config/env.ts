@@ -1,4 +1,3 @@
-/* eslint-disable turbo/no-undeclared-env-vars */
 import dotenv from "dotenv";
 import path from "path";
 import { settingsManager } from "./settings";
@@ -22,8 +21,7 @@ for (const envPath of possiblePaths) {
   }
 }
 
-// Get default settings from user settings manager (works for both dev and executable)
-// Note: We use defaults here for initialization, actual settings will be loaded async later
+// Get default settings from user settings manager
 const defaultSettings = settingsManager.getDefaultSettings();
 
 export const config = {
@@ -34,23 +32,6 @@ export const config = {
   databaseUrl:
     process.env.DATABASE_URL ||
     "postgresql://postgres:postgres@localhost:5432/desterlib_prod",
-  frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
-  jwtSecret: process.env.JWT_SECRET || defaultSettings.jwtSecret,
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || "100"),
-  enableRouteGuards:
-    process.env.ENABLE_ROUTE_GUARDS === "true" ||
-    defaultSettings.enableRouteGuards,
-  // TMDB API key will be loaded from database when needed
-  tmdbApiKey: process.env.TMDB_API_KEY || "",
 } as const;
-
-// Helper function to get TMDB API key from database
-export const getTmdbApiKey = async (): Promise<string> => {
-  try {
-    return await settingsManager.getTmdbApiKey();
-  } catch {
-    return process.env.TMDB_API_KEY || "";
-  }
-};

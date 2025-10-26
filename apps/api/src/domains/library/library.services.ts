@@ -34,8 +34,11 @@ export const libraryServices = {
     logger.info(`📚 Found library: ${library.name}`);
 
     // Find media that ONLY belongs to this library
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mediaToDelete = library.media
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((ml: any) => ml.media.libraries.length === 1)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((ml: any) => ml.mediaId);
 
     logger.info(
@@ -46,6 +49,7 @@ export const libraryServices = {
     );
 
     // Use a transaction to ensure atomicity
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await prisma.$transaction(async (tx: any) => {
       let deletedCount = 0;
 
@@ -115,6 +119,7 @@ export const libraryServices = {
     });
 
     const librariesWithMetadata: LibraryWithMetadata[] = libraries.map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (library: any) => ({
         ...library,
         createdAt: library.createdAt.toISOString(),
