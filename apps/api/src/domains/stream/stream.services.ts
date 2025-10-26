@@ -19,6 +19,8 @@ export const streamServices = {
    * Find media file info by ID across movies, episodes, music, and comics
    */
   getMediaFileById: async (id: string): Promise<MediaFileInfo> => {
+    logger.info(`🔍 Searching for media file with ID: ${id}`);
+
     // Try to find in movies first
     const movie = await prisma.movie.findUnique({
       where: { id },
@@ -26,6 +28,7 @@ export const streamServices = {
     });
 
     if (movie && movie.filePath) {
+      logger.info(`✅ Found movie: ${movie.media.title}`);
       return {
         filePath: movie.filePath,
         fileSize: movie.fileSize || BigInt(0),
@@ -49,6 +52,7 @@ export const streamServices = {
     });
 
     if (episode && episode.filePath) {
+      logger.info(`✅ Found episode: ${episode.season.tvShow.media.title}`);
       return {
         filePath: episode.filePath,
         fileSize: episode.fileSize || BigInt(0),
@@ -64,6 +68,7 @@ export const streamServices = {
     });
 
     if (music && music.filePath) {
+      logger.info(`✅ Found music: ${music.media.title}`);
       return {
         filePath: music.filePath,
         fileSize: music.fileSize || BigInt(0),
@@ -79,6 +84,7 @@ export const streamServices = {
     });
 
     if (comic && comic.filePath) {
+      logger.info(`✅ Found comic: ${comic.media.title}`);
       return {
         filePath: comic.filePath,
         fileSize: comic.fileSize || BigInt(0),
@@ -87,6 +93,7 @@ export const streamServices = {
       };
     }
 
+    logger.error(`❌ Media file not found with ID: ${id}`);
     throw new Error(`Media file with ID ${id} not found`);
   },
 };

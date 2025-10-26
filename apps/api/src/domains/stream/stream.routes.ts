@@ -36,33 +36,40 @@ const router: Router = express.Router();
  *         headers:
  *           Content-Type:
  *             description: Media MIME type based on file extension
- *             type: string
+ *             schema:
+ *               type: string
  *             example: "video/mp4"
  *           Accept-Ranges:
  *             description: Indicates range requests are supported
- *             type: string
+ *             schema:
+ *               type: string
  *             example: "bytes"
  *           Content-Length:
  *             description: Total file size in bytes
- *             type: string
+ *             schema:
+ *               type: string
  *           Content-Disposition:
  *             description: Filename for download/display
- *             type: string
+ *             schema:
+ *               type: string
  *             example: "inline; filename=\"Movie Title.mp4\""
  *       206:
  *         description: Partial content (when Range header is provided)
  *         headers:
  *           Content-Type:
  *             description: Media MIME type based on file extension
- *             type: string
+ *             schema:
+ *               type: string
  *             example: "video/mp4"
  *           Content-Range:
  *             description: Range of bytes being returned
- *             type: string
+ *             schema:
+ *               type: string
  *             example: "bytes 0-1048575/5368709120"
  *           Content-Length:
  *             description: Size of the returned chunk in bytes
- *             type: string
+ *             schema:
+ *               type: string
  *       400:
  *         description: Bad request - Invalid media ID or file path
  *         content:
@@ -94,7 +101,8 @@ const router: Router = express.Router();
  *         headers:
  *           Content-Range:
  *             description: Indicates the valid range for the file
- *             type: string
+ *             schema:
+ *               type: string
  *             example: "bytes 5368709120"
  *         content:
  *           application/json:

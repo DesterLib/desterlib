@@ -1,4 +1,3 @@
-/* eslint-disable turbo/no-undeclared-env-vars */
 import dotenv from "dotenv";
 import path from "path";
 import { settingsManager } from "./settings";

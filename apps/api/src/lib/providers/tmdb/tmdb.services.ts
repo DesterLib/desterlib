@@ -79,6 +79,41 @@ export const tmdbServices = {
       throw error;
     }
   },
+  getSeason: async (
+    tvId: string,
+    seasonNumber: number,
+    {
+      apiKey,
+      lang = "en-US",
+    }: {
+      apiKey: string;
+      lang?: string;
+    }
+  ) => {
+    try {
+      const response = await axios.get(
+        `https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNumber}`,
+        {
+          params: {
+            api_key: apiKey,
+            language: lang,
+          },
+          timeout: 8000,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (!error.response) throw new Error("Network error / no response");
+        throw new Error(
+          `TMDB season fetch failed (${error.response.status}): ${
+            error.response.data?.status_message || "Unknown error"
+          }`
+        );
+      }
+      throw error;
+    }
+  },
   search: async (
     query: string,
     type: "movie" | "tv",
