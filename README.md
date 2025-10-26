@@ -1,338 +1,173 @@
-# 🎬 DesterLib - Your Personal Media Server
+# 🎬 DesterLib
 
-Welcome! **DesterLib** is a system that lets you watch your movies and TV shows from anywhere. It's like Netflix, but for YOUR personal collection!
+**Your Personal Media Server** - Watch your movies and TV shows from anywhere. It's like Netflix, but for YOUR personal collection!
 
-Think of it this way:
-- 📚 **Library**: A place where all your movies and shows are organized
-- 🎞️ **Player**: Tools to watch your media smoothly
-- ⚙️ **Engine**: The behind-the-scenes magic that makes everything work
+[![GitHub](https://img.shields.io/badge/GitHub-DesterLib-blue?logo=github)](https://github.com/DesterLib/desterlib)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 
 ---
 
-## 📦 What's Inside?
+## What is DesterLib?
 
-This project has two main parts:
-
-1. **Backend API** (`apps/api/`) - The engine that does all the work
-   - Organizes your media files
-   - Streams videos to your devices
-   - Remembers what you're watching
-   - Talks to the database
-
-2. **Mobile & Desktop App** (`desterlib-flutter/`) - The way you watch on your devices
-   - Browse your media collection (Movies, TV Shows)
-   - Play videos smoothly
-   - Manage settings
-   - Works on Android, iOS, macOS, Linux, Windows, and TV (coming soon!)
+DesterLib is a modern, self-hosted media server system that lets you:
+- 📚 **Organize** your media collection automatically
+- 🎞️ **Stream** movies and TV shows smoothly
+- 📱 **Watch** on any device (Android, iOS, macOS, Linux, Windows)
+- ⚙️ **Control** your entire media library from one place
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### What You Need First
-- **Docker** installed on your computer ([Get Docker](https://www.docker.com/products/docker-desktop))
-- **Node.js 18+** and **pnpm** for development
-- A folder with your movies/TV shows
-- A few minutes to set up
+### Prerequisites
+- Docker installed
+- Node.js 18+ and pnpm (for development)
+- Your media files
 
-### For Development (Recommended)
-
-This setup runs only the database in Docker, while you run the API with pnpm for fast development:
-
-#### Step 1: Configure Your Environment
-
-Create a file called `.env` in the `apps/api/` folder:
+### Development Setup
 
 ```bash
-# Database Configuration
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test
+# Clone the repository
+git clone https://github.com/DesterLib/desterlib.git
+cd desterlib
 
-# Application Configuration
-NODE_ENV=development
-PORT=3001
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX=100
-```
-
-#### Step 2: Start the Test Database
-
-```bash
-# Start only the PostgreSQL database (runs on port 5433)
+# Start test database
 docker-compose -f docker-compose.test.yml up -d
-```
 
-#### Step 3: Install and Run the API
-
-```bash
-# Install dependencies
+# Install dependencies and run
 pnpm install
-
-# Run the API in development mode
 cd apps/api
 pnpm dev
 ```
 
-#### Step 4: Access Your System
+Access the API at `http://localhost:3001`
 
-- **API**: `http://localhost:3001`
-- **API Documentation**: `http://localhost:3001/api-docs`
-- **Database**: Runs on `localhost:5433`
-
-### For Production (Full Docker)
-
-This setup runs everything in Docker containers:
+### Production Setup
 
 ```bash
-# Start the services (API + Database in containers)
-docker-compose up
-```
-
-That's it! Docker will:
-- 🐘 Start a PostgreSQL database
-- 🔧 Build and run the API
-- 📁 Set up your media library
-
-Access at `http://localhost:3001`
-
----
-
-## 📱 Using the Mobile App
-
-### Install
-
-1. Get the Flutter app source from `desterlib-flutter/`
-2. Run: `flutter pub get` (downloads everything needed)
-3. Build it for your phone:
-   - **Android**: `flutter build apk`
-   - **iOS**: `flutter build ios`
-
-### Configure
-
-When you open the app:
-1. Enter your server address (like `http://192.168.1.100:3001`)
-2. The app will connect and show your media
-3. Tap any movie or show to watch!
-
----
-
-## 🔧 Development Setup
-
-Want to work on the code? Here's how:
-
-### Backend Development
-
-See the **Quick Start > For Development** section above for the recommended setup.
-
-Additional commands:
-
-```bash
-# Format code nicely
-pnpm format
-
-# Check code for errors
-pnpm lint
-
-# Fix code automatically
-pnpm lint:fix
-```
-
-### Mobile App Development
-
-```bash
-# Install dependencies
-flutter pub get
-
-# Start development (interactive mode)
-flutter run
-
-# Build for your phone
-flutter build apk    # Android
-flutter build ios    # iOS
-flutter build web    # Web browser
-```
-
----
-
-## 📂 How It's Organized
-
-### Backend Structure
-```
-apps/api/src/
-├── domains/       ← Features (movies, TV shows, streaming, etc.)
-├── lib/          ← Shared tools and helpers
-├── core/         ← Configuration and central services
-└── routes/       ← API endpoints
-```
-
-### Mobile App Structure
-```
-lib/
-├── features/     ← Screens and features (watch, browse, settings)
-├── api/          ← Communication with the backend
-├── shared/       ← Reusable widgets and helpers
-└── core/         ← Configuration and global setup
-```
-
----
-
-## 🎯 Main Features
-
-✅ **Scan & Index** - Automatically finds and organizes your media  
-✅ **Browse Library** - Find movies and shows easily  
-✅ **Smooth Streaming** - Watch without buffering  
-✅ **Multi-Device** - Watch on phone, tablet, or desktop (Linux, macOS, Windows)  
-✅ **Track Progress** - Remember where you stopped (coming soon)  
-✅ **Settings** - Personalize your experience
-
----
-
-## 🐛 Troubleshooting
-
-### "Can't connect to the server"
-- **Development**: Make sure the test database is running (`docker-compose -f docker-compose.test.yml up -d`) and API is running (`pnpm dev`)
-- **Production**: Make sure Docker is running: `docker-compose up`
-- Check the server address in the app settings
-- Make sure you're on the same network (or use your computer's IP)
-
-### "Movies aren't showing up"
-- Go to Settings → Scan Library
-- Make sure your media folder is mounted correctly
-- Check that file names follow standard formats (movie name + year)
-
-### "Video won't play"
-- Check your internet connection
-- Try a different video format (MP4, MKV usually work best)
-- Restart the app
-
-### Database issues (Development)
-- Stop the test database: `docker-compose -f docker-compose.test.yml down`
-- Start fresh: `docker-compose -f docker-compose.test.yml up -d`
-- This resets the test database completely
-
-### Database issues (Production)
-- Run: `docker-compose down` then `docker-compose up -d`
-- This resets the production database completely
-
----
-
-## 🛠️ Useful Commands
-
-### Backend (API)
-
-```bash
-# Check code for errors
-pnpm lint
-
-# Fix code automatically
-pnpm lint:fix
-
-# Build for production
-pnpm build
-
-# Start in production
-pnpm start
-
-# Database management
-pnpm db:studio          # Open database viewer
-pnpm db:migrate         # Create new database changes
-pnpm db:push            # Apply changes to database
-
-# Test database management (from root directory)
-docker-compose -f docker-compose.test.yml up -d      # Start test database
-docker-compose -f docker-compose.test.yml down       # Stop test database
-docker-compose -f docker-compose.test.yml logs       # View test database logs
-```
-
-### Mobile App
-
-```bash
-# Download dependencies
-flutter pub get
-
-# Check code for issues
-flutter analyze
-
-# Format code nicely
-dart format lib/
-
-# Clean everything (use when things break)
-flutter clean
-```
-
----
-
-## 📚 Important Paths
-
-- **Media Files**: `/Volumes/External/Library/Media` - Your movies and shows
-- **Database**: Stored automatically in PostgreSQL
-- **Logs**: `logs/` folder - useful for debugging
-- **API Docs**: `http://localhost:3001/api-docs` - what the API can do
-
----
-
-## 🚢 Production Deployment
-
-When you want to use this in the real world (not just locally):
-
-```bash
-# Build and run production version
+# Start all services with Docker
 docker-compose up -d
 ```
 
-The main `docker-compose.yml` file is configured for production deployment and:
-- Runs both API and database in containers
-- Optimizes performance
-- Includes production settings
-- Uses persistent volumes for data
+---
+
+## 📚 Documentation
+
+**Full documentation is available at: http://localhost:4321**
+
+To run the docs locally:
+```bash
+cd apps/docs
+pnpm dev
+```
+
+### Quick Links
+
+- 📥 [Download Flutter App](https://github.com/DesterLib/Dester-Flutter/releases/latest) - Get the alpha client app
+- 🚀 [Quick Start Guide](http://localhost:4321/getting-started/quick-start/) - Get up and running
+- 📦 [Installation Guide](http://localhost:4321/getting-started/installation/) - Detailed setup
+- 🏗️ [Project Structure](http://localhost:4321/development/structure/) - Code organization
+- 📋 [Versioning Guide](http://localhost:4321/development/versioning/) - Contributing
+- 💻 [Commit Guidelines](http://localhost:4321/development/commit-guidelines/) - Commit format
+- 🔗 [API Documentation](http://localhost:3001/api/docs) - When API is running
 
 ---
 
-## 📖 Learning More
+## Contributing
 
-- **API Documentation**: Visit `http://localhost:3001/api-docs` (Swagger UI) - note: some features in docs may be in development
-- **Backend Architecture**: Read `apps/api/STRUCTURE.md`
-- **Mobile Architecture**: Read `desterlib-flutter/CODE_STRUCTURE.md`
-- **Database Schema**: Check `apps/api/prisma/schema.prisma`
+We welcome contributions from the community! 🎉
+
+### Quick Start for Contributors
+
+```bash
+# Fork the repo, then:
+git clone https://github.com/YOUR-USERNAME/desterlib.git
+cd desterlib
+
+# Install dependencies
+pnpm install
+
+# Create feature branch
+git checkout -b feat/your-feature
+
+# Make changes and commit
+pnpm commit
+
+# Add changeset for user-facing changes
+pnpm changeset
+
+# Push and create PR
+git push origin feat/your-feature
+```
+
+### Branching Strategy
+
+- `main` → Production releases (tagged)
+- `dev` → Development (merge PRs here)
+- `feat/*` → New features
+- `fix/*` → Bug fixes
+- `docs/*` → Documentation updates
+
+### Resources
+
+- 📖 **[Contributing Guide](CONTRIBUTING.md)** - Complete contribution instructions
+- 💻 **[Commit Guidelines](http://localhost:4321/development/commit-guidelines/)** - Commit message format
+- 🦋 **[Versioning Guide](http://localhost:4321/development/versioning/)** - Changesets workflow
+- 📋 **[Quick Reference](http://localhost:4321/development/quick-reference/)** - Common commands
+
+**Before submitting a PR:**
+1. Use conventional commits: `pnpm commit`
+2. Add changeset: `pnpm changeset` (if needed)
+3. Ensure tests pass: `pnpm lint && pnpm check-types`
+4. Fill out the PR template completely
 
 ---
 
-## 💡 Tips
+## Project Structure
 
-1. **First time developing?** Use the development setup: `docker-compose -f docker-compose.test.yml up -d` then `pnpm dev`
-2. **First time deploying?** Use production setup: `docker-compose up -d`
-3. **Need help?** Check logs:
-   - Development: `pnpm dev` shows logs in terminal
-   - Production: `docker logs desterlib-api`
-4. **Slow video?** Check your internet speed and video bitrate
-5. **Want to contribute?** Follow the commit guidelines in `.commitlintrc`
-
----
-
-## ❓ FAQ
-
-**Q: Can I watch when I'm away from home?**  
-A: Yes! Set up port forwarding on your router or use a service like ngrok.
-
-**Q: How much space do I need?**  
-A: At least as much as your media collection, plus 10% extra.
-
-**Q: Can multiple people watch at once?**  
-A: Yes, but each stream uses bandwidth.
-
-**Q: Is my data private?**  
-A: Yes! Everything stays on your computer.
+```
+desterlib/
+├── apps/
+│   ├── api/          # Backend API (Express + TypeScript)
+│   └── docs/         # Documentation site (Starlight)
+├── packages/
+│   ├── eslint-config/       # Shared ESLint config
+│   └── typescript-config/   # Shared TypeScript config
+└── .changeset/       # Version management
+```
 
 ---
 
-## 📝 Need Help?
+## Key Features
 
-Check these files:
-- `docker-compose.yml` - Docker setup details
-- `docker-compose.test.yml` - Test database setup
-- `apps/api/STRUCTURE.md` - API organization
-- `desterlib-flutter/CODE_STRUCTURE.md` - App organization
+✅ Automatic media scanning and organization  
+✅ Smooth video streaming  
+✅ Multi-device support  
+✅ REST API with WebSocket support  
+✅ Docker-ready deployment  
+✅ Cross-platform (Android, iOS, Desktop)
+
+---
+
+## Get Help
+
+- 📖 [Documentation](http://localhost:4321)
+- 🐛 [Report Issues](https://github.com/DesterLib/desterlib/issues)
+- 💬 [Discussions](https://github.com/DesterLib/desterlib/discussions)
+
+---
+
+## License
+
+**GNU Affero General Public License v3.0 (AGPL-3.0)**
+
+DesterLib is free and open source software licensed under AGPL-3.0. This ensures:
+- The software remains free forever
+- All modifications must be open source
+- Network use requires source code sharing
+- No proprietary forks allowed
+
+See [LICENSE](LICENSE) for full details.
 
 ---
 
