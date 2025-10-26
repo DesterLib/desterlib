@@ -27,37 +27,65 @@ This project has two main parts:
 
 ---
 
-## 🚀 Quick Start (Using Docker)
+## 🚀 Quick Start
 
 ### What You Need First
 - **Docker** installed on your computer ([Get Docker](https://www.docker.com/products/docker-desktop))
+- **Node.js 18+** and **pnpm** for development
 - A folder with your movies/TV shows
 - A few minutes to set up
 
-### Step 1: Configure Your System
+### For Development (Recommended)
 
-Create a file called `.env` in the `apps/api/` folder with your settings:
+This setup runs only the database in Docker, while you run the API with pnpm for fast development:
+
+#### Step 1: Configure Your Environment
+
+Create a file called `.env` in the `apps/api/` folder:
 
 ```bash
-# Database settings (usually keep these as-is)
-DATABASE_URL="postgresql://postgres:postgres@postgres:5432/desterlib_prod?schema=public"
-NODE_ENV="development"
+# Database Configuration
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test
+
+# Application Configuration
+NODE_ENV=development
 PORT=3001
 
-# TMDB (The Movie Database) - for movie information
-# Get free key from: https://www.themoviedb.org/settings/api
-TMDB_API_KEY="your_tmdb_key_here"
-
-# Choose where to watch from
-FRONTEND_URL="http://localhost:3001"
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX=100
 ```
 
-> **Not sure about TMDB?** It's a free service that gives us movie posters, descriptions, and ratings!
-
-### Step 2: Start Everything
+#### Step 2: Start the Test Database
 
 ```bash
-# Start the services (API + Database)
+# Start only the PostgreSQL database (runs on port 5433)
+docker-compose -f docker-compose.test.yml up -d
+```
+
+#### Step 3: Install and Run the API
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run the API in development mode
+cd apps/api
+pnpm dev
+```
+
+#### Step 4: Access Your System
+
+- **API**: `http://localhost:3001`
+- **API Documentation**: `http://localhost:3001/api-docs`
+- **Database**: Runs on `localhost:5433`
+
+### For Production (Full Docker)
+
+This setup runs everything in Docker containers:
+
+```bash
+# Start the services (API + Database in containers)
 docker-compose up
 ```
 
@@ -66,11 +94,7 @@ That's it! Docker will:
 - 🔧 Build and run the API
 - 📁 Set up your media library
 
-### Step 3: Access Your System
-
-- **Web Dashboard**: Open `http://localhost:3001` in your browser
-- **API Documentation**: Go to `http://localhost:3001/api-docs` to see all features
-- **Mobile App**: Use the Flutter app to connect (configure the server URL)
+Access at `http://localhost:3001`
 
 ---
 
@@ -99,19 +123,19 @@ Want to work on the code? Here's how:
 
 ### Backend Development
 
+See the **Quick Start > For Development** section above for the recommended setup.
+
+Additional commands:
+
 ```bash
-# Install dependencies
-pnpm install
-
-# Start development server (watches for code changes)
-cd apps/api
-pnpm dev
-
-# Run tests
-pnpm test
-
 # Format code nicely
 pnpm format
+
+# Check code for errors
+pnpm lint
+
+# Fix code automatically
+pnpm lint:fix
 ```
 
 ### Mobile App Development
@@ -167,7 +191,8 @@ lib/
 ## 🐛 Troubleshooting
 
 ### "Can't connect to the server"
-- Make sure the API is running: `docker-compose up`
+- **Development**: Make sure the test database is running (`docker-compose -f docker-compose.test.yml up -d`) and API is running (`pnpm dev`)
+- **Production**: Make sure Docker is running: `docker-compose up`
 - Check the server address in the app settings
 - Make sure you're on the same network (or use your computer's IP)
 
@@ -181,9 +206,14 @@ lib/
 - Try a different video format (MP4, MKV usually work best)
 - Restart the app
 
-### Database issues
-- Run: `docker-compose down` then `docker-compose up`
-- This resets the database completely
+### Database issues (Development)
+- Stop the test database: `docker-compose -f docker-compose.test.yml down`
+- Start fresh: `docker-compose -f docker-compose.test.yml up -d`
+- This resets the test database completely
+
+### Database issues (Production)
+- Run: `docker-compose down` then `docker-compose up -d`
+- This resets the production database completely
 
 ---
 
@@ -206,8 +236,13 @@ pnpm start
 
 # Database management
 pnpm db:studio          # Open database viewer
-pnpm db:migrate        # Create new database changes
-pnpm db:push           # Apply changes to database
+pnpm db:migrate         # Create new database changes
+pnpm db:push            # Apply changes to database
+
+# Test database management (from root directory)
+docker-compose -f docker-compose.test.yml up -d      # Start test database
+docker-compose -f docker-compose.test.yml down       # Stop test database
+docker-compose -f docker-compose.test.yml logs       # View test database logs
 ```
 
 ### Mobile App
@@ -242,15 +277,15 @@ flutter clean
 When you want to use this in the real world (not just locally):
 
 ```bash
-# Build production version
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+# Build and run production version
+docker-compose up -d
 ```
 
-This:
-- Uses production database
+The main `docker-compose.yml` file is configured for production deployment and:
+- Runs both API and database in containers
 - Optimizes performance
-- Secures your connection
-- Removes development tools
+- Includes production settings
+- Uses persistent volumes for data
 
 ---
 
@@ -265,10 +300,13 @@ This:
 
 ## 💡 Tips
 
-1. **First time?** Start with `docker-compose up` and open http://localhost:3001
-2. **Need help?** Check logs: `docker logs desterlib-api`
-3. **Slow video?** Check your internet speed and video bitrate
-4. **Want to contribute?** Follow the commit guidelines in `.commitlintrc`
+1. **First time developing?** Use the development setup: `docker-compose -f docker-compose.test.yml up -d` then `pnpm dev`
+2. **First time deploying?** Use production setup: `docker-compose up -d`
+3. **Need help?** Check logs:
+   - Development: `pnpm dev` shows logs in terminal
+   - Production: `docker logs desterlib-api`
+4. **Slow video?** Check your internet speed and video bitrate
+5. **Want to contribute?** Follow the commit guidelines in `.commitlintrc`
 
 ---
 
@@ -291,8 +329,8 @@ A: Yes! Everything stays on your computer.
 ## 📝 Need Help?
 
 Check these files:
-- `.env.example` - Example configuration
 - `docker-compose.yml` - Docker setup details
+- `docker-compose.test.yml` - Test database setup
 - `apps/api/STRUCTURE.md` - API organization
 - `desterlib-flutter/CODE_STRUCTURE.md` - App organization
 
