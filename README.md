@@ -1,96 +1,83 @@
 # 🎬 DesterLib
 
-**Your Personal Media Server** - Watch your movies and TV shows from anywhere. It's like Netflix, but for YOUR personal collection!
+**Your Personal Media Server** - Self-hosted media streaming for movies and TV shows.
 
 [![GitHub](https://img.shields.io/badge/GitHub-DesterLib-blue?logo=github)](https://github.com/DesterLib/desterlib)
 [![License](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-desterlib-blue)](https://desterlib.github.io/desterlib)
 
 ---
 
 ## What is DesterLib?
 
-DesterLib is a modern, self-hosted media server system that lets you:
+DesterLib is a modern, self-hosted media server that lets you:
 - 📚 **Organize** your media collection automatically
 - 🎞️ **Stream** movies and TV shows smoothly
-- 📱 **Watch** on any device (Android, iOS, macOS, Linux, Windows)
-- ⚙️ **Control** your entire media library from one place
+- 📱 **Watch** on any device (mobile, desktop, TV)
+- 🎨 **Beautiful UI** with automatic metadata and artwork
+
+**Components:**
+- **API Server** (this repo) - Backend for media management and streaming
+- **Client Apps** - Mobile and desktop applications ([desterlib-flutter](https://github.com/DesterLib/desterlib-flutter))
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
-### Prerequisites
-- Docker installed
-- Node.js 18+ and pnpm (for development)
-- Your media files
-
-### Development Setup
+### Using Docker (Recommended)
 
 ```bash
 # Clone the repository
 git clone https://github.com/DesterLib/desterlib.git
 cd desterlib
 
+# Start all services
+docker-compose up -d
+
+# Access API: http://localhost:3001
+# API Docs: http://localhost:3001/api/docs
+```
+
+### Development Setup
+
+```bash
+# Install dependencies
+pnpm install
+
 # Start test database
 docker-compose -f docker-compose.test.yml up -d
 
-# Install dependencies and run
-pnpm install
+# Run API server
 cd apps/api
 pnpm dev
-```
-
-Access the API at `http://localhost:3001`
-
-### Production Setup
-
-```bash
-# Start all services with Docker
-docker-compose up -d
 ```
 
 ---
 
 ## 📚 Documentation
 
-**Full documentation is available at: http://localhost:4321**
-
-To run the docs locally:
-```bash
-cd apps/docs
-pnpm dev
-```
+**📖 Full Documentation:** [desterlib.github.io/desterlib](https://desterlib.github.io/desterlib)
 
 ### Quick Links
 
-- 📥 [Download Flutter App](https://github.com/DesterLib/Dester-Flutter/releases/latest) - Get the alpha client app
-- 🚀 [Quick Start Guide](http://localhost:4321/getting-started/quick-start/) - Get up and running
-- 📦 [Installation Guide](http://localhost:4321/getting-started/installation/) - Detailed setup
-- 🏗️ [Project Structure](http://localhost:4321/development/structure/) - Code organization
-- 📋 [Versioning Guide](http://localhost:4321/development/versioning/) - Contributing
-- 💻 [Commit Guidelines](http://localhost:4321/development/commit-guidelines/) - Commit format
-- 🔗 [API Documentation](http://localhost:3001/api/docs) - When API is running
+- [Getting Started](https://desterlib.github.io/desterlib/getting-started/quick-start) - Installation and setup
+- [API Server Guide](https://desterlib.github.io/desterlib/api/overview) - Backend development
+- [Client Apps](https://desterlib.github.io/desterlib/clients/overview) - Mobile & desktop apps
+- [Contributing](https://desterlib.github.io/desterlib/development/contributing) - How to contribute
+- [API Docs](http://localhost:3001/api/docs) - Interactive API documentation (when running)
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-We welcome contributions from the community! 🎉
+We welcome contributions! Please see our [Contributing Guide](https://desterlib.github.io/desterlib/development/contributing).
 
-### Quick Start for Contributors
-
+**Quick Start:**
 ```bash
-# Fork the repo, then:
-git clone https://github.com/YOUR-USERNAME/desterlib.git
-cd desterlib
-
-# Install dependencies
-pnpm install
-
-# Create feature branch
+# Fork, clone, and create branch
 git checkout -b feat/your-feature
 
-# Make changes and commit
+# Make changes with conventional commits
 pnpm commit
 
 # Add changeset for user-facing changes
@@ -100,75 +87,53 @@ pnpm changeset
 git push origin feat/your-feature
 ```
 
-### Branching Strategy
-
-- `main` → Production releases (tagged)
-- `dev` → Development (merge PRs here)
-- `feat/*` → New features
-- `fix/*` → Bug fixes
-- `docs/*` → Documentation updates
-
-### Resources
-
-- 📖 **[Contributing Guide](CONTRIBUTING.md)** - Complete contribution instructions
-- 💻 **[Commit Guidelines](http://localhost:4321/development/commit-guidelines/)** - Commit message format
-- 🦋 **[Versioning Guide](http://localhost:4321/development/versioning/)** - Changesets workflow
-- 📋 **[Quick Reference](http://localhost:4321/development/quick-reference/)** - Common commands
-
-**Before submitting a PR:**
-1. Use conventional commits: `pnpm commit`
-2. Add changeset: `pnpm changeset` (if needed)
-3. Ensure tests pass: `pnpm lint && pnpm check-types`
-4. Fill out the PR template completely
+**Resources:**
+- [Contributing Guide](CONTRIBUTING.md) - Quick start
+- [Commit Guidelines](https://desterlib.github.io/desterlib/development/commit-guidelines)
+- [Versioning Guide](https://desterlib.github.io/desterlib/development/versioning)
 
 ---
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 desterlib/
 ├── apps/
-│   ├── api/          # Backend API (Express + TypeScript)
-│   └── docs/         # Documentation site (Starlight)
-├── packages/
-│   ├── eslint-config/       # Shared ESLint config
-│   └── typescript-config/   # Shared TypeScript config
-└── .changeset/       # Version management
+│   ├── api/          # Backend API (Node.js + TypeScript + Express)
+│   └── docs/         # Documentation (Astro + Starlight)
+└── packages/
+    ├── eslint-config/       # Shared ESLint configuration
+    └── typescript-config/   # Shared TypeScript configuration
 ```
 
 ---
 
-## Key Features
+## 📦 Features
 
-✅ Automatic media scanning and organization  
-✅ Smooth video streaming  
-✅ Multi-device support  
-✅ REST API with WebSocket support  
-✅ Docker-ready deployment  
-✅ Cross-platform (Android, iOS, Desktop)
+- ✅ Automatic media scanning and organization
+- ✅ TMDB metadata and artwork integration
+- ✅ Video streaming with transcoding support
+- ✅ Watch progress tracking
+- ✅ REST API + WebSocket support
+- ✅ Docker-ready deployment
+- ✅ Cross-platform clients (Android, iOS, macOS, Linux, Windows)
 
 ---
 
-## Get Help
+## 💬 Support
 
-- 📖 [Documentation](http://localhost:4321)
+- 📖 [Documentation](https://desterlib.github.io/desterlib)
 - 🐛 [Report Issues](https://github.com/DesterLib/desterlib/issues)
 - 💬 [Discussions](https://github.com/DesterLib/desterlib/discussions)
 
 ---
 
-## License
+## 📄 License
 
-**GNU Affero General Public License v3.0 (AGPL-3.0)**
+GNU Affero General Public License v3.0 (AGPL-3.0)
 
-DesterLib is free and open source software licensed under AGPL-3.0. This ensures:
-- The software remains free forever
-- All modifications must be open source
-- Network use requires source code sharing
-- No proprietary forks allowed
-
-See [LICENSE](LICENSE) for full details.
+This ensures the software remains free and open source forever. See [LICENSE](LICENSE) for details.
 
 ---
 
-**Happy watching! 🎉**
+**Made with ❤️ by the DesterLib community**
