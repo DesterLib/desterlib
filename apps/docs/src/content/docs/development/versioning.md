@@ -1,17 +1,49 @@
 ---
 title: Versioning Guide
-description: How to track changes and manage releases with Changesets
+description: How to track changes and manage releases across all DesterLib projects
 ---
 
-This project uses [Changesets](https://github.com/changesets/changesets) for version management and changelog generation.
+DesterLib uses different versioning tools for different projects, but all follow semantic versioning and conventional commits.
 
-## Overview
+## Overview by Project
 
-We use **Changesets** to:
-- Track changes across our monorepo packages
+### API Server (Node.js/TypeScript)
+Uses **[Changesets](https://github.com/changesets/changesets)** to:
+- Track changes across monorepo packages
 - Generate changelogs automatically
 - Version packages based on changes
 - Simplify the release process
+
+### Client Applications (Flutter/Dart)
+Uses **conventional-changelog** to:
+- Generate changelogs from commit history
+- Automate version bumping in `pubspec.yaml`
+- Create releases with automated builds
+- Maintain semantic versioning
+
+---
+
+## Semantic Versioning
+
+All projects follow [Semantic Versioning 2.0.0](https://semver.org/):
+
+```
+MAJOR.MINOR.PATCH
+
+API Server:     1.2.3
+Client (Flutter): 1.2.3+4  (includes build number)
+```
+
+| Version | When to Bump | Example |
+|---------|-------------|---------|
+| **MAJOR** | Breaking changes | 0.9.0 → 1.0.0 |
+| **MINOR** | New features (backward-compatible) | 1.0.0 → 1.1.0 |
+| **PATCH** | Bug fixes | 1.1.0 → 1.1.1 |
+| **BUILD** | Flutter only - build number | 1.1.0+1 → 1.1.0+2 |
+
+---
+
+## API Server Versioning (Changesets)
 
 Each significant change should have an associated changeset file that describes what changed and the impact level (patch, minor, or major).
 
@@ -307,7 +339,104 @@ git commit -m "chore: add changeset for breaking change"
 git push -u origin feat/api-v2-breaking
 ```
 
-## Commands Reference
+---
+
+## Client Versioning (Flutter)
+
+The Flutter client uses a simpler, automated workflow with `conventional-changelog`.
+
+### Quick Workflow
+
+```bash
+# 1. Work on feature branch
+git checkout -b feat/subtitle-support
+# ... make changes ...
+npm run commit  # Conventional commits
+
+# 2. Create PR, get it merged to main
+
+# 3. After merge, create release from main
+git checkout main
+git pull origin main
+npm run release  # Interactive script
+```
+
+### Release Script
+
+The `npm run release` command:
+1. ✅ Checks you're on `main` branch
+2. ✅ Shows current version
+3. ✅ Prompts for bump type (patch/minor/major/build)
+4. ✅ Updates `pubspec.yaml`
+5. ✅ Generates changelog from commits
+6. ✅ Creates release commit and tag
+7. ✅ Prompts you to push
+
+### Version Format
+
+```yaml
+version: 1.2.3+4
+#         │ │ │ │
+#         │ │ │ └─ Build number (auto-incremented)
+#         │ │ └─── PATCH
+#         │ └───── MINOR
+#         └─────── MAJOR
+```
+
+### Automated Builds
+
+When you push a tag, GitHub Actions automatically:
+- Creates GitHub Release with changelog
+- Builds for all platforms (Android, iOS, macOS, Linux, Windows)
+- Attaches builds to the release
+
+### Example: Feature Release
+
+```bash
+# After PRs are merged to main
+git checkout main
+git pull origin main
+
+# Run release script
+npm run release
+
+# Interactive prompts:
+# Current version: 0.1.5+3
+# Select version bump type:
+#   1) Patch (bug fixes)         - 0.1.5 → 0.1.6+1
+#   2) Minor (new features)      - 0.1.5 → 0.2.0+1
+#   3) Major (breaking changes)  - 0.1.5 → 1.0.0+1
+# 
+# Enter choice: 2
+
+# Changelog is generated from commits:
+# ## [0.2.0] - 2024-10-27
+# 
+# ### Features
+# * **player:** add subtitle support
+# * **ui:** add dark mode theme
+# 
+# ### Bug Fixes
+# * **auth:** resolve token refresh
+
+# Confirm and push
+git push origin main --tags
+
+# Check: https://github.com/DesterLib/desterlib-flutter/releases
+```
+
+### Client Commands Reference
+
+| Command | Description |
+|---------|-------------|
+| `npm run commit` | Create conventional commit |
+| `npm run release` | Interactive release (must be on main) |
+| `npm run version:bump patch` | Manual version bump |
+| `npm run changelog:generate` | Generate changelog only |
+
+---
+
+## API Commands Reference
 
 | Command | Description |
 |---------|-------------|

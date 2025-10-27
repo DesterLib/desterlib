@@ -1,9 +1,20 @@
 ---
 title: Contributing Guide
-description: How to contribute to DesterLib - for community members and external contributors
+description: How to contribute to DesterLib - applies to all projects
 ---
 
 Thank you for your interest in contributing to DesterLib! This guide will help you get started with contributing to the project.
+
+:::note[Applies to All Projects]
+This guide applies to **all DesterLib projects**:
+- **API Server** - Backend and API development
+- **Client Applications** - Mobile, desktop, and TV apps  
+- **Documentation** - This documentation site
+
+For project-specific setup:
+- [API Server Setup](/api/overview)
+- [Client Development](/clients/overview)
+:::
 
 ## 🎯 Quick Start
 

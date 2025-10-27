@@ -1,9 +1,20 @@
 ---
-title: API Overview
-description: DesterLib REST API documentation and reference
+title: API Server
+description: DesterLib API Server - Backend for your personal media library
 ---
 
-DesterLib provides a comprehensive REST API for managing your media library, streaming content, and integrating with other applications.
+The DesterLib API Server is the backend that powers your personal media library. It provides a comprehensive REST API for managing your media library, streaming content, and integrating with client applications.
+
+## What is the API Server?
+
+The API Server handles:
+- **Media Library Management** - Scan, organize, and index your media files
+- **Metadata Fetching** - Automatic metadata and artwork from TMDB
+- **Video Streaming** - Adaptive streaming endpoints
+- **Watch Progress** - Track viewing history and resume points
+- **WebSocket Events** - Real-time updates for scans and library changes
+
+**Repository**: [desterlib](https://github.com/DesterLib/desterlib) (monorepo)
 
 ## Interactive API Documentation
 

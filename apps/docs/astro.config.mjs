@@ -4,6 +4,8 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://desterlib.github.io',
+	base: '/desterlib',
 	integrations: [
 		starlight({
 			title: 'DesterLib Docs',
@@ -25,7 +27,21 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Projects',
+					items: [
+						{ label: 'API Server', slug: 'api/overview' },
+						{ label: 'Client Applications', slug: 'clients/overview' },
+					],
+				},
+				{
+					label: 'Client Platforms',
+					items: [
+						{ label: 'Platform Setup', slug: 'clients/flutter' },
+					],
+				},
+				{
 					label: 'Development',
+					collapsed: false,
 					items: [
 						{ label: 'Contributing Guide', slug: 'development/contributing' },
 						{ label: 'Project Structure', slug: 'development/structure' },
@@ -37,7 +53,6 @@ export default defineConfig({
 				{
 					label: 'API Reference',
 					items: [
-						{ label: 'Overview', slug: 'api/overview' },
 						{ label: 'Swagger Docs', link: 'http://localhost:3001/api/docs', attrs: { target: '_blank', rel: 'noopener noreferrer' } },
 					],
 				},
