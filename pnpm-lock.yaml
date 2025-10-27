@@ -44,6 +44,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@prisma/client':
+        specifier: ^6.17.1
+        version: 6.17.1(prisma@6.17.1(magicast@0.3.5)(typescript@5.9.2))(typescript@5.9.2)
       '@types/pg':
         specifier: ^8.15.5
         version: 8.15.5
@@ -94,9 +97,6 @@ importers:
         specifier: ^4.0.9
         version: 4.0.9
     devDependencies:
-      '@prisma/client':
-        specifier: ^6.17.1
-        version: 6.17.1(prisma@6.17.1(magicast@0.3.5)(typescript@5.9.2))(typescript@5.9.2)
       '@types/compression':
         specifier: ^1.7.5
         version: 1.8.1
@@ -141,10 +141,10 @@ importers:
     dependencies:
       '@astrojs/starlight':
         specifier: ^0.36.1
-        version: 0.36.1(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1))
+        version: 0.36.1(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1))
       astro:
         specifier: ^5.6.1
-        version: 5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1)
+        version: 5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1)
       sharp:
         specifier: ^0.34.2
         version: 0.34.4
@@ -4974,12 +4974,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/mdx@4.3.8(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1))':
+  '@astrojs/mdx@4.3.8(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1))':
     dependencies:
       '@astrojs/markdown-remark': 6.3.8
       '@mdx-js/mdx': 3.1.1
       acorn: 8.15.0
-      astro: 5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1)
+      astro: 5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1)
       es-module-lexer: 1.7.0
       estree-util-visit: 2.0.0
       hast-util-to-html: 9.0.5
@@ -5003,17 +5003,17 @@ snapshots:
       stream-replace-string: 2.0.0
       zod: 3.25.76
 
-  '@astrojs/starlight@0.36.1(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1))':
+  '@astrojs/starlight@0.36.1(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1))':
     dependencies:
       '@astrojs/markdown-remark': 6.3.8
-      '@astrojs/mdx': 4.3.8(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1))
+      '@astrojs/mdx': 4.3.8(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1))
       '@astrojs/sitemap': 3.6.0
       '@pagefind/default-ui': 1.4.0
       '@types/hast': 3.0.4
       '@types/js-yaml': 4.0.9
       '@types/mdast': 4.0.4
-      astro: 5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1)
-      astro-expressive-code: 0.41.3(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1))
+      astro: 5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1)
+      astro-expressive-code: 0.41.3(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1))
       bcp-47: 2.1.0
       hast-util-from-html: 2.0.3
       hast-util-select: 6.0.4
@@ -6352,12 +6352,12 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro-expressive-code@0.41.3(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1)):
+  astro-expressive-code@0.41.3(astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1)):
     dependencies:
-      astro: 5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1)
+      astro: 5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1)
       rehype-expressive-code: 0.41.3
 
-  astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.0.0-1):
+  astro@5.15.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.52.5)(tsx@4.20.6)(typescript@5.9.2)(yaml@2.8.1):
     dependencies:
       '@astrojs/compiler': 2.13.0
       '@astrojs/internal-helpers': 0.7.4
@@ -6413,8 +6413,8 @@ snapshots:
       unist-util-visit: 5.0.0
       unstorage: 1.17.1
       vfile: 6.0.3
-      vite: 6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.0.0-1)
-      vitefu: 1.1.1(vite@6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.0.0-1))
+      vite: 6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
+      vitefu: 1.1.1(vite@6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1))
       xxhash-wasm: 1.1.0
       yargs-parser: 21.1.1
       yocto-spinner: 0.2.3
@@ -10315,7 +10315,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vite@6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.0.0-1):
+  vite@6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1):
     dependencies:
       esbuild: 0.25.11
       fdir: 6.5.0(picomatch@4.0.3)
@@ -10329,11 +10329,11 @@ snapshots:
       jiti: 2.6.1
       lightningcss: 1.30.1
       tsx: 4.20.6
-      yaml: 2.0.0-1
+      yaml: 2.8.1
 
-  vitefu@1.1.1(vite@6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.0.0-1)):
+  vitefu@1.1.1(vite@6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)):
     optionalDependencies:
-      vite: 6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.0.0-1)
+      vite: 6.4.1(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(tsx@4.20.6)(yaml@2.8.1)
 
   volar-service-css@0.0.65(@volar/language-service@2.4.23):
     dependencies:
