@@ -1,2 +1,2 @@
 export { default as prisma } from "./prisma";
-export { MediaType } from "../../../generated/prisma";
+export { MediaType } from "@prisma/client";

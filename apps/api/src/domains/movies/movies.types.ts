@@ -2,7 +2,7 @@
  * Movie types and interfaces
  */
 
-import { Movie, Media } from "../../../generated/prisma";
+import { Movie, Media } from "@prisma/client";
 
 /**
  * Movie with its associated media information

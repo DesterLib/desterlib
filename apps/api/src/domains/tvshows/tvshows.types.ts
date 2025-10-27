@@ -2,7 +2,7 @@
  * TV Show types and interfaces
  */
 
-import { TVShow, Media, Season, Episode } from "../../../generated/prisma";
+import { TVShow, Media, Season, Episode } from "@prisma/client";
 
 /**
  * TV Show with its associated media information

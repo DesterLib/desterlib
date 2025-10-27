@@ -1,4 +1,4 @@
-import { Library } from "../../../generated/prisma";
+import { Library } from "@prisma/client";
 
 /**
  * Library types and interfaces

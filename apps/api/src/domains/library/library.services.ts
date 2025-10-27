@@ -5,7 +5,7 @@ import {
   LibraryUpdateResult,
   LibraryWithMetadata,
 } from "./library.types";
-import { Prisma, MediaType } from "../../../generated/prisma";
+import { Prisma, MediaType } from "@prisma/client";
 
 export const libraryServices = {
   delete: async (libraryId: string): Promise<LibraryDeleteResult> => {
