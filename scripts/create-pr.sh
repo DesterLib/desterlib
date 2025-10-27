@@ -5,8 +5,8 @@
 
 set -e
 
-# Default target branch is dev
-TARGET_BRANCH="${1:-dev}"
+# Default target branch is main
+TARGET_BRANCH="${1:-main}"
 
 # Get current branch
 CURRENT_BRANCH=$(git branch --show-current)
@@ -19,8 +19,8 @@ if ! command -v gh &> /dev/null; then
 fi
 
 # Check if we're on a branch
-if [ "$CURRENT_BRANCH" == "main" ] || [ "$CURRENT_BRANCH" == "dev" ]; then
-    echo "❌ Cannot create PR from main or dev branch"
+if [ "$CURRENT_BRANCH" == "main" ]; then
+    echo "❌ Cannot create PR from main branch"
     echo "Please switch to a feature branch"
     exit 1
 fi

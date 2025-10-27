@@ -66,8 +66,8 @@ pnpm release
 ## Changeset Flow
 
 ```
-Make Changes → Create Changeset → Commit & Push → Create PR to dev
-    → Review & Merge → Version Bump → Merge to main → Auto Release
+Make Changes → Create Changeset → Commit & Push → Create PR to main
+    → Review & Merge → Auto Deploy (docs) → Version Bump → Release
 ```
 
 ## Example Changeset File
@@ -103,9 +103,9 @@ BREAKING CHANGE: Replace /auth/login with OAuth2
 
 ## PR Workflow
 
-1. **Create feature branch from `dev`**
+1. **Create feature branch from `main`**
    ```bash
-   git checkout dev && git pull
+   git checkout main && git pull
    git checkout -b feat/my-feature
    ```
 
@@ -127,9 +127,10 @@ BREAKING CHANGE: Replace /auth/login with OAuth2
    git push -u origin feat/my-feature
    ```
 
-5. **After merge to dev → version bump**
+5. **After merge to main**
    ```bash
-   pnpm version
+   # Docs auto-deploy via GitHub Actions
+   # Version bump via automated PR when ready
    git commit -am "chore: version packages"
    ```
 

@@ -28,7 +28,7 @@ New to DesterLib? Here's the fastest way to start contributing:
 6. **Push** to your fork and create a **Pull Request**
 
 :::tip[First Time Contributing?]
-Check out our [CONTRIBUTING.md](https://github.com/DesterLib/desterlib/blob/dev/CONTRIBUTING.md) for detailed step-by-step instructions!
+Check out our [CONTRIBUTING.md](https://github.com/DesterLib/desterlib/blob/main/CONTRIBUTING.md) for detailed step-by-step instructions!
 :::
 
 ## 🚀 For Community Contributors
@@ -52,16 +52,16 @@ Before starting new work, always sync:
 
 ```bash
 git fetch upstream
-git checkout dev
-git merge upstream/dev
-git push origin dev
+git checkout main
+git merge upstream/main
+git push origin main
 ```
 
 ### 3. Create Feature Branch
 
 ```bash
-# Create branch from dev
-git checkout dev
+# Create branch from main
+git checkout main
 git checkout -b feat/your-feature-name
 ```
 
@@ -97,7 +97,7 @@ git push origin feat/your-feature-name
 2. Click "Pull requests" → "New pull request"
 3. Click "compare across forks"
 4. Select:
-   - **base:** `DesterLib/desterlib` / `dev`
+   - **base:** `DesterLib/desterlib` / `main`
    - **head:** `YOUR-USERNAME/desterlib` / `feat/your-feature-name`
 5. Fill out the PR template
 6. Submit!
@@ -113,9 +113,9 @@ If you have write access to the repository:
 git clone https://github.com/DesterLib/desterlib.git
 cd desterlib
 
-# Create feature branch from dev
-git checkout dev
-git pull origin dev
+# Create feature branch from main
+git checkout main
+git pull origin main
 git checkout -b feat/your-feature-name
 
 # Make changes, commit, add changeset
@@ -125,8 +125,13 @@ pnpm changeset
 # Push to origin
 git push -u origin feat/your-feature-name
 
-# Create PR to dev
+# Create PR using script (targets main by default)
+pnpm pr:create
 ```
+
+:::note[Alpha Development]
+During alpha development, we use a simplified workflow: **Feature Branches → Main**. Once we reach stable releases, we'll introduce a `dev` branch for staging.
+:::
 
 See the [Versioning Guide](/development/versioning/) for complete workflow.
 
@@ -208,7 +213,7 @@ Before submitting your PR, verify:
 - [ ] Documentation updated (if needed)
 - [ ] PR template filled out completely
 - [ ] Tests pass (when available)
-- [ ] No merge conflicts with `dev`
+- [ ] No merge conflicts with `main`
 
 ## 📝 Commit Message Format
 
@@ -307,8 +312,9 @@ git push origin feat/your-feature-name
 ### 4. Merge
 
 Once approved:
-- Maintainer merges to `dev`
+- Maintainer merges to `main`
 - Your contribution is part of DesterLib!
+- Docs automatically deploy to GitHub Pages
 - Celebrate! 🎉
 
 ## 🌟 After Your PR is Merged
@@ -316,9 +322,9 @@ Once approved:
 ### Update Your Fork
 
 ```bash
-git checkout dev
-git pull upstream dev
-git push origin dev
+git checkout main
+git pull upstream main
+git push origin main
 ```
 
 ### Clean Up
@@ -344,7 +350,7 @@ Need assistance?
 
 - 💭 [GitHub Discussions](https://github.com/DesterLib/desterlib/discussions) - Ask questions
 - 🐛 [GitHub Issues](https://github.com/DesterLib/desterlib/issues) - Report bugs
-- 📖 [Full Contributing Guide](https://github.com/DesterLib/desterlib/blob/dev/CONTRIBUTING.md) - Detailed instructions
+- 📖 [Full Contributing Guide](https://github.com/DesterLib/desterlib/blob/main/CONTRIBUTING.md) - Detailed instructions
 
 ## 🎉 Recognition
 
