@@ -4,8 +4,8 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://desterlib.github.io',
-	base: '/desterlib',
+	site: 'https://docs.dester.in',
+	base: '/',
 	integrations: [
 		starlight({
 			title: 'DesterLib Docs',
