@@ -49,19 +49,23 @@ Each significant change should have an associated changeset file that describes 
 
 ## Branching Strategy
 
-- **main** - Production-ready code, tagged releases
-- **dev** - Development branch, all features merge here first
-- **feat/** - Feature branches created from `dev`
-- **fix/** - Bug fix branches created from `dev`
-- **chore/** - Maintenance branches created from `dev`
+:::note[Alpha Development Workflow]
+During alpha development, we use a simplified workflow. Once we reach stable releases (v1.0.0), we'll introduce a `dev` branch for staging.
+:::
+
+- **main** - Production code, auto-deploys docs, tagged releases
+- **feat/** - Feature branches created from `main`
+- **fix/** - Bug fix branches created from `main`
+- **chore/** - Maintenance branches created from `main`
+- **docs/** - Documentation branches created from `main`
 
 ## Making Changes
 
 ### 1. Create a feature branch
 
 ```bash
-git checkout dev
-git pull origin dev
+git checkout main
+git pull origin main
 git checkout -b feat/your-feature-name
 ```
 
@@ -213,8 +217,10 @@ git push
 
 1. Merge to main:
    ```bash
-   git checkout main
-   git merge dev
+   # Not needed in alpha - PRs merge directly to main
+   # In the future with dev branch:
+   # git checkout main
+   # git merge dev
    ```
 
 2. Build and publish:
@@ -244,8 +250,8 @@ GitHub Actions automatically handles releases:
 
 ```bash
 # 1. Create feature branch
-git checkout dev
-git pull origin dev
+git checkout main
+git pull origin main
 git checkout -b feat/add-user-search
 
 # 2. Make changes
@@ -276,8 +282,8 @@ git push -u origin feat/add-user-search
 
 ```bash
 # 1. Create fix branch
-git checkout dev
-git pull origin dev
+git checkout main
+git pull origin main
 git checkout -b fix/authentication-error
 
 # 2. Fix the bug
@@ -308,7 +314,7 @@ git push -u origin fix/authentication-error
 
 ```bash
 # 1. Create feature branch
-git checkout dev
+git checkout main
 git checkout -b feat/api-v2-breaking
 
 # 2. Make breaking changes
