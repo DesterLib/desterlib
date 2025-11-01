@@ -23,10 +23,8 @@ const startServer = async () => {
     logger.info("Starting DesterLib server...");
     await settingsManager.initialize();
 
-    if (await settingsManager.isFirstRun()) {
-      logger.info("🆕 First run detected - server will start in setup mode");
-      logger.info("Please configure your TMDB API key via the web interface");
-    }
+    const isFirstRun = await settingsManager.isFirstRun();
+    const tmdbApiKey = await settingsManager.getTmdbApiKey();
 
     httpServer.listen(config.port, "0.0.0.0", async () => {
       logger.info(`🚀 Server running on port ${config.port}`);
@@ -37,9 +35,6 @@ const startServer = async () => {
       logger.info(`🔌 WebSocket endpoint: ws://localhost:${config.port}/ws`);
       logger.info(`🔧 Environment: ${config.nodeEnv}`);
       logger.info(`🗄️  Database: ${config.databaseUrl}`);
-
-      const isFirstRun = await settingsManager.isFirstRun();
-      const tmdbApiKey = await settingsManager.getTmdbApiKey();
 
       if (isFirstRun) {
         logger.info("⏳ First run: Please configure TMDB API key in settings");
