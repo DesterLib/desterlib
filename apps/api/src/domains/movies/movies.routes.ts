@@ -18,73 +18,79 @@ const router: Router = express.Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                     example: "clx123abc456def789"
- *                   duration:
- *                     type: number
- *                     nullable: true
- *                     description: Movie duration in minutes
- *                     example: 142
- *                   trailerUrl:
- *                     type: string
- *                     nullable: true
- *                     example: "https://youtube.com/watch?v=xyz"
- *                   filePath:
- *                     type: string
- *                     nullable: true
- *                     example: "/media/movies/Movie Title (2024).mkv"
- *                   fileSize:
- *                     type: string
- *                     nullable: true
- *                     description: File size in bytes
- *                     example: "5368709120"
- *                   fileModifiedAt:
- *                     type: string
- *                     format: date-time
- *                     nullable: true
- *                   mediaId:
- *                     type: string
- *                     example: "clx987zyx654wvu321"
- *                   media:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
  *                     type: object
  *                     properties:
  *                       id:
  *                         type: string
- *                       title:
- *                         type: string
- *                         example: "The Matrix"
- *                       type:
- *                         type: string
- *                         enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
- *                         example: MOVIE
- *                       description:
- *                         type: string
- *                         nullable: true
- *                       posterUrl:
- *                         type: string
- *                         nullable: true
- *                       backdropUrl:
- *                         type: string
- *                         nullable: true
- *                       releaseDate:
- *                         type: string
- *                         format: date-time
- *                         nullable: true
- *                       rating:
+ *                         example: "clx123abc456def789"
+ *                       duration:
  *                         type: number
  *                         nullable: true
- *                         example: 8.7
- *                       createdAt:
+ *                         description: Movie duration in minutes
+ *                         example: 142
+ *                       trailerUrl:
+ *                         type: string
+ *                         nullable: true
+ *                         example: "https://youtube.com/watch?v=xyz"
+ *                       filePath:
+ *                         type: string
+ *                         nullable: true
+ *                         example: "/media/movies/Movie Title (2024).mkv"
+ *                       fileSize:
+ *                         type: string
+ *                         nullable: true
+ *                         description: File size in bytes
+ *                         example: "5368709120"
+ *                       fileModifiedAt:
  *                         type: string
  *                         format: date-time
- *                       updatedAt:
+ *                         nullable: true
+ *                       mediaId:
  *                         type: string
- *                         format: date-time
+ *                         example: "clx987zyx654wvu321"
+ *                       media:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                             example: "The Matrix"
+ *                           type:
+ *                             type: string
+ *                             enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
+ *                             example: MOVIE
+ *                           description:
+ *                             type: string
+ *                             nullable: true
+ *                           posterUrl:
+ *                             type: string
+ *                             nullable: true
+ *                           backdropUrl:
+ *                             type: string
+ *                             nullable: true
+ *                           releaseDate:
+ *                             type: string
+ *                             format: date-time
+ *                             nullable: true
+ *                           rating:
+ *                             type: number
+ *                             nullable: true
+ *                             example: 8.7
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           updatedAt:
+ *                             type: string
+ *                             format: date-time
  *       500:
  *         description: Internal server error
  *         content:
@@ -92,6 +98,9 @@ const router: Router = express.Router();
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Internal server error"
@@ -124,73 +133,79 @@ router.get("/", moviesControllers.getMovies);
  *             schema:
  *               type: object
  *               properties:
- *                 id:
- *                   type: string
- *                   example: "clx123abc456def789"
- *                 duration:
- *                   type: number
- *                   nullable: true
- *                   description: Movie duration in minutes
- *                   example: 142
- *                 trailerUrl:
- *                   type: string
- *                   nullable: true
- *                   example: "https://youtube.com/watch?v=xyz"
- *                 filePath:
- *                   type: string
- *                   nullable: true
- *                   example: "/media/movies/Movie Title (2024).mkv"
- *                 fileSize:
- *                   type: string
- *                   nullable: true
- *                   description: File size in bytes
- *                   example: "5368709120"
- *                 fileModifiedAt:
- *                   type: string
- *                   format: date-time
- *                   nullable: true
- *                 streamUrl:
- *                   type: string
- *                   description: URL to stream the movie
- *                   example: "/api/v1/stream/clx123abc456def789"
- *                 mediaId:
- *                   type: string
- *                   example: "clx987zyx654wvu321"
- *                 media:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
  *                   type: object
  *                   properties:
  *                     id:
  *                       type: string
- *                     title:
- *                       type: string
- *                       example: "The Matrix"
- *                     type:
- *                       type: string
- *                       enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
- *                       example: MOVIE
- *                     description:
- *                       type: string
- *                       nullable: true
- *                     posterUrl:
- *                       type: string
- *                       nullable: true
- *                     backdropUrl:
- *                       type: string
- *                       nullable: true
- *                     releaseDate:
- *                       type: string
- *                       format: date-time
- *                       nullable: true
- *                     rating:
+ *                       example: "clx123abc456def789"
+ *                     duration:
  *                       type: number
  *                       nullable: true
- *                       example: 8.7
- *                     createdAt:
+ *                       description: Movie duration in minutes
+ *                       example: 142
+ *                     trailerUrl:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "https://youtube.com/watch?v=xyz"
+ *                     filePath:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "/media/movies/Movie Title (2024).mkv"
+ *                     fileSize:
+ *                       type: string
+ *                       nullable: true
+ *                       description: File size in bytes
+ *                       example: "5368709120"
+ *                     fileModifiedAt:
  *                       type: string
  *                       format: date-time
- *                     updatedAt:
+ *                       nullable: true
+ *                     streamUrl:
  *                       type: string
- *                       format: date-time
+ *                       description: URL to stream the movie
+ *                       example: "/api/v1/stream/clx123abc456def789"
+ *                     mediaId:
+ *                       type: string
+ *                       example: "clx987zyx654wvu321"
+ *                     media:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                           example: "The Matrix"
+ *                         type:
+ *                           type: string
+ *                           enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
+ *                           example: MOVIE
+ *                         description:
+ *                           type: string
+ *                           nullable: true
+ *                         posterUrl:
+ *                           type: string
+ *                           nullable: true
+ *                         backdropUrl:
+ *                           type: string
+ *                           nullable: true
+ *                         releaseDate:
+ *                           type: string
+ *                           format: date-time
+ *                           nullable: true
+ *                         rating:
+ *                           type: number
+ *                           nullable: true
+ *                           example: 8.7
+ *                         createdAt:
+ *                           type: string
+ *                           format: date-time
+ *                         updatedAt:
+ *                           type: string
+ *                           format: date-time
  *       400:
  *         description: Bad request - Movie ID is required
  *         content:
@@ -198,6 +213,9 @@ router.get("/", moviesControllers.getMovies);
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Validation failed"
@@ -211,12 +229,15 @@ router.get("/", moviesControllers.getMovies);
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Not found"
  *                 message:
  *                   type: string
- *                   example: "Movie with ID clx123abc456def789 not found"
+ *                   example: "Movie with identifier 'clx123abc456def789' not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -224,6 +245,9 @@ router.get("/", moviesControllers.getMovies);
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Internal server error"

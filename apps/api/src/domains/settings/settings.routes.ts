@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { settingsControllers } from "./settings.controller";
-import { validate } from "../../lib/middleware/validation";
+import { validate } from "../../lib/middleware";
 import { updateSettingsSchema, getSettingsSchema } from "./settings.types";
 
 const router: Router = Router();

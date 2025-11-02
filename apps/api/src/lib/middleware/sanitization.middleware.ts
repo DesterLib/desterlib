@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { sanitizeObject } from "../utils/sanitization";
-import { logger } from "../utils";
+import { sanitizeObject, logger } from "../utils";
 
 /**
  * Middleware to sanitize request data

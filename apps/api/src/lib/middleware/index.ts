@@ -1,14 +1,14 @@
-export { setupMiddleware } from "./middleware";
+export { setupMiddleware } from "./setup.middleware";
 export {
   setupErrorHandling,
   notFoundHandler,
   errorHandler,
-} from "./errorHandler";
+} from "./error-handler.middleware";
 export {
   validate,
   validateBody,
   validateQuery,
   validateParams,
-} from "./validation";
-export { sanitizeInput } from "./sanitization";
+} from "./validation.middleware";
+export { sanitizeInput } from "./sanitization.middleware";
 // Auth middleware exports go here

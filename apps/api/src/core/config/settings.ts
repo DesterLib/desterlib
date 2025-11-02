@@ -26,17 +26,15 @@ async function loadSettings(): Promise<UserSettings> {
     const dbSettings = await prisma.settings.findMany();
 
     // Convert database rows to settings object
-    const parsedSettings: Partial<UserSettings> = {};
+    const parsedSettings: Record<string, unknown> = {};
 
     for (const setting of dbSettings) {
       try {
         const value = JSON.parse(setting.value);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (parsedSettings as any)[setting.key] = value;
+        parsedSettings[setting.key] = value;
       } catch {
         // If JSON parsing fails, treat as string
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (parsedSettings as any)[setting.key] = setting.value;
+        parsedSettings[setting.key] = setting.value;
       }
     }
 

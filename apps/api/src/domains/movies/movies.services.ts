@@ -1,6 +1,6 @@
 import prisma from "@/lib/database/prisma";
 import { MoviesListResponse, MovieResponse } from "./movies.types";
-import { serializeBigInt } from "@/lib/utils";
+import { serializeBigInt, NotFoundError } from "@/lib/utils";
 
 export const moviesServices = {
   getMovies: async (): Promise<MoviesListResponse> => {
@@ -22,7 +22,7 @@ export const moviesServices = {
       },
     });
     if (!movie) {
-      throw new Error(`Movie with ID ${id} not found`);
+      throw new NotFoundError("Movie", id);
     }
     const serialized = serializeBigInt(movie) as MovieResponse;
     return {

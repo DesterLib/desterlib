@@ -1,11 +1,10 @@
-import { Library } from "@prisma/client";
+import { Library, Prisma } from "@prisma/client";
 
 /**
  * Library types and interfaces
  */
 
 export interface LibraryDeleteResult {
-  success: boolean;
   libraryId: string;
   libraryName: string;
   mediaDeleted: number;
@@ -13,7 +12,6 @@ export interface LibraryDeleteResult {
 }
 
 export interface LibraryUpdateResult {
-  success: boolean;
   library: Library;
   message: string;
 }
@@ -25,3 +23,25 @@ export interface LibraryWithMetadata
   updatedAt: string;
   mediaCount: number;
 }
+
+// Prisma payload types for type-safe queries
+export type LibraryWithMediaRelations = Prisma.LibraryGetPayload<{
+  include: {
+    media: {
+      include: {
+        media: {
+          include: {
+            libraries: true;
+          };
+        };
+      };
+    };
+  };
+}>;
+
+// Type for media library with nested relations
+export type MediaLibraryWithRelations =
+  LibraryWithMediaRelations["media"][number];
+
+// Type for Prisma transaction client
+export type PrismaTransactionClient = Prisma.TransactionClient;

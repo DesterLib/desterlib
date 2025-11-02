@@ -12,7 +12,10 @@
     "RATE_LIMIT_MAX",
     "ENABLE_ROUTE_GUARDS",
     "TMDB_API_KEY",
-    "VITE_API_URL"
+    "VITE_API_URL",
+    "HOST_MEDIA_PATH",
+    "CONTAINER_MEDIA_PATH",
+    "DOCKER_CHECK_PATH"
   ],
   "tasks": {
     "build": {

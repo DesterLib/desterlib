@@ -5,7 +5,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import os from "os";
 import { config } from "../../core/config/env";
-import { sanitizeInput } from "./sanitization";
+import { sanitizeInput } from ".";
 
 const limiter = rateLimit({
   windowMs: config.rateLimitWindowMs,

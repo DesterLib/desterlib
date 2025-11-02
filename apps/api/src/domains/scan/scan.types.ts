@@ -2,7 +2,7 @@
  * Scan types and interfaces
  */
 
-import { ExtractedIds } from "@/lib/utils/extractExternalId";
+import { ExtractedIds } from "@/lib/utils/external-id.util";
 
 export interface FileEntry {
   path: string;

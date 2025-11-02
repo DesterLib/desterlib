@@ -18,61 +18,67 @@ const router: Router = express.Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                     example: "clx123abc456def789"
- *                   creator:
- *                     type: string
- *                     nullable: true
- *                     description: Creator of the TV show
- *                     example: "Vince Gilligan"
- *                   network:
- *                     type: string
- *                     nullable: true
- *                     description: Network that aired the TV show
- *                     example: "AMC"
- *                   mediaId:
- *                     type: string
- *                     example: "clx987zyx654wvu321"
- *                   media:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
  *                     type: object
  *                     properties:
  *                       id:
  *                         type: string
- *                       title:
- *                         type: string
- *                         example: "Breaking Bad"
- *                       type:
- *                         type: string
- *                         enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
- *                         example: TV_SHOW
- *                       description:
+ *                         example: "clx123abc456def789"
+ *                       creator:
  *                         type: string
  *                         nullable: true
- *                       posterUrl:
+ *                         description: Creator of the TV show
+ *                         example: "Vince Gilligan"
+ *                       network:
  *                         type: string
  *                         nullable: true
- *                       backdropUrl:
+ *                         description: Network that aired the TV show
+ *                         example: "AMC"
+ *                       mediaId:
  *                         type: string
- *                         nullable: true
- *                       releaseDate:
- *                         type: string
- *                         format: date-time
- *                         nullable: true
- *                       rating:
- *                         type: number
- *                         nullable: true
- *                         example: 9.5
- *                       createdAt:
- *                         type: string
- *                         format: date-time
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
+ *                         example: "clx987zyx654wvu321"
+ *                       media:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                             example: "Breaking Bad"
+ *                           type:
+ *                             type: string
+ *                             enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
+ *                             example: TV_SHOW
+ *                           description:
+ *                             type: string
+ *                             nullable: true
+ *                           posterUrl:
+ *                             type: string
+ *                             nullable: true
+ *                           backdropUrl:
+ *                             type: string
+ *                             nullable: true
+ *                           releaseDate:
+ *                             type: string
+ *                             format: date-time
+ *                             nullable: true
+ *                           rating:
+ *                             type: number
+ *                             nullable: true
+ *                             example: 9.5
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           updatedAt:
+ *                             type: string
+ *                             format: date-time
  *       500:
  *         description: Internal server error
  *         content:
@@ -80,6 +86,9 @@ const router: Router = express.Router();
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Internal server error"
@@ -112,57 +121,63 @@ router.get("/", tvshowsControllers.getTVShows);
  *             schema:
  *               type: object
  *               properties:
- *                 id:
- *                   type: string
- *                   example: "clx123abc456def789"
- *                 creator:
- *                   type: string
- *                   nullable: true
- *                   description: Creator of the TV show
- *                   example: "Vince Gilligan"
- *                 network:
- *                   type: string
- *                   nullable: true
- *                   description: Network that aired the TV show
- *                   example: "AMC"
- *                 mediaId:
- *                   type: string
- *                   example: "clx987zyx654wvu321"
- *                 media:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
  *                   type: object
  *                   properties:
  *                     id:
  *                       type: string
- *                     title:
- *                       type: string
- *                       example: "Breaking Bad"
- *                     type:
- *                       type: string
- *                       enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
- *                       example: TV_SHOW
- *                     description:
+ *                       example: "clx123abc456def789"
+ *                     creator:
  *                       type: string
  *                       nullable: true
- *                     posterUrl:
+ *                       description: Creator of the TV show
+ *                       example: "Vince Gilligan"
+ *                     network:
  *                       type: string
  *                       nullable: true
- *                     backdropUrl:
+ *                       description: Network that aired the TV show
+ *                       example: "AMC"
+ *                     mediaId:
  *                       type: string
- *                       nullable: true
- *                     releaseDate:
- *                       type: string
- *                       format: date-time
- *                       nullable: true
- *                     rating:
- *                       type: number
- *                       nullable: true
- *                       example: 9.5
- *                     createdAt:
- *                       type: string
- *                       format: date-time
- *                     updatedAt:
- *                       type: string
- *                       format: date-time
+ *                       example: "clx987zyx654wvu321"
+ *                     media:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                           example: "Breaking Bad"
+ *                         type:
+ *                           type: string
+ *                           enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
+ *                           example: TV_SHOW
+ *                         description:
+ *                           type: string
+ *                           nullable: true
+ *                         posterUrl:
+ *                           type: string
+ *                           nullable: true
+ *                         backdropUrl:
+ *                           type: string
+ *                           nullable: true
+ *                         releaseDate:
+ *                           type: string
+ *                           format: date-time
+ *                           nullable: true
+ *                         rating:
+ *                           type: number
+ *                           nullable: true
+ *                           example: 9.5
+ *                         createdAt:
+ *                           type: string
+ *                           format: date-time
+ *                         updatedAt:
+ *                           type: string
+ *                           format: date-time
  *       400:
  *         description: Bad request - TV show ID is required
  *         content:
@@ -170,6 +185,9 @@ router.get("/", tvshowsControllers.getTVShows);
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Validation failed"
@@ -183,12 +201,15 @@ router.get("/", tvshowsControllers.getTVShows);
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Not found"
  *                 message:
  *                   type: string
- *                   example: "TV Show with ID clx123abc456def789 not found"
+ *                   example: "TV Show with identifier 'clx123abc456def789' not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -196,6 +217,9 @@ router.get("/", tvshowsControllers.getTVShows);
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Internal server error"

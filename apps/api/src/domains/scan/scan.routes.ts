@@ -75,41 +75,44 @@ const router: Router = express.Router();
  *                 success:
  *                   type: boolean
  *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     libraryId:
+ *                       type: string
+ *                       description: The ID of the library that was scanned
+ *                       example: "clxxxx1234567890abcdefgh"
+ *                     libraryName:
+ *                       type: string
+ *                       description: The name of the library
+ *                       example: "My Anime Library"
+ *                     totalFiles:
+ *                       type: number
+ *                       description: Total number of media files discovered
+ *                       example: 15
+ *                     totalSaved:
+ *                       type: number
+ *                       description: Total number saved to database
+ *                       example: 14
+ *                     cacheStats:
+ *                       type: object
+ *                       description: Metadata cache statistics
+ *                       properties:
+ *                         metadataFromCache:
+ *                           type: number
+ *                           description: Items using existing metadata
+ *                           example: 10
+ *                         metadataFromTMDB:
+ *                           type: number
+ *                           description: Items with fresh TMDB metadata
+ *                           example: 5
+ *                         totalMetadataFetched:
+ *                           type: number
+ *                           description: Total items with metadata
+ *                           example: 15
  *                 message:
  *                   type: string
  *                   example: "Scan completed successfully"
- *                 libraryId:
- *                   type: string
- *                   description: The ID of the library that was scanned
- *                   example: "clxxxx1234567890abcdefgh"
- *                 libraryName:
- *                   type: string
- *                   description: The name of the library
- *                   example: "My Anime Library"
- *                 totalFiles:
- *                   type: number
- *                   description: Total number of media files discovered during scan
- *                   example: 15
- *                 totalSaved:
- *                   type: number
- *                   description: Total number of media files successfully saved to the database
- *                   example: 14
- *                 cacheStats:
- *                   type: object
- *                   description: Cache statistics showing metadata reuse
- *                   properties:
- *                     metadataFromCache:
- *                       type: number
- *                       description: Number of items that reused existing metadata from database
- *                       example: 10
- *                     metadataFromTMDB:
- *                       type: number
- *                       description: Number of items that fetched fresh metadata from TMDB
- *                       example: 5
- *                     totalMetadataFetched:
- *                       type: number
- *                       description: Total number of items with metadata
- *                       example: 15
  *       400:
  *         description: Bad request - Invalid path, validation error, or missing TMDB API key
  *         content:
@@ -117,12 +120,15 @@ const router: Router = express.Router();
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Validation failed"
  *                 message:
  *                   type: string
- *                   example: "Invalid or unsafe file path"
+ *                   example: "TMDB API key is required. Please configure it in settings."
  *       500:
  *         description: Internal server error
  *         content:
@@ -130,6 +136,9 @@ const router: Router = express.Router();
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Internal server error"

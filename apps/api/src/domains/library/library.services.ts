@@ -1,9 +1,12 @@
 import prisma from "@/lib/database/prisma";
-import { logger } from "@/lib/utils";
+import { logger, NotFoundError } from "@/lib/utils";
 import {
   LibraryDeleteResult,
   LibraryUpdateResult,
   LibraryWithMetadata,
+  LibraryWithMediaRelations,
+  MediaLibraryWithRelations,
+  PrismaTransactionClient,
 } from "./library.types";
 import { Prisma, MediaType } from "@prisma/client";
 
@@ -12,7 +15,7 @@ export const libraryServices = {
     logger.info(`🗑️  Starting deletion of library: ${libraryId}`);
 
     // Find the library first
-    const library = await prisma.library.findUnique({
+    const library = (await prisma.library.findUnique({
       where: { id: libraryId },
       include: {
         media: {
@@ -25,21 +28,18 @@ export const libraryServices = {
           },
         },
       },
-    });
+    })) as LibraryWithMediaRelations | null;
 
     if (!library) {
-      throw new Error(`Library with ID ${libraryId} not found`);
+      throw new NotFoundError("Library", libraryId);
     }
 
     logger.info(`📚 Found library: ${library.name}`);
 
     // Find media that ONLY belongs to this library
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mediaToDelete = library.media
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((ml: any) => ml.media.libraries.length === 1)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((ml: any) => ml.mediaId);
+      .filter((ml: MediaLibraryWithRelations) => ml.media.libraries.length === 1)
+      .map((ml: MediaLibraryWithRelations) => ml.mediaId);
 
     logger.info(
       `📊 Analysis:
@@ -49,8 +49,7 @@ export const libraryServices = {
     );
 
     // Use a transaction to ensure atomicity
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx: PrismaTransactionClient) => {
       let deletedCount = 0;
 
       // Delete media that only belongs to this library
@@ -82,7 +81,6 @@ export const libraryServices = {
       logger.info(`✓ Deleted library: ${library.name}`);
 
       return {
-        success: true,
         libraryId: library.id,
         libraryName: library.name,
         mediaDeleted: deletedCount,
@@ -119,13 +117,16 @@ export const libraryServices = {
     });
 
     const librariesWithMetadata: LibraryWithMetadata[] = libraries.map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (library: any) => ({
-        ...library,
-        createdAt: library.createdAt.toISOString(),
-        updatedAt: library.updatedAt.toISOString(),
-        mediaCount: library.media.length,
-      })
+      (library) => {
+        // Destructure to exclude the media array from the response
+        const { media, ...libraryWithoutMedia } = library;
+        return {
+          ...libraryWithoutMedia,
+          createdAt: library.createdAt.toISOString(),
+          updatedAt: library.updatedAt.toISOString(),
+          mediaCount: media.length,
+        };
+      }
     );
 
     logger.info(`✓ Found ${librariesWithMetadata.length} libraries`);
@@ -151,7 +152,7 @@ export const libraryServices = {
     });
 
     if (!existingLibrary) {
-      throw new Error(`Library with ID ${libraryId} not found`);
+      throw new NotFoundError("Library", libraryId);
     }
 
     // Update the library, handling empty strings for URLs
@@ -186,7 +187,6 @@ export const libraryServices = {
     logger.info(`✓ Updated library: ${updatedLibrary.name}`);
 
     return {
-      success: true,
       library: updatedLibrary,
       message: `Successfully updated library "${updatedLibrary.name}"`,
     };

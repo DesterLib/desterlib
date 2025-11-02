@@ -191,10 +191,20 @@ const options = {
   ],
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let specs: any;
+interface SwaggerSpec {
+  openapi: string;
+  info: {
+    title: string;
+    version: string;
+    description: string;
+  };
+  paths: Record<string, unknown>;
+  components?: Record<string, unknown>;
+}
+
+let specs: SwaggerSpec;
 try {
-  specs = swaggerJsdoc(options);
+  specs = swaggerJsdoc(options) as SwaggerSpec;
   logger.info(
     `Swagger specs generated successfully with ${Object.keys(specs.paths || {}).length} paths`
   );

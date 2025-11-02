@@ -46,16 +46,22 @@ const router: Router = express.Router();
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 libraryId:
- *                   type: string
- *                   example: "clx123abc456def789"
- *                 libraryName:
- *                   type: string
- *                   example: "My Anime Library"
- *                 mediaDeleted:
- *                   type: number
- *                   description: Number of media entries that were deleted (only those belonging exclusively to this library)
- *                   example: 42
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     libraryId:
+ *                       type: string
+ *                       example: "clx123abc456def789"
+ *                     libraryName:
+ *                       type: string
+ *                       example: "My Anime Library"
+ *                     mediaDeleted:
+ *                       type: number
+ *                       description: Number of media entries deleted
+ *                       example: 42
+ *                     message:
+ *                       type: string
+ *                       example: "Successfully deleted library \"My Anime Library\" and 42 associated media entries"
  *                 message:
  *                   type: string
  *                   example: "Successfully deleted library \"My Anime Library\" and 42 associated media entries"
@@ -66,6 +72,9 @@ const router: Router = express.Router();
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Validation failed"
@@ -79,12 +88,15 @@ const router: Router = express.Router();
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Not found"
  *                 message:
  *                   type: string
- *                   example: "Library with ID clx123abc456def789 not found"
+ *                   example: "Library with identifier 'clx123abc456def789' not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -92,6 +104,9 @@ const router: Router = express.Router();
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Internal server error"
@@ -129,9 +144,15 @@ const router: Router = express.Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Library'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Library'
  */
 router.get(
   "/",
@@ -199,8 +220,14 @@ router.get(
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 library:
- *                   $ref: '#/components/schemas/Library'
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     library:
+ *                       $ref: '#/components/schemas/Library'
+ *                     message:
+ *                       type: string
+ *                       example: "Successfully updated library \"My Updated Anime Library\""
  *                 message:
  *                   type: string
  *                   example: "Successfully updated library \"My Updated Anime Library\""
@@ -211,9 +238,15 @@ router.get(
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Validation failed"
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid input data"
  *       404:
  *         description: Library not found
  *         content:
@@ -221,12 +254,15 @@ router.get(
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
  *                 error:
  *                   type: string
  *                   example: "Not found"
  *                 message:
  *                   type: string
- *                   example: "Library with ID clx123abc456def789 not found"
+ *                   example: "Library with identifier 'clx123abc456def789' not found"
  */
 router.put("/", validateBody(updateLibrarySchema), libraryControllers.update);
 

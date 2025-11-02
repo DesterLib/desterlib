@@ -1,6 +1,6 @@
 import prisma from "@/lib/database/prisma";
 import { TVShowsListResponse, TVShowResponse } from "./tvshows.types";
-import { serializeBigInt } from "@/lib/utils";
+import { serializeBigInt, NotFoundError } from "@/lib/utils";
 
 export const tvshowsServices = {
   getTVShows: async (): Promise<TVShowsListResponse> => {
@@ -25,7 +25,7 @@ export const tvshowsServices = {
       },
     });
     if (!tvshow) {
-      throw new Error(`TV Show with ID ${id} not found`);
+      throw new NotFoundError("TV Show", id);
     }
     const serialized = serializeBigInt(tvshow) as TVShowResponse;
 

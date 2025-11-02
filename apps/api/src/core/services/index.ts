@@ -1,1 +1,1 @@
-export * from "./genreService";
+export * from "./genre.service";

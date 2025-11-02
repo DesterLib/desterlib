@@ -3,6 +3,17 @@
  */
 
 /**
+ * Options for sanitization operations
+ */
+export interface SanitizeOptions {
+  stripHtml?: boolean;
+  escapeHtml?: boolean;
+  trimWhitespace?: boolean;
+  maxLength?: number;
+  maxDepth?: number;
+}
+
+/**
  * Sanitizes a string by removing or escaping potentially dangerous characters
  * @param input - The string to sanitize
  * @param options - Sanitization options
@@ -10,12 +21,7 @@
  */
 export function sanitizeString(
   input: string,
-  options: {
-    stripHtml?: boolean;
-    escapeHtml?: boolean;
-    trimWhitespace?: boolean;
-    maxLength?: number;
-  } = {}
+  options: SanitizeOptions = {}
 ): string {
   const {
     stripHtml = true,
@@ -76,7 +82,7 @@ export function sanitizeString(
   }
 
   // Remove null bytes and control characters (except newlines and tabs)
-  // Using unicode escapes to represent control characters that should be filtered out
+  // Using unicode escapes - intentionally includes control characters for security
   sanitized = sanitized.replace(
     /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,
     ""
@@ -98,13 +104,7 @@ export function sanitizeString(
  */
 export function sanitizeObject(
   obj: unknown,
-  options: {
-    stripHtml?: boolean;
-    escapeHtml?: boolean;
-    trimWhitespace?: boolean;
-    maxLength?: number;
-    maxDepth?: number;
-  } = {}
+  options: SanitizeOptions = {}
 ): unknown {
   const { maxDepth = 10 } = options;
 

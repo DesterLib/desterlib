@@ -4,7 +4,7 @@
  */
 
 import prisma from "../../lib/database/prisma";
-import { normalizeGenres } from "../../lib/utils/genreMapping";
+import { normalizeGenres } from "../../lib/utils/genre-mapping.util";
 
 /**
  * Assign genres to media with automatic deduplication
