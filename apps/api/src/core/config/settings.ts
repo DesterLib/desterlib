@@ -9,124 +9,239 @@ export interface UserSettings {
   firstRun: boolean;
 }
 
-const defaultSettings: UserSettings = {
-  port: 3001,
-  jwtSecret: "your-secret-key-change-in-production",
-  enableRouteGuards: false,
-  firstRun: true,
-};
+export interface PublicSettings {
+  tmdbApiKey?: string;
+  port: number;
+  enableRouteGuards: boolean;
+  firstRun: boolean;
+}
 
-// Module-level state
-let settings: UserSettings | null = null;
-let initialized = false;
+/**
+ * Core setting keys
+ */
+const SETTING_KEYS = {
+  TMDB_API_KEY: "core.tmdb.apiKey",
+  PORT: "core.server.port",
+  JWT_SECRET: "core.server.jwtSecret",
+  ENABLE_ROUTE_GUARDS: "core.server.enableRouteGuards",
+  FIRST_RUN: "core.system.firstRun",
+} as const;
 
-async function loadSettings(): Promise<UserSettings> {
-  try {
-    // Load settings from database
-    const dbSettings = await prisma.settings.findMany();
+/**
+ * Core settings definitions
+ */
+const coreSettings = [
+  {
+    key: SETTING_KEYS.TMDB_API_KEY,
+    category: "INTEGRATION" as const,
+    module: "tmdb",
+    type: "SECRET" as const,
+    value: "",
+    displayName: "TMDB API Key",
+    description: "The Movie Database API key",
+    isPublic: false,
+  },
+  {
+    key: SETTING_KEYS.PORT,
+    category: "CORE" as const,
+    module: "server",
+    type: "NUMBER" as const,
+    value: "3001",
+    displayName: "Server Port",
+    description: "API server port",
+    isPublic: true,
+  },
+  {
+    key: SETTING_KEYS.JWT_SECRET,
+    category: "CORE" as const,
+    module: "server",
+    type: "SECRET" as const,
+    value: "change-me-in-production",
+    displayName: "JWT Secret",
+    description: "Secret for signing tokens",
+    isPublic: false,
+  },
+  {
+    key: SETTING_KEYS.ENABLE_ROUTE_GUARDS,
+    category: "CORE" as const,
+    module: "server",
+    type: "BOOLEAN" as const,
+    value: "false",
+    displayName: "Enable Route Guards",
+    description: "Enable authentication",
+    isPublic: true,
+  },
+  {
+    key: SETTING_KEYS.FIRST_RUN,
+    category: "CORE" as const,
+    module: "system",
+    type: "BOOLEAN" as const,
+    value: "true",
+    displayName: "First Run",
+    description: "Initial setup needed",
+    isPublic: true,
+  },
+];
 
-    // Convert database rows to settings object
-    const parsedSettings: Record<string, unknown> = {};
-
-    for (const setting of dbSettings) {
-      try {
-        const value = JSON.parse(setting.value);
-        parsedSettings[setting.key] = value;
-      } catch {
-        // If JSON parsing fails, treat as string
-        parsedSettings[setting.key] = setting.value;
-      }
-    }
-
-    const finalSettings = { ...defaultSettings, ...parsedSettings };
-    logger.info("Settings loaded from database");
-    return finalSettings;
-  } catch (error) {
-    logger.error("Failed to load settings from database:", error);
-    logger.info("Using default settings");
-    return { ...defaultSettings };
+/**
+ * Parse value based on type
+ */
+function parseValue(value: string, type: string): string | number | boolean {
+  switch (type) {
+    case "NUMBER":
+      return parseFloat(value);
+    case "BOOLEAN":
+      return value.toLowerCase() === "true";
+    default:
+      return value;
   }
 }
 
-async function saveSetting(key: string, value: unknown): Promise<void> {
-  try {
-    const stringValue =
-      typeof value === "string" ? value : JSON.stringify(value);
+/**
+ * Serialize value to string
+ */
+function serializeValue(value: string | number | boolean): string {
+  return String(value);
+}
 
-    await prisma.settings.upsert({
-      where: { key },
-      update: { value: stringValue },
-      create: { key, value: stringValue },
+/**
+ * Ensure core settings exist
+ */
+async function ensureCoreSettings(): Promise<void> {
+  for (const setting of coreSettings) {
+    await prisma.setting.upsert({
+      where: { key: setting.key },
+      update: {},
+      create: setting,
     });
-
-    logger.debug(`Setting ${key} saved to database`);
-  } catch (error) {
-    logger.error(`Failed to save setting ${key}:`, error);
-    throw new Error(`Failed to save setting ${key}`);
   }
 }
 
+/**
+ * Get setting value
+ */
+async function getSetting<T = string>(key: string, defaultValue?: T): Promise<T> {
+  const setting = await prisma.setting.findUnique({ where: { key } });
+  if (!setting) return defaultValue as T;
+  return parseValue(setting.value, setting.type) as T;
+}
+
+/**
+ * Set setting value
+ */
+async function setSetting(key: string, value: string | number | boolean): Promise<void> {
+  const stringValue = serializeValue(value);
+  await prisma.setting.update({
+    where: { key },
+    data: { value: stringValue },
+  });
+}
+
+/**
+ * Initialize settings
+ */
 export async function initializeSettings(): Promise<void> {
-  if (!initialized) {
-    settings = await loadSettings();
-    initialized = true;
-  }
+  await ensureCoreSettings();
+  logger.info("Settings initialized");
 }
 
+/**
+ * Get all settings
+ */
 export async function getSettings(): Promise<UserSettings> {
-  if (!initialized) {
-    await initializeSettings();
-  }
-  return { ...settings! };
+  return {
+    tmdbApiKey: await getSetting<string>(SETTING_KEYS.TMDB_API_KEY) || undefined,
+    port: await getSetting<number>(SETTING_KEYS.PORT, 3001),
+    jwtSecret: await getSetting<string>(SETTING_KEYS.JWT_SECRET, "change-me-in-production"),
+    enableRouteGuards: await getSetting<boolean>(SETTING_KEYS.ENABLE_ROUTE_GUARDS, false),
+    firstRun: await getSetting<boolean>(SETTING_KEYS.FIRST_RUN, true),
+  };
 }
 
-// Synchronous getters for settings that need to be available immediately (fallback to defaults)
+/**
+ * Get public settings (excludes secrets)
+ */
+export async function getPublicSettings(): Promise<PublicSettings> {
+  const allSettings = await getSettings();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { jwtSecret: _, ...publicSettings } = allSettings;
+  return publicSettings;
+}
+
+/**
+ * Get default settings
+ */
 export function getDefaultSettings(): UserSettings {
-  return { ...defaultSettings };
+  return {
+    port: 3001,
+    jwtSecret: "change-me-in-production",
+    enableRouteGuards: false,
+    firstRun: true,
+  };
 }
 
-export async function updateSettings(
-  updates: Partial<UserSettings>
-): Promise<void> {
+/**
+ * Update settings
+ */
+export async function updateSettings(updates: Partial<UserSettings>): Promise<void> {
   try {
-    // Update each setting individually in the database
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        await saveSetting(key, value);
-      }
+    if (updates.tmdbApiKey !== undefined) {
+      await setSetting(SETTING_KEYS.TMDB_API_KEY, updates.tmdbApiKey);
     }
-
-    // Refresh cached settings
-    settings = await loadSettings();
-    logger.info("Settings updated successfully");
+    if (updates.port !== undefined) {
+      await setSetting(SETTING_KEYS.PORT, updates.port);
+    }
+    if (updates.jwtSecret !== undefined) {
+      await setSetting(SETTING_KEYS.JWT_SECRET, updates.jwtSecret);
+    }
+    if (updates.enableRouteGuards !== undefined) {
+      await setSetting(SETTING_KEYS.ENABLE_ROUTE_GUARDS, updates.enableRouteGuards);
+    }
+    if (updates.firstRun !== undefined) {
+      await setSetting(SETTING_KEYS.FIRST_RUN, updates.firstRun);
+    }
+    logger.info("Settings updated");
   } catch (error) {
     logger.error("Failed to update settings:", error);
     throw error;
   }
 }
 
+/**
+ * Get TMDB API key
+ */
 export async function getTmdbApiKey(): Promise<string> {
-  const currentSettings = await getSettings();
-  return currentSettings.tmdbApiKey || "";
+  return await getSetting<string>(SETTING_KEYS.TMDB_API_KEY, "");
 }
 
+/**
+ * Set TMDB API key
+ */
 export async function setTmdbApiKey(apiKey: string): Promise<void> {
-  await updateSettings({ tmdbApiKey: apiKey });
+  await setSetting(SETTING_KEYS.TMDB_API_KEY, apiKey);
 }
 
+/**
+ * Check if first run
+ */
 export async function isFirstRun(): Promise<boolean> {
-  const currentSettings = await getSettings();
-  return currentSettings.firstRun;
+  return await getSetting<boolean>(SETTING_KEYS.FIRST_RUN, true);
 }
 
+/**
+ * Complete first run
+ */
 export async function completeFirstRun(): Promise<void> {
-  await updateSettings({ firstRun: false });
+  await setSetting(SETTING_KEYS.FIRST_RUN, false);
 }
 
-// For backward compatibility, maintain the settingsManager object interface
+/**
+ * Settings manager
+ */
 export const settingsManager = {
   initialize: initializeSettings,
   getSettings,
+  getPublicSettings,
   getDefaultSettings,
   updateSettings,
   getTmdbApiKey,

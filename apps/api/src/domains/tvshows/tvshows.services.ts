@@ -27,20 +27,36 @@ export const tvshowsServices = {
     if (!tvshow) {
       throw new NotFoundError("TV Show", id);
     }
-    const serialized = serializeBigInt(tvshow) as TVShowResponse;
+    const serialized = serializeBigInt(tvshow) as any;
 
-    // Add streamUrl to each episode
-    const seasonsWithStreamUrls = serialized.seasons.map((season) => ({
-      ...season,
-      episodes: season.episodes.map((episode) => ({
-        ...episode,
+    // Transform seasons and episodes to match API schema
+    const seasonsWithTransformedData = serialized.seasons.map((season: any) => ({
+      id: season.id,
+      seasonNumber: season.number,
+      name: `Season ${season.number}`,
+      overview: null,
+      airDate: null,
+      posterUrl: season.posterUrl,
+      tvShowId: season.tvShowId,
+      episodes: season.episodes.map((episode: any) => ({
+        id: episode.id,
+        episodeNumber: episode.number,
+        seasonNumber: season.number,
+        title: episode.title,
+        overview: null,
+        airDate: episode.airDate,
+        runtime: episode.duration,
+        stillUrl: episode.stillPath,
+        filePath: episode.filePath,
+        fileSize: episode.fileSize,
+        seasonId: episode.seasonId,
         streamUrl: `/api/v1/stream/${episode.id}`,
       })),
     }));
 
     return {
       ...serialized,
-      seasons: seasonsWithStreamUrls,
+      seasons: seasonsWithTransformedData,
     };
   },
 };

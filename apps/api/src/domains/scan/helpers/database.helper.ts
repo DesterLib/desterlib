@@ -50,6 +50,13 @@ export async function upsertMedia(
     },
   });
 
+  // Debug logging for poster URL
+  const posterUrl = getTmdbImageUrl(metadata.poster_path);
+  const backdropUrl = getTmdbImageUrl(metadata.backdrop_path);
+  
+  logger.debug(`[${metadata.title || metadata.name}] poster_path: ${metadata.poster_path} → posterUrl: ${posterUrl}`);
+  logger.debug(`[${metadata.title || metadata.name}] backdrop_path: ${metadata.backdrop_path} → backdropUrl: ${backdropUrl}`);
+
   let media;
 
   if (existingExternalId) {
@@ -59,8 +66,8 @@ export async function upsertMedia(
       data: {
         title: metadata.title || metadata.name || "Unknown",
         description: metadata.overview,
-        posterUrl: getTmdbImageUrl(metadata.poster_path),
-        backdropUrl: getTmdbImageUrl(metadata.backdrop_path),
+        posterUrl,
+        backdropUrl,
         releaseDate: metadata.release_date
           ? new Date(metadata.release_date)
           : metadata.first_air_date
@@ -76,8 +83,8 @@ export async function upsertMedia(
         title: metadata.title || metadata.name || "Unknown",
         type: mediaType === "tv" ? MediaType.TV_SHOW : MediaType.MOVIE,
         description: metadata.overview,
-        posterUrl: getTmdbImageUrl(metadata.poster_path),
-        backdropUrl: getTmdbImageUrl(metadata.backdrop_path),
+        posterUrl,
+        backdropUrl,
         releaseDate: metadata.release_date
           ? new Date(metadata.release_date)
           : metadata.first_air_date
@@ -159,12 +166,18 @@ export async function saveGenres(
   genres: Array<{ id: number; name: string }> | undefined,
   mediaTitle: string
 ) {
-  if (genres && genres.length > 0) {
-    const result = await assignGenresToMedia(mediaId, genres);
-    logger.debug(
-      `✓ Genres for ${mediaTitle}: ${result.linked} linked${result.duplicatesAvoided > 0 ? `, ${result.duplicatesAvoided} duplicates avoided` : ""}`
-    );
+  // Debug logging for genres
+  if (!genres || genres.length === 0) {
+    logger.warn(`[${mediaTitle}] No genres received from TMDB metadata`);
+    return;
   }
+
+  logger.debug(`[${mediaTitle}] Received ${genres.length} genres from TMDB: ${genres.map(g => g.name).join(', ')}`);
+
+  const result = await assignGenresToMedia(mediaId, genres);
+  logger.info(
+    `✓ Genres for ${mediaTitle}: ${result.linked} linked${result.duplicatesAvoided > 0 ? `, ${result.duplicatesAvoided} duplicates avoided` : ""}`
+  );
 }
 
 /**

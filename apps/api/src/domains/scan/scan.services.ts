@@ -31,7 +31,7 @@ export const scanServices = {
       maxDepth = Infinity,
       tmdbApiKey,
       mediaType = "movie",
-      fileExtensions = getDefaultVideoExtensions(),
+      fileExtensions,
       libraryName,
       rescan = false,
       originalPath,
@@ -40,6 +40,11 @@ export const scanServices = {
     if (!tmdbApiKey) {
       throw new Error("TMDB API key is required");
     }
+
+    // Use default extensions if none provided or if empty array
+    const finalFileExtensions = fileExtensions && fileExtensions.length > 0 
+      ? fileExtensions 
+      : getDefaultVideoExtensions();
 
     // Use original path for library name and database storage, but scanPath for actual scanning
     const displayPath = originalPath || rootPath;
@@ -76,6 +81,7 @@ export const scanServices = {
 
     // Phase 1: Scan directory structure
     logger.info("📁 Phase 1: Scanning directory structure...");
+    logger.info(`Looking for extensions: ${finalFileExtensions.join(', ')}`);
     wsManager.sendScanProgress({
       phase: "scanning",
       progress: 0,
@@ -87,7 +93,7 @@ export const scanServices = {
 
     const mediaEntries = await collectMediaEntries(rootPath, {
       maxDepth,
-      fileExtensions,
+      fileExtensions: finalFileExtensions,
     });
 
     logger.info(`\n✓ Found ${mediaEntries.length} media items\n`);
@@ -101,6 +107,29 @@ export const scanServices = {
       message: `Found ${mediaEntries.length} media items`,
       libraryId: library.id,
     });
+
+    // Early exit if no media items found
+    if (mediaEntries.length === 0) {
+      logger.info("⚠️  No media items found. Scan complete.\n");
+      
+      wsManager.sendScanComplete({
+        libraryId: library.id,
+        totalItems: 0,
+        message: `Scan complete! No media items found in "${library.name}"`,
+      });
+
+      return {
+        libraryId: library.id,
+        libraryName: library.name,
+        totalFiles: 0,
+        totalSaved: 0,
+        cacheStats: {
+          metadataFromCache: 0,
+          metadataFromTMDB: 0,
+          totalMetadataFetched: 0,
+        },
+      };
+    }
 
     // Phase 2: Fetch metadata from TMDB
     logger.info("🌐 Phase 2: Fetching metadata from TMDB (rate-limited parallel)...");

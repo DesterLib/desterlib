@@ -141,6 +141,15 @@ export async function fetchMetadataForEntries(
           );
           if (metadata) {
             const typedMetadata = metadata as TmdbMetadata;
+            
+            // Debug: Log genres from TMDB
+            const genres = (metadata as any).genres;
+            if (genres && genres.length > 0) {
+              logger.debug(`TMDB returned ${genres.length} genres for "${typedMetadata.title || typedMetadata.name}": ${genres.map((g: any) => g.name).join(', ')}`);
+            } else {
+              logger.warn(`TMDB returned NO genres for "${typedMetadata.title || typedMetadata.name}"`);
+            }
+            
             metadataCache.set(extractedIds.tmdbId!, typedMetadata);
             mediaEntry.metadata = typedMetadata;
             metadataFetched++;
@@ -212,6 +221,15 @@ export async function fetchMetadataForEntries(
               );
               if (metadata) {
                 const typedMetadata = metadata as TmdbMetadata;
+                
+                // Debug: Log genres from TMDB
+                const genres = (metadata as any).genres;
+                if (genres && genres.length > 0) {
+                  logger.debug(`TMDB search returned ${genres.length} genres for "${typedMetadata.title || typedMetadata.name}": ${genres.map((g: any) => g.name).join(', ')}`);
+                } else {
+                  logger.warn(`TMDB search returned NO genres for "${typedMetadata.title || typedMetadata.name}"`);
+                }
+                
                 metadataCache.set(foundId, typedMetadata);
                 mediaEntry.metadata = typedMetadata;
                 metadataFetched++;

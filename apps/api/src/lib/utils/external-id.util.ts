@@ -48,18 +48,42 @@ export function extractIds(name: string): ExtractedIds {
   }
 
   // Clean title (remove IDs, year, season/episode info, and common patterns)
-  const cleanTitle = name
+  let cleanTitle = name
+    // Remove file extension first
+    .replace(/\.(mkv|mp4|avi|mov|wmv|m4v|webm|flv|mpg|mpeg|m2ts|ts)$/i, "")
+    // Remove release group tags at start [GroupName]
+    .replace(/^\[[\w\s-]+\]\s*/i, "")
+    // Remove quality/codec info in brackets/parentheses (1080p, AV1, BD, etc.)
+    .replace(/\([^)]*(?:1080p|720p|480p|2160p|4K|AV1|x264|x265|HEVC|BD|BluRay|WEB-?DL|WEBRip)[^)]*\)/gi, "")
+    .replace(/\[[^\]]*(?:1080p|720p|480p|2160p|4K|AV1|x264|x265|HEVC|BD|BluRay|WEB-?DL|WEBRip)[^\]]*\]/gi, "")
+    // Remove hash codes in brackets [A1B2C3D4]
+    .replace(/\[[0-9A-F]{8}\]/gi, "")
+    // Remove episode tags like (OAD1), (OVA), (Special), etc.
+    .replace(/\((?:OAD|OVA|ONA|Special|Movie|Batch)\d*\)/gi, "")
+    // Remove TMDB/IMDB/TVDB IDs
     .replace(/[[{]?(tmdb|imdb|tvdb)[:-][\w\d]+[\]}]?/gi, "")
+    // Remove year
     .replace(/[[(]\d{4}[\])]/, "")
+    // Remove season/episode info
     .replace(/[Ss]\d{1,2}[Ee]\d{1,2}/g, "")
     .replace(/\d{1,2}x\d{1,2}/g, "")
     .replace(/[Ss]eason\s*\d{1,2}/gi, "")
-    .replace(/\.(mkv|mp4|avi|mov|wmv|m4v)$/i, "")
-    .replace(/[._-]/g, " ")
+    // Remove episode numbers like (01), (02)
+    .replace(/\((\d{1,3})\)/g, "")
+    // Replace dots, underscores, and dashes with spaces
+    .replace(/[._-]+/g, " ")
+    // Remove multiple spaces
     .replace(/\s+/g, " ")
     .trim();
 
-  result.title = cleanTitle;
+  // Further cleanup: remove remaining empty brackets/parentheses
+  cleanTitle = cleanTitle
+    .replace(/\[\s*\]/g, "")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  result.title = cleanTitle || name; // Fallback to original name if cleaning results in empty string
 
   return result;
 }

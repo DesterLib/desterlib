@@ -318,12 +318,44 @@ model ExternalId {
 // SETTINGS
 // ────────────────────────────
 
-model Settings {
-  id                String   @id @default(cuid())
-  key               String   @unique
-  value             String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+/// Setting categories for organizing configuration
+enum SettingCategory {
+  CORE        // Core system settings
+  INTEGRATION // External integrations (TMDB, Plex, etc.)
+  LIBRARY     // Library management
+  TRANSCODING // Media transcoding
+  NETWORK     // Network and streaming
+  NOTIFICATION // Notifications
+  UI          // User interface
+  PLUGIN      // Plugin-specific
+  CUSTOM      // User-defined
+}
 
-  @@index([key])
+/// Setting data types for validation
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  SECRET  // Encrypted/sensitive values
+}
+
+/// Modular settings table - future-proof for plugins and extensions
+model Setting {
+  id          String          @id @default(cuid())
+  key         String          @unique
+  category    SettingCategory @default(CUSTOM)
+  module      String?
+  value       String
+  type        SettingType     @default(STRING)
+  displayName String?
+  description String?
+  isPublic    Boolean         @default(false)
+  isRequired  Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  @@index([category])
+  @@index([module])
+  @@map("settings")
 }

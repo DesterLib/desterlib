@@ -178,6 +178,73 @@ router.get("/", tvshowsControllers.getTVShows);
  *                         updatedAt:
  *                           type: string
  *                           format: date-time
+ *                     seasons:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           seasonNumber:
+ *                             type: integer
+ *                             example: 1
+ *                           name:
+ *                             type: string
+ *                             nullable: true
+ *                             example: "Season 1"
+ *                           overview:
+ *                             type: string
+ *                             nullable: true
+ *                           airDate:
+ *                             type: string
+ *                             format: date-time
+ *                             nullable: true
+ *                           posterUrl:
+ *                             type: string
+ *                             nullable: true
+ *                           tvShowId:
+ *                             type: string
+ *                           episodes:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 id:
+ *                                   type: string
+ *                                 episodeNumber:
+ *                                   type: integer
+ *                                   example: 1
+ *                                 seasonNumber:
+ *                                   type: integer
+ *                                   example: 1
+ *                                 title:
+ *                                   type: string
+ *                                   example: "Pilot"
+ *                                 overview:
+ *                                   type: string
+ *                                   nullable: true
+ *                                 airDate:
+ *                                   type: string
+ *                                   format: date-time
+ *                                   nullable: true
+ *                                 runtime:
+ *                                   type: integer
+ *                                   nullable: true
+ *                                   example: 45
+ *                                 stillUrl:
+ *                                   type: string
+ *                                   nullable: true
+ *                                 filePath:
+ *                                   type: string
+ *                                   nullable: true
+ *                                 fileSize:
+ *                                   type: string
+ *                                   nullable: true
+ *                                 seasonId:
+ *                                   type: string
+ *                                 streamUrl:
+ *                                   type: string
+ *                                   example: "/api/v1/stream/clx123"
  *       400:
  *         description: Bad request - TV show ID is required
  *         content:

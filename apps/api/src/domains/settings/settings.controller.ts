@@ -1,19 +1,14 @@
 import { Request, Response } from "express";
-import { settingsManager, UserSettings } from "../../core/config/settings";
+import { settingsManager } from "../../core/config/settings";
 import { sendSuccess, asyncHandler } from "../../lib/utils";
-import { UpdateSettingsRequest } from "./settings.types";
+import { UpdateSettingsRequest } from "./settings.schema";
 
 export const settingsControllers = {
   /**
    * Get application settings (excludes sensitive data)
    */
   get: asyncHandler(async (req: Request, res: Response) => {
-    const settings = await settingsManager.getSettings();
-
-    // Don't return sensitive information like jwtSecret
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { jwtSecret: _, ...publicSettings } = settings;
-
+    const publicSettings = await settingsManager.getPublicSettings();
     return sendSuccess(res, publicSettings);
   }),
 
@@ -23,27 +18,17 @@ export const settingsControllers = {
   update: asyncHandler(async (req: Request, res: Response) => {
     const validatedData = req.validatedData as UpdateSettingsRequest;
 
-    const updates: Partial<UserSettings> = {};
+    // Update only the fields that were provided
+    await settingsManager.updateSettings(validatedData);
 
-    if (validatedData.tmdbApiKey !== undefined) {
-      updates.tmdbApiKey = validatedData.tmdbApiKey;
-    }
+    const updatedSettings = await settingsManager.getPublicSettings();
 
-    if (validatedData.port !== undefined) {
-      updates.port = validatedData.port;
-    }
-
-    if (validatedData.enableRouteGuards !== undefined) {
-      updates.enableRouteGuards = validatedData.enableRouteGuards;
-    }
-
-    await settingsManager.updateSettings(updates);
-
-    const updatedSettings = await settingsManager.getSettings();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { jwtSecret: _, ...publicSettings } = updatedSettings;
-
-    return sendSuccess(res, publicSettings, 200, "Settings updated successfully");
+    return sendSuccess(
+      res,
+      updatedSettings,
+      200,
+      "Settings updated successfully"
+    );
   }),
 
   /**
