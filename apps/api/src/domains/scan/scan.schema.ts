@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isDangerousRootPath } from "./helpers/path-validator.helper";
 
 /**
  * General string validation schema
@@ -26,11 +27,29 @@ export const scanPathSchema = z.object({
       {
         message: "Invalid or unsafe file path",
       }
+    )
+    .refine(
+      (path) => {
+        // Prevent scanning dangerous root paths
+        return !isDangerousRootPath(path);
+      },
+      {
+        message:
+          "Cannot scan system root directories or entire drives. Please specify a media folder (e.g., /Users/username/Movies or C:\\Media\\Movies)",
+      }
     ),
   options: z
     .object({
-      maxDepth: z.number().int().min(0).max(10).optional(),
-      mediaType: z.enum(["movie", "tv"]).optional(),
+      maxDepth: z
+        .number()
+        .int()
+        .min(0)
+        .max(10)
+        .optional()
+        .describe(
+          "Maximum directory depth to scan. Defaults to 2 for movies, 4 for TV shows"
+        ),
+      mediaType: z.enum(["movie", "tv"]).default("movie"),
       fileExtensions: z.array(sanitizedStringSchema).max(20).optional(),
       libraryName: z.string().min(1).max(100).optional(),
       rescan: z.boolean().optional(),

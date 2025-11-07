@@ -62,7 +62,7 @@ export function extractIds(name: string): ExtractedIds {
     .replace(/\((?:OAD|OVA|ONA|Special|Movie|Batch)\d*\)/gi, "")
     // Remove TMDB/IMDB/TVDB IDs
     .replace(/[[{]?(tmdb|imdb|tvdb)[:-][\w\d]+[\]}]?/gi, "")
-    // Remove year
+    // Remove year (but keep it for the extracted year)
     .replace(/[[(]\d{4}[\])]/, "")
     // Remove season/episode info
     .replace(/[Ss]\d{1,2}[Ee]\d{1,2}/g, "")
@@ -76,12 +76,49 @@ export function extractIds(name: string): ExtractedIds {
     .replace(/\s+/g, " ")
     .trim();
 
-  // Further cleanup: remove remaining empty brackets/parentheses
+  // Additional aggressive cleanup for modern release naming conventions
+  // This removes quality indicators, codecs, cuts, and release groups
   cleanTitle = cleanTitle
+    // Remove resolution and quality (2160p, 1080p, 720p, 480p, 4K, UHD, HD, SD, etc.)
+    .replace(/\b(2160p|1080p|1440p|720p|480p|360p|4K|8K|UHD|FHD|HD|SD)\b/gi, "")
+    // Remove source/release type (BluRay, BDRip, WEB-DL, WEBRip, HDTV, DVDRip, etc.)
+    .replace(/\b(BluRay|Blu-?Ray|BDRip|BD|BRRip|WEB-?DL|WEBRip|WEB|HDTV|DVDRip|DVD|AMZN|ATVP|MA|DS4K|35mm|IMAX)\b/gi, "")
+    // Remove video codecs (H.264, H.265, x264, x265, AV1, HEVC, etc.)
+    .replace(/\b(H\.?26[45]|x26[45]|AV1|HEVC|AVC|10bit|8bit)\b/gi, "")
+    // Remove audio codecs and channels - MUST handle both "5.1" and "5 1" formats (after dot-to-space conversion)
+    .replace(/\b(DDP5?|DD\+?5?|Atmos|OPUS|AAC|AC3|DTS|TrueHD|FLAC|DL)\b/gi, "")
+    .replace(/\b([5-7][\s.]1|2[\s.]0|6CH|8CH)\b/gi, "")
+    // Remove quality/encoding metrics (vmaf, etc.)
+    .replace(/\b(vmaf\d+|crf\d+)\b/gi, "")
+    // Remove HDR/color info (HDR, HDR10, DV, Dolby Vision, SDR, etc.)
+    .replace(/\b(HDR10\+?|HDR|DV|Dolby\s*Vision|SDR)\b/gi, "")
+    // Remove remaster/cut/version info (REMASTERED, EXTENDED, IMAX, Director's Cut, etc.)
+    .replace(/\b(REMASTERED|EXTENDED|UNRATED|THEATRICAL|Director'?s?\s*Cut|Open\s*Matte|The\s*Super\s*Duper\s*Cut|PROPER)\b/gi, "")
+    // Remove media type keywords
+    .replace(/\b(bluray|brrip|webrip|web)\b/gi, "")
+    // Remove common tags and metadata
+    .replace(/\b(INTERNAL|LIMITED|FESTIVAL|SCREENER|R5|CAM)\b/gi, "")
+    // Remove file size indicators
+    .replace(/\b(\d+(\.\d+)?\s?(GB|MB|GiB|MiB))\b/gi, "")
+    // Remove remaining empty brackets/parentheses
     .replace(/\[\s*\]/g, "")
     .replace(/\(\s*\)/g, "")
+    .replace(/\{\s*\}/g, "")
+    // Remove multiple spaces
     .replace(/\s+/g, " ")
     .trim();
+    
+  // Final cleanup: Remove release group tags at the end
+  // They're usually all caps or mixed case names after a dash or space at the end
+  // Examples: KIMJI, RAV1NE, PSA, FLUX, CRUCiBLE, Ralphy, etc.
+  cleanTitle = cleanTitle.replace(/\s+[A-Z][A-Za-z0-9]*$/i, "").trim();
+  
+  // Fix common movie title patterns that may have been mangled
+  cleanTitle = cleanTitle
+    // Fix possessives that got mangled (Sorcerer s -> Sorcerer's)
+    .replace(/\b(\w+)\s+s\s+/gi, "$1's ")
+    // Normalize "and the" patterns
+    .replace(/\band\s+the\b/gi, "and the");
 
   result.title = cleanTitle || name; // Fallback to original name if cleaning results in empty string
 

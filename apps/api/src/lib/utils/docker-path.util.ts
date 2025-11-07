@@ -112,35 +112,3 @@ export function mapContainerToHostPath(
   return containerPath;
 }
 
-/**
- * Normalizes a path for consistent storage in database
- * Always returns the host path format that users expect to see
- * 
- * @param path - Path to normalize
- * @param originalHostBase - Optional original host base path
- * @returns Normalized path
- */
-export function normalizePathForStorage(
-  path: string,
-  originalHostBase?: string
-): string {
-  // If the path looks like a container path, map it back
-  if (path.startsWith(PATH_CONFIG.CONTAINER_BASE)) {
-    return mapContainerToHostPath(path, originalHostBase);
-  }
-
-  // Otherwise, return the path as-is (should be a host path already)
-  return path;
-}
-
-/**
- * Get the configured path bases
- * Useful for debugging and configuration checks
- */
-export function getPathConfig() {
-  return {
-    ...PATH_CONFIG,
-    isDocker: isRunningInDocker(),
-  };
-}
-

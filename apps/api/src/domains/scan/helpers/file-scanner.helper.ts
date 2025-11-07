@@ -7,6 +7,7 @@ import { readdir, stat } from "fs/promises";
 import { join } from "path";
 import { logger, extractIds } from "@/lib/utils";
 import { shouldSkipEntry } from "./file-filter.helper";
+import { validateMediaPath, logValidationStats } from "./path-validator.helper";
 import type { MediaEntry } from "../scan.types";
 
 /**
@@ -20,18 +21,25 @@ export async function collectMediaEntries(
   rootPath: string,
   options: {
     maxDepth?: number;
+    mediaType: "movie" | "tv";
     fileExtensions: string[];
     onProgress?: (count: number) => void;
   }
 ): Promise<MediaEntry[]> {
-  const { maxDepth = Infinity, fileExtensions, onProgress } = options;
+  const { maxDepth = Infinity, mediaType, fileExtensions, onProgress } = options;
   const mediaEntries: MediaEntry[] = [];
   let totalScanned = 0;
   let totalSkipped = 0;
+  let depthViolations = 0;
+  let structureViolations = 0;
   const sampleFiles: string[] = [];
   const maxSamples = 10;
   
+  // Track unique show folders for TV shows (for optimization)
+  const tvShowFolders = new Map<string, Set<number>>(); // showFolder -> Set<seasons>
+  
   logger.debug(`File scanner initialized with ${fileExtensions.length} extensions: ${fileExtensions.join(', ')}`);
+  logger.debug(`Media type: ${mediaType}, Max depth: ${maxDepth}`);
 
   async function collectEntries(
     currentPath: string,
@@ -116,6 +124,43 @@ export async function collectMediaEntries(
           }
 
           if (hasIds || isMediaFile) {
+            // Validate path structure based on media type
+            const validation = validateMediaPath(
+              rootPath,
+              fullPath,
+              mediaType,
+              extractedIds
+            );
+            
+            if (!validation.valid) {
+              totalSkipped++;
+              
+              // Track violation type for statistics
+              if (validation.reason?.includes("too deeply nested")) {
+                depthViolations++;
+              } else {
+                structureViolations++;
+              }
+              
+              // Log first few violations at info level, rest at debug
+              const logLevel = (depthViolations + structureViolations) <= 5 ? "info" : "debug";
+              logger[logLevel](
+                `⏭️  Skipping ${entry.name}: ${validation.reason}`
+              );
+              
+              // Skip this file
+              continue;
+            }
+            
+            // For TV shows, track show folders for metadata optimization
+            if (mediaType === "tv" && validation.metadata?.showFolder && extractedIds.season) {
+              const showFolder = validation.metadata.showFolder;
+              if (!tvShowFolders.has(showFolder)) {
+                tvShowFolders.set(showFolder, new Set());
+              }
+              tvShowFolders.get(showFolder)!.add(extractedIds.season);
+            }
+
             const mediaEntry: MediaEntry = {
               path: fullPath,
               name: entry.name,
@@ -167,6 +212,29 @@ export async function collectMediaEntries(
   
   const notRecognized = totalScanned - totalSkipped - mediaEntries.length;
   logger.info(`Scan statistics: Scanned ${totalScanned} items, Skipped ${totalSkipped} filtered items, Not recognized as media: ${notRecognized}, Found ${mediaEntries.length} media items`);
+  
+  // Log validation statistics
+  if (depthViolations > 0 || structureViolations > 0) {
+    logValidationStats({
+      total: totalScanned,
+      valid: mediaEntries.length,
+      depthViolations,
+      structureViolations,
+    });
+  }
+  
+  // Log TV show folder information for optimization insights
+  if (mediaType === "tv" && tvShowFolders.size > 0) {
+    logger.info(`\n📺 TV Show Structure Detected:`);
+    logger.info(`   Found ${tvShowFolders.size} unique show(s)`);
+    let totalSeasons = 0;
+    tvShowFolders.forEach((seasons, showFolder) => {
+      totalSeasons += seasons.size;
+      logger.debug(`   - ${showFolder}: ${seasons.size} season(s)`);
+    });
+    logger.info(`   Total seasons across all shows: ${totalSeasons}`);
+    logger.info(`   This optimizes metadata fetching - show metadata will be fetched once per show\n`);
+  }
   
   if (mediaEntries.length === 0 && notRecognized > 0) {
     logger.warn(`⚠️  ${notRecognized} items were found but not recognized as media files. Enable debug logging to see details.`);

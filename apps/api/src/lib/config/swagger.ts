@@ -52,6 +52,10 @@ const options = {
         description: "Health check and API status endpoints",
       },
       {
+        name: "Search",
+        description: "Media search endpoints for finding movies and TV shows",
+      },
+      {
         name: "Scan",
         description: "Media scanning and metadata fetching operations",
       },
@@ -66,6 +70,14 @@ const options = {
       {
         name: "TV Shows",
         description: "TV show catalog and retrieval endpoints",
+      },
+      {
+        name: "Stream",
+        description: "Media streaming endpoints",
+      },
+      {
+        name: "Settings",
+        description: "Application settings and configuration",
       },
     ],
     components: {

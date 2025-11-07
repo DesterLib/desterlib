@@ -106,8 +106,163 @@ export async function fetchMetadataForEntries(
     (e) => e.extractedIds.tmdbId || e.extractedIds.title
   ).length;
 
-  for (const mediaEntry of mediaEntries) {
-    const { extractedIds } = mediaEntry;
+  // For TV shows, optimize by grouping episodes of the same show
+  // This prevents fetching the same show metadata multiple times
+  if (mediaType === "tv") {
+    // Group entries by TMDB ID and title
+    const entriesByTmdbId = new Map<string, MediaEntry[]>();
+    const entriesByTitle = new Map<string, MediaEntry[]>();
+    
+    for (const mediaEntry of mediaEntries) {
+      if (mediaEntry.extractedIds.tmdbId) {
+        if (!entriesByTmdbId.has(mediaEntry.extractedIds.tmdbId)) {
+          entriesByTmdbId.set(mediaEntry.extractedIds.tmdbId, []);
+        }
+        entriesByTmdbId.get(mediaEntry.extractedIds.tmdbId)!.push(mediaEntry);
+      } else if (mediaEntry.extractedIds.title) {
+        const titleKey = `${mediaEntry.extractedIds.title}-${mediaEntry.extractedIds.year || ""}`;
+        
+        if (!entriesByTitle.has(titleKey)) {
+          entriesByTitle.set(titleKey, []);
+        }
+        entriesByTitle.get(titleKey)!.push(mediaEntry);
+      }
+    }
+    
+    const uniqueShows = entriesByTmdbId.size + entriesByTitle.size;
+    logger.info(`\n📊 TV Show Optimization Enabled:`);
+    logger.info(`   Found ${mediaEntries.length} episode(s) from ${uniqueShows} unique show(s)`);
+    logger.info(`   Will fetch show metadata ${uniqueShows} time(s) instead of ${mediaEntries.length} time(s)\n`);
+    
+    // Fetch metadata for unique shows, then apply to all their episodes
+    for (const [tmdbId, episodes] of entriesByTmdbId.entries()) {
+      const representativeEntry = episodes[0];
+      
+      const fetchPromise = rateLimiter.add(async () => {
+        // Check cache first
+        if (metadataCache.has(tmdbId)) {
+          const cachedMetadata = metadataCache.get(tmdbId)!;
+          // Apply cached metadata to all episodes of this show
+          episodes.forEach(ep => { ep.metadata = cachedMetadata; });
+          metadataFetched += episodes.length;
+          
+          if (existingMetadataMap.has(tmdbId)) {
+            metadataFromCache += episodes.length;
+            logger.debug(
+              `⏭️  Using existing metadata for ${episodes.length} episode(s) of "${cachedMetadata.title || cachedMetadata.name}"`
+            );
+          }
+          return;
+        }
+
+        // Fetch from TMDB
+        try {
+          const metadata = await tmdbServices.get(
+            tmdbId,
+            "tv" as TmdbType,
+            {
+              apiKey: tmdbApiKey,
+              extraParams: {
+                append_to_response: "credits",
+              },
+            }
+          );
+          
+          if (metadata) {
+            const typedMetadata = metadata as TmdbMetadata;
+            metadataCache.set(tmdbId, typedMetadata);
+            
+            // Apply metadata to all episodes of this show
+            episodes.forEach(ep => { ep.metadata = typedMetadata; });
+            metadataFetched += episodes.length;
+            metadataFromTMDB++;
+            
+            logger.info(
+              `✓ Fetched show metadata: "${typedMetadata.title || typedMetadata.name}" (applied to ${episodes.length} episode(s))`
+            );
+          }
+        } catch (error) {
+          logger.error(
+            `✗ Failed to fetch TMDB ID ${tmdbId}: ${error instanceof Error ? error.message : error}`
+          );
+          metadataFetched += episodes.length;
+        }
+      });
+      metadataFetchPromises.push(fetchPromise);
+    }
+    
+    // Handle shows identified by title
+    for (const [titleKey, episodes] of entriesByTitle.entries()) {
+      const representativeEntry = episodes[0];
+      if (!representativeEntry?.extractedIds) continue;
+      const { extractedIds } = representativeEntry;
+      
+      const searchPromise = rateLimiter.add(async () => {
+        try {
+          const foundId = await tmdbServices.search(
+            extractedIds.title!,
+            "tv",
+            {
+              apiKey: tmdbApiKey,
+              year: extractedIds.year,
+            }
+          );
+          
+          if (foundId) {
+            logger.info(
+              `✓ Search found TMDB ID ${foundId} for: "${extractedIds.title}"`
+            );
+            
+            // Update all episodes with the found TMDB ID
+            episodes.forEach(ep => { ep.extractedIds.tmdbId = foundId; });
+            
+            // Check cache
+            if (metadataCache.has(foundId)) {
+              const cachedMetadata = metadataCache.get(foundId)!;
+              episodes.forEach(ep => { ep.metadata = cachedMetadata; });
+              metadataFetched += episodes.length;
+            } else {
+              // Fetch metadata
+              const metadata = await tmdbServices.get(
+                foundId,
+                "tv" as TmdbType,
+                {
+                  apiKey: tmdbApiKey,
+                  extraParams: {
+                    append_to_response: "credits",
+                  },
+                }
+              );
+              
+              if (metadata) {
+                const typedMetadata = metadata as TmdbMetadata;
+                metadataCache.set(foundId, typedMetadata);
+                episodes.forEach(ep => { ep.metadata = typedMetadata; });
+                metadataFetched += episodes.length;
+                metadataFromTMDB++;
+                
+                logger.info(
+                  `✓ Fetched show metadata: "${typedMetadata.title || typedMetadata.name}" (applied to ${episodes.length} episode(s))`
+                );
+              }
+            }
+          } else {
+            logger.warn(`✗ No results found for: "${extractedIds.title}"`);
+            metadataFetched += episodes.length;
+          }
+        } catch (error) {
+          logger.error(
+            `✗ Failed to search for "${extractedIds.title}": ${error instanceof Error ? error.message : error}`
+          );
+          metadataFetched += episodes.length;
+        }
+      });
+      metadataFetchPromises.push(searchPromise);
+    }
+  } else {
+    // For movies, process each entry individually (they're all unique)
+    for (const mediaEntry of mediaEntries) {
+      const { extractedIds } = mediaEntry;
 
     // Fetch metadata if TMDB ID exists
     if (extractedIds.tmdbId) {
@@ -270,6 +425,7 @@ export async function fetchMetadataForEntries(
         }
       });
       metadataFetchPromises.push(searchPromise);
+    }
     }
   }
 

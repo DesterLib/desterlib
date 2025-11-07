@@ -28,7 +28,7 @@ export const scanServices = {
     }
   ) => {
     const {
-      maxDepth = Infinity,
+      maxDepth,
       tmdbApiKey,
       mediaType = "movie",
       fileExtensions,
@@ -36,6 +36,12 @@ export const scanServices = {
       rescan = false,
       originalPath,
     } = options;
+    
+    // Set reasonable default maxDepth based on media type if not provided
+    // Movies: max 2 levels (/movies/Avengers.mkv or /movies/Avengers/Avengers.mkv)
+    // TV Shows: max 4 levels (/tvshows/ShowName/Season 1/S1E1.mkv)
+    const defaultMaxDepth = mediaType === "tv" ? 4 : 2;
+    const effectiveMaxDepth = maxDepth ?? defaultMaxDepth;
 
     if (!tmdbApiKey) {
       throw new Error("TMDB API key is required");
@@ -82,6 +88,7 @@ export const scanServices = {
     // Phase 1: Scan directory structure
     logger.info("📁 Phase 1: Scanning directory structure...");
     logger.info(`Looking for extensions: ${finalFileExtensions.join(', ')}`);
+    logger.info(`Max depth: ${effectiveMaxDepth} (${mediaType === "tv" ? "TV show" : "movie"} mode)`);
     wsManager.sendScanProgress({
       phase: "scanning",
       progress: 0,
@@ -92,7 +99,8 @@ export const scanServices = {
     });
 
     const mediaEntries = await collectMediaEntries(rootPath, {
-      maxDepth,
+      maxDepth: effectiveMaxDepth,
+      mediaType,
       fileExtensions: finalFileExtensions,
     });
 

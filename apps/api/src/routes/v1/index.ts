@@ -5,8 +5,12 @@ import moviesRoutes from "../../domains/movies/movies.routes";
 import tvshowsRoutes from "../../domains/tvshows/tvshows.routes";
 import streamRoutes from "../../domains/stream/stream.routes";
 import settingsRoutes from "../../domains/settings/settings.routes";
+import searchRoutes from "../../domains/search/search.routes";
 
 const router: Router = express.Router();
+
+// Search routes
+router.use("/search", searchRoutes);
 
 // Scan routes
 router.use("/scan", scanRoutes);
