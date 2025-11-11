@@ -4,12 +4,18 @@ import { logger } from "@/lib/utils";
 
 interface ScanProgress {
   type: "scan:progress";
-  phase: "scanning" | "fetching-metadata" | "fetching-episodes" | "saving";
+  phase: "scanning" | "fetching-metadata" | "fetching-episodes" | "saving" | "discovering" | "batching" | "batch-complete";
   progress: number; // 0-100
   current: number;
   total: number;
   message: string;
   libraryId?: string;
+  scanJobId?: string;
+  batchItemComplete?: {
+    folderName: string;
+    itemsSaved: number;
+    totalItems: number;
+  };
 }
 
 interface ScanComplete {
@@ -17,15 +23,25 @@ interface ScanComplete {
   libraryId: string;
   totalItems: number;
   message: string;
+  scanJobId?: string;
 }
 
 interface ScanError {
   type: "scan:error";
   libraryId?: string;
+  scanJobId?: string;
   error: string;
 }
 
-type WebSocketMessage = ScanProgress | ScanComplete | ScanError;
+interface LogMessage {
+  type: "log:message";
+  level: "error" | "warn" | "info" | "http" | "debug";
+  message: string;
+  timestamp: string;
+  meta?: Record<string, unknown>;
+}
+
+type WebSocketMessage = ScanProgress | ScanComplete | ScanError | LogMessage;
 
 // Module-level state
 let wss: WebSocketServer | null = null;
@@ -107,6 +123,13 @@ export function sendScanError(data: Omit<ScanError, "type">) {
   });
 }
 
+export function sendLogMessage(data: Omit<LogMessage, "type">) {
+  broadcast({
+    type: "log:message",
+    ...data,
+  });
+}
+
 export function getClientCount(): number {
   return clients.size;
 }
@@ -128,7 +151,8 @@ export const wsManager = {
   sendScanProgress,
   sendScanComplete,
   sendScanError,
+  sendLogMessage,
   getClientCount,
   close: closeWebSocket,
 };
-export type { ScanProgress, ScanComplete, ScanError, WebSocketMessage };
+export type { ScanProgress, ScanComplete, ScanError, LogMessage, WebSocketMessage };

@@ -1,4 +1,5 @@
 import winston from "winston";
+import { WebSocketTransport } from "./websocket-transport";
 
 // Define log levels
 const levels = {
@@ -49,6 +50,8 @@ const transports = [
   }),
   // File transport for all logs
   new winston.transports.File({ filename: "logs/combined.log" }),
+  // WebSocket transport for real-time log streaming
+  new WebSocketTransport(),
 ];
 
 // Create the logger

@@ -7,6 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
+    "kill-port": "(lsof -ti:3001 | xargs kill -9 2>/dev/null && sleep 1 && lsof -ti:3001 | xargs kill -9 2>/dev/null) || echo 'Port cleared or not in use'",
+    "dev:clean": "pnpm kill-port && pnpm dev",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:push:force": "prisma db push --accept-data-loss",
@@ -40,6 +42,7 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.18.3",
+    "winston-transport": "^4.9.0",
     "ws": "^8.18.3",
     "zod": "^4.1.12"
   },

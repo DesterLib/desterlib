@@ -79,6 +79,10 @@ const options = {
         name: "Settings",
         description: "Application settings and configuration",
       },
+      {
+        name: "Logs",
+        description: "API logs and debugging endpoints",
+      },
     ],
     components: {
       schemas: {

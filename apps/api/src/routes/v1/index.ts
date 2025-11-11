@@ -6,6 +6,7 @@ import tvshowsRoutes from "../../domains/tvshows/tvshows.routes";
 import streamRoutes from "../../domains/stream/stream.routes";
 import settingsRoutes from "../../domains/settings/settings.routes";
 import searchRoutes from "../../domains/search/search.routes";
+import logsRoutes from "../../domains/logs/logs.routes";
 
 const router: Router = express.Router();
 
@@ -29,5 +30,8 @@ router.use("/stream", streamRoutes);
 
 // Settings routes
 router.use("/settings", settingsRoutes);
+
+// Logs routes
+router.use("/logs", logsRoutes);
 
 export default router;
