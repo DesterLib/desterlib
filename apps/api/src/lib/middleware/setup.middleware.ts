@@ -11,6 +11,24 @@ const limiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
   max: config.rateLimitMax,
   message: "Too many requests from this IP, please try again later.",
+  // Skip rate limiting for localhost, scan routes, stream routes, and WebSocket
+  skip: (req) => {
+    // Skip for localhost/127.0.0.1
+    const isLocalhost = req.ip === '127.0.0.1' || 
+                       req.ip === '::1' || 
+                       req.ip === 'localhost' ||
+                       req.hostname === 'localhost' ||
+                       req.hostname === '127.0.0.1';
+    
+    if (isLocalhost) return true;
+    
+    // Skip for specific routes
+    return (
+      req.path.startsWith('/api/v1/scan') ||
+      req.path.startsWith('/api/v1/stream') ||
+      req.path.startsWith('/ws') // WebSocket
+    );
+  },
 });
 
 // Get local machine IP address for LAN access

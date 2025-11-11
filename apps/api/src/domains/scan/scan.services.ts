@@ -12,6 +12,13 @@ import {
   fetchMetadataForEntries,
   fetchSeasonMetadata,
   saveMediaToDatabase,
+  discoverFoldersToScan,
+  createScanJob,
+  getNextBatch,
+  markBatchProcessed,
+  processFolderBatch,
+  cleanupStaleJobs,
+  getScanJobStatus,
 } from "./helpers";
 
 export const scanServices = {
@@ -263,6 +270,372 @@ export const scanServices = {
         metadataFromTMDB: metadataStats.metadataFromTMDB,
         totalMetadataFetched: metadataStats.totalFetched,
       },
+    };
+  },
+
+  /**
+   * Batch scanning service - processes large libraries in manageable batches
+   * Ideal for remote/slow storage (FTP, SMB, etc.)
+   */
+  postBatched: async (
+    rootPath: string,
+    options: {
+      maxDepth?: number;
+      tmdbApiKey: string;
+      mediaType?: "movie" | "tv";
+      fileExtensions?: string[];
+      libraryName?: string;
+      rescan?: boolean;
+      originalPath?: string;
+    }
+  ) => {
+    const {
+      maxDepth,
+      tmdbApiKey,
+      mediaType = "movie",
+      fileExtensions,
+      libraryName,
+      rescan = false,
+      originalPath,
+    } = options;
+
+    // Set reasonable default maxDepth based on media type if not provided
+    const defaultMaxDepth = mediaType === "tv" ? 4 : 2;
+    const effectiveMaxDepth = maxDepth ?? defaultMaxDepth;
+
+    if (!tmdbApiKey) {
+      throw new Error("TMDB API key is required");
+    }
+
+    // Use default extensions if none provided or if empty array
+    const finalFileExtensions =
+      fileExtensions && fileExtensions.length > 0
+        ? fileExtensions
+        : getDefaultVideoExtensions();
+
+    // Use original path for library name and database storage
+    const displayPath = originalPath || rootPath;
+    const finalLibraryName = libraryName || `Library - ${displayPath}`;
+    const librarySlug = finalLibraryName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    logger.info(`📚 Creating/getting library: ${finalLibraryName}`);
+
+    const library = await prisma.library.upsert({
+      where: { slug: librarySlug },
+      update: {
+        name: finalLibraryName,
+        libraryPath: displayPath,
+        libraryType: mediaType === "tv" ? MediaType.TV_SHOW : MediaType.MOVIE,
+        isLibrary: true,
+      },
+      create: {
+        name: finalLibraryName,
+        slug: librarySlug,
+        libraryPath: displayPath,
+        libraryType: mediaType === "tv" ? MediaType.TV_SHOW : MediaType.MOVIE,
+        isLibrary: true,
+      },
+    });
+
+    logger.info(`✓ Library ready: ${library.name} (ID: ${library.id})\n`);
+
+    // Step 1: Discover folders to scan
+    logger.info("🔍 Discovering folders to scan...");
+    wsManager.sendScanProgress({
+      phase: "discovering",
+      progress: 0,
+      current: 0,
+      total: 0,
+      message: "Discovering folders...",
+      libraryId: library.id,
+    });
+
+    const folders = await discoverFoldersToScan(rootPath, mediaType);
+
+    if (folders.length === 0) {
+      logger.info("⚠️  No folders found to scan.");
+      wsManager.sendScanComplete({
+        libraryId: library.id,
+        totalItems: 0,
+        message: `No ${mediaType === "tv" ? "shows" : "movies"} found in "${library.name}"`,
+      });
+
+      return {
+        libraryId: library.id,
+        libraryName: library.name,
+        totalFolders: 0,
+        totalSaved: 0,
+        scanJobId: null,
+      };
+    }
+
+    // Step 2: Create scan job
+    const scanJobId = await createScanJob(
+      library.id,
+      displayPath,
+      mediaType === "tv" ? MediaType.TV_SHOW : MediaType.MOVIE,
+      folders
+    );
+
+    wsManager.sendScanProgress({
+      phase: "batching",
+      progress: 5,
+      current: 0,
+      total: folders.length,
+      message: `Starting batch scan (${folders.length} folders)`,
+      libraryId: library.id,
+      scanJobId,
+    });
+
+    // Step 3: Process batches
+    let totalSaved = 0;
+    let batchNumber = 0;
+
+    while (true) {
+      const batch = await getNextBatch(scanJobId);
+
+      if (!batch || batch.length === 0) {
+        break;
+      }
+
+      batchNumber++;
+      logger.info(
+        `\n📦 Processing batch ${batchNumber} (${batch.length} folders)`
+      );
+
+      const result = await processFolderBatch(scanJobId, batch, {
+        rootPath,
+        mediaType,
+        tmdbApiKey,
+        libraryId: library.id,
+        maxDepth: effectiveMaxDepth,
+        fileExtensions: finalFileExtensions,
+        rescan,
+        originalPath,
+      });
+
+      totalSaved += result.totalSaved;
+
+      // Mark batch as processed
+      await markBatchProcessed(
+        scanJobId,
+        result.processedFolders,
+        result.failedFolders,
+        result.totalSaved
+      );
+
+      // Send batch completion update
+      const scanJob = await prisma.scanJob.findUnique({
+        where: { id: scanJobId },
+      });
+
+      if (scanJob) {
+        const progressPercent = Math.floor(
+          ((scanJob.processedCount + scanJob.failedCount) /
+            scanJob.totalFolders) *
+            100
+        );
+
+        wsManager.sendScanProgress({
+          phase: "batching",
+          progress: progressPercent,
+          current: scanJob.processedCount + scanJob.failedCount,
+          total: scanJob.totalFolders,
+          message: `Batch ${scanJob.currentBatch}/${scanJob.totalBatches} complete: ${result.processedFolders.length} success, ${result.failedFolders.length} failed (${scanJob.processedCount + scanJob.failedCount}/${scanJob.totalFolders} folders)`,
+          libraryId: library.id,
+          scanJobId,
+        });
+      }
+    }
+
+    logger.info("\n✅ Batch scan complete!\n");
+
+    // Send final completion message
+    wsManager.sendScanComplete({
+      libraryId: library.id,
+      totalItems: totalSaved,
+      message: `Batch scan complete! Saved ${totalSaved} items to library "${library.name}"`,
+      scanJobId,
+    });
+
+    // Get final scan job stats
+    const finalScanJob = await prisma.scanJob.findUnique({
+      where: { id: scanJobId },
+    });
+
+    return {
+      libraryId: library.id,
+      libraryName: library.name,
+      totalFolders: folders.length,
+      foldersProcessed: finalScanJob?.processedCount || 0,
+      foldersFailed: finalScanJob?.failedCount || 0,
+      totalItemsSaved: finalScanJob?.totalItemsSaved || 0,
+      scanJobId,
+    };
+  },
+
+  /**
+   * Resume a failed or paused scan job
+   */
+  resumeScanJob: async (scanJobId: string, tmdbApiKey: string) => {
+    // Get the scan job
+    const scanJob = await prisma.scanJob.findUnique({
+      where: { id: scanJobId },
+      include: { library: true },
+    });
+
+    if (!scanJob) {
+      throw new Error(`Scan job ${scanJobId} not found`);
+    }
+
+    if (scanJob.status === "COMPLETED") {
+      throw new Error("Cannot resume a completed scan job");
+    }
+
+    if (scanJob.status === "IN_PROGRESS") {
+      throw new Error("Scan job is already in progress");
+    }
+
+    logger.info(
+      `🔄 Resuming scan job ${scanJobId} for library: ${scanJob.library.name}`
+    );
+
+    // Update status to in progress
+    await prisma.scanJob.update({
+      where: { id: scanJobId },
+      data: {
+        status: "IN_PROGRESS",
+        startedAt: scanJob.startedAt || new Date(),
+      },
+    });
+
+    const mediaType = scanJob.mediaType === MediaType.TV_SHOW ? "tv" : "movie";
+    const rootPath = scanJob.scanPath;
+
+    // Get default file extensions
+    const finalFileExtensions = getDefaultVideoExtensions();
+
+    // Set maxDepth based on media type
+    const effectiveMaxDepth = mediaType === "tv" ? 4 : 2;
+
+    // Process remaining batches
+    let totalSaved = 0;
+    let batchNumber = 0;
+
+    wsManager.sendScanProgress({
+      phase: "batching",
+      progress: Math.floor(
+        ((scanJob.processedCount + scanJob.failedCount) / scanJob.totalFolders) *
+          100
+      ),
+      current: scanJob.processedCount + scanJob.failedCount,
+      total: scanJob.totalFolders,
+      message: `Resuming scan job...`,
+      libraryId: scanJob.libraryId,
+      scanJobId,
+    });
+
+    while (true) {
+      const batch = await getNextBatch(scanJobId);
+
+      if (!batch || batch.length === 0) {
+        break;
+      }
+
+      batchNumber++;
+      logger.info(
+        `\n📦 Processing batch ${batchNumber} (${batch.length} folders)`
+      );
+
+      const result = await processFolderBatch(scanJobId, batch, {
+        rootPath,
+        mediaType,
+        tmdbApiKey,
+        libraryId: scanJob.libraryId,
+        maxDepth: effectiveMaxDepth,
+        fileExtensions: finalFileExtensions,
+        rescan: false,
+      });
+
+      totalSaved += result.totalSaved;
+
+      // Mark batch as processed
+      await markBatchProcessed(
+        scanJobId,
+        result.processedFolders,
+        result.failedFolders,
+        result.totalSaved
+      );
+
+      // Send batch completion update
+      const updatedScanJob = await prisma.scanJob.findUnique({
+        where: { id: scanJobId },
+      });
+
+      if (updatedScanJob) {
+        const progressPercent = Math.floor(
+          ((updatedScanJob.processedCount + updatedScanJob.failedCount) /
+            updatedScanJob.totalFolders) *
+            100
+        );
+
+        wsManager.sendScanProgress({
+          phase: "batching",
+          progress: progressPercent,
+          current:
+            updatedScanJob.processedCount + updatedScanJob.failedCount,
+          total: updatedScanJob.totalFolders,
+          message: `Batch ${updatedScanJob.currentBatch}/${updatedScanJob.totalBatches} complete: ${result.processedFolders.length} success, ${result.failedFolders.length} failed (${updatedScanJob.processedCount + updatedScanJob.failedCount}/${updatedScanJob.totalFolders} folders)`,
+          libraryId: scanJob.libraryId,
+          scanJobId,
+        });
+      }
+    }
+
+    logger.info("\n✅ Resumed scan complete!\n");
+
+    // Get final scan job stats
+    const finalScanJob = await prisma.scanJob.findUnique({
+      where: { id: scanJobId },
+    });
+
+    // Send final completion message
+    wsManager.sendScanComplete({
+      libraryId: scanJob.libraryId,
+      totalItems: finalScanJob?.totalItemsSaved || 0,
+      message: `Resumed scan complete! Total: ${finalScanJob?.totalItemsSaved || 0} items in library "${scanJob.library.name}"`,
+      scanJobId,
+    });
+
+    return {
+      libraryId: scanJob.libraryId,
+      libraryName: scanJob.library.name,
+      totalFolders: finalScanJob?.totalFolders || 0,
+      foldersProcessed: finalScanJob?.processedCount || 0,
+      foldersFailed: finalScanJob?.failedCount || 0,
+      totalItemsSaved: finalScanJob?.totalItemsSaved || 0,
+      scanJobId,
+    };
+  },
+
+  /**
+   * Get scan job status
+   */
+  getJobStatus: async (scanJobId: string) => {
+    return getScanJobStatus(scanJobId);
+  },
+
+  /**
+   * Manually cleanup stale jobs
+   */
+  cleanupStaleJobs: async (staleTimeoutMs?: number) => {
+    const cleanedCount = await cleanupStaleJobs(staleTimeoutMs);
+    return {
+      cleanedCount,
+      message: `Cleaned up ${cleanedCount} stale scan job(s)`,
     };
   },
 };

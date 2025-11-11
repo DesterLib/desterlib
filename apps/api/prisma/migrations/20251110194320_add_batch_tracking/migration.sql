@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "ScanJob" ADD COLUMN     "currentBatch" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "totalBatches" INTEGER NOT NULL DEFAULT 0;

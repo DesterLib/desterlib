@@ -8,6 +8,12 @@ export const moviesServices = {
       include: {
         media: true,
       },
+      orderBy: {
+        media: {
+          createdAt: 'desc', // Most recent first
+        },
+      },
+      take: 10, // Limit to 10 most recent
     });
     return serializeBigInt(movies) as MoviesListResponse;
   },

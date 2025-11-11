@@ -256,6 +256,7 @@ model Library {
   children Library[] @relation("LibraryHierarchy")
 
   media      MediaLibrary[]
+  scanJobs   ScanJob[]
 
   @@index([slug])
   @@index([parentId])
@@ -312,6 +313,55 @@ model ExternalId {
   @@unique([source, mediaId])
   @@index([mediaId])
   @@index([externalId])
+}
+
+// ────────────────────────────
+// SCAN JOBS
+// ────────────────────────────
+
+enum ScanJobStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  PAUSED
+}
+
+model ScanJob {
+  id               String        @id @default(cuid())
+  libraryId        String
+  scanPath         String
+  mediaType        MediaType
+  status           ScanJobStatus @default(PENDING)
+  batchSize        Int           // Number of folders per batch
+  
+  // Progress tracking
+  totalFolders     Int           @default(0)
+  totalBatches     Int           @default(0) // Total number of batches (calculated)
+  currentBatch     Int           @default(0) // Current batch number
+  processedCount   Int           @default(0) // Number of folders processed
+  failedCount      Int           @default(0) // Number of folders failed
+  totalItemsSaved  Int           @default(0) // Number of media items actually saved to DB
+  
+  // Folder tracking (JSON arrays)
+  processedFolders String        @default("[]") // JSON array of processed folder paths
+  failedFolders    String        @default("[]") // JSON array of failed folder paths
+  pendingFolders   String        @default("[]") // JSON array of remaining folder paths
+  
+  errorMessage     String?
+  
+  startedAt        DateTime?
+  completedAt      DateTime?
+  lastBatchAt      DateTime? // Last batch completion time
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  library Library @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+  
+  @@index([libraryId])
+  @@index([status])
+  @@index([scanPath])
 }
 
 // ────────────────────────────

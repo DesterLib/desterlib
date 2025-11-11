@@ -148,4 +148,102 @@ const router: Router = express.Router();
  */
 router.post("/path", validateBody(scanPathSchema), scanControllers.post);
 
+/**
+ * @swagger
+ * /api/v1/scan/resume/{scanJobId}:
+ *   post:
+ *     summary: Resume a failed or paused scan job
+ *     description: |
+ *       Resumes a scan job that was previously paused or failed.
+ *       - Continues processing from where it left off
+ *       - Only processes remaining unscanned folders
+ *       - Sends progress updates via WebSocket
+ *     tags: [Scan]
+ *     parameters:
+ *       - in: path
+ *         name: scanJobId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the scan job to resume
+ *         example: "clxxxx1234567890abcdefgh"
+ *     responses:
+ *       202:
+ *         description: Scan resumed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Scan resumed successfully. Progress will be sent via WebSocket."
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     scanJobId:
+ *                       type: string
+ *                       example: "clxxxx1234567890abcdefgh"
+ *       400:
+ *         description: Bad request - Invalid scan job ID or cannot resume
+ *       404:
+ *         description: Scan job not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/resume/:scanJobId", scanControllers.resumeScan);
+
+/**
+ * @swagger
+ * /api/v1/scan/job/{scanJobId}:
+ *   get:
+ *     summary: Get scan job status
+ *     description: Get detailed status information about a scan job
+ *     tags: [Scan]
+ *     parameters:
+ *       - in: path
+ *         name: scanJobId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Scan job status retrieved successfully
+ *       404:
+ *         description: Scan job not found
+ */
+router.get("/job/:scanJobId", scanControllers.getJobStatus);
+
+/**
+ * @swagger
+ * /api/v1/scan/cleanup:
+ *   post:
+ *     summary: Cleanup stale scan jobs
+ *     description: |
+ *       Manually trigger cleanup of scan jobs that have been stuck in IN_PROGRESS state.
+ *       Useful after API crashes or unexpected shutdowns.
+ *     tags: [Scan]
+ *     responses:
+ *       200:
+ *         description: Cleanup completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cleanedCount:
+ *                       type: number
+ *                     message:
+ *                       type: string
+ */
+router.post("/cleanup", scanControllers.cleanupStaleJobs);
+
 export default router;

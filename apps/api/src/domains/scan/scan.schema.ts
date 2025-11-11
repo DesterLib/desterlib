@@ -53,6 +53,12 @@ export const scanPathSchema = z.object({
       fileExtensions: z.array(sanitizedStringSchema).max(20).optional(),
       libraryName: z.string().min(1).max(100).optional(),
       rescan: z.boolean().optional(),
+      batchScan: z
+        .boolean()
+        .optional()
+        .describe(
+          "Enable batch scanning mode for large libraries. Automatically enabled for TV shows. Batches: 5 shows or 25 movies per batch."
+        ),
     })
     .optional(),
 });

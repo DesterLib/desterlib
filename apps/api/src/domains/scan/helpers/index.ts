@@ -9,4 +9,8 @@ export * from "./file-scanner.helper";
 export * from "./metadata-fetcher.helper";
 export * from "./database.helper";
 export * from "./path-validator.helper";
+export * from "./batch-scanner.helper";
+export * from "./timeout-helper";
+export * from "./scan-job-cleanup.helper";
+export * from "./media-type-detector.helper";
 

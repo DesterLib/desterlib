@@ -15,8 +15,8 @@ export interface RateLimiter {
  * @returns RateLimiter instance
  */
 export function createRateLimiter(
-  maxRequestsPer10Sec: number = 38,
-  concurrency: number = 10
+  maxRequestsPer10Sec: number = 30, // Reduced from 38 to be more conservative
+  concurrency: number = 8 // Reduced from 10 to avoid overwhelming TMDB
 ): RateLimiter {
   const queue: Array<() => Promise<void>> = [];
   let processing = false;

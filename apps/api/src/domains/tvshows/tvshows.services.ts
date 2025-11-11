@@ -8,6 +8,12 @@ export const tvshowsServices = {
       include: {
         media: true,
       },
+      orderBy: {
+        media: {
+          createdAt: 'desc', // Most recent first
+        },
+      },
+      take: 10, // Limit to 10 most recent
     });
     return serializeBigInt(tvshows) as TVShowsListResponse;
   },
