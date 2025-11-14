@@ -105,7 +105,7 @@ Check out the [platform-specific setup guide](/clients/flutter) for detailed bui
 | System Integration | ✅ | ✅ | ✅ |
 | Remote Control | Touch | KB/Mouse | 🔜 |
 
-Legend: ✅ Available | 🔜 Planned | ❌ Not Available
+**Legend:** ✅ Available | 🔜 Planned | ❌ Not Available
 
 ## Requesting Features
 
