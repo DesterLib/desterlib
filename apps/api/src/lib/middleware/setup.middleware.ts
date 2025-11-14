@@ -5,7 +5,8 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import os from "os";
 import { config } from "../../core/config/env";
-import { sanitizeInput } from ".";
+import { sanitizeInput, addVersionHeader, validateVersion } from ".";
+import { logger } from "../utils";
 
 const limiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
@@ -50,6 +51,14 @@ function getLocalIpAddress(): string {
 const localIp = getLocalIpAddress();
 
 export function setupMiddleware(app: express.Application) {
+  // HTTP Request logging (skip health checks and websocket)
+  app.use((req, res, next) => {
+    if (req.path !== "/health" && req.path !== "/ws" && !req.path.includes("/api/docs")) {
+      logger.debug(`${req.method} ${req.path}`);
+    }
+    next();
+  });
+
   // Only trust loopback proxies to satisfy express-rate-limit validation
   app.set("trust proxy", "loopback");
   app.use(
@@ -105,9 +114,16 @@ export function setupMiddleware(app: express.Application) {
       credentials: true,
       optionsSuccessStatus: 200,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Client-Version"],
+      exposedHeaders: ["X-API-Version"],
     })
   );
+
+  // Add API version to response headers
+  app.use(addVersionHeader);
+
+  // Validate client version (only for /api/v1 routes)
+  app.use("/api/v1", validateVersion);
 
   // JSON parsing middleware - skip for static assets and image/media files
   app.use((req, res, next) => {
