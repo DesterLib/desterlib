@@ -13,4 +13,6 @@ export * from "./batch-scanner.helper";
 export * from "./timeout-helper";
 export * from "./scan-job-cleanup.helper";
 export * from "./media-type-detector.helper";
+export * from "./color-extraction.helper";
+export * from "./color-extraction-middleware.helper";
 

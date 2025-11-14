@@ -15,16 +15,17 @@ enum MediaType {
 }
 
 model Media {
-  id          String    @id @default(cuid())
-  title       String
-  type        MediaType
-  description String?
-  posterUrl   String?
-  backdropUrl String?
-  releaseDate DateTime?
-  rating      Float?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  title               String
+  type                MediaType
+  description         String?
+  posterUrl           String?
+  backdropUrl         String?
+  meshGradientColors  String[]  // Hex colors for mesh gradient (4 colors for corners)
+  releaseDate         DateTime?
+  rating              Float?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   // Relations - subtypes point to Media, not the other way around
   movie  Movie?
