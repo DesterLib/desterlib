@@ -4,6 +4,19 @@ import { config } from "../../core/config/env";
 import { logger } from "../../lib/utils";
 import path from "path";
 import os from "os";
+import { readFileSync } from "fs";
+
+// Read version from package.json
+function getApiVersion(): string {
+  try {
+    const packageJson = JSON.parse(
+      readFileSync(path.join(__dirname, "../../../package.json"), "utf-8")
+    );
+    return packageJson.version;
+  } catch (error) {
+    return "0.1.0"; // Fallback version
+  }
+}
 
 /// Get local machine IP address for LAN access
 function getLocalIpAddress(): string {
@@ -22,13 +35,14 @@ function getLocalIpAddress(): string {
 }
 
 const localIp = getLocalIpAddress();
+const apiVersion = getApiVersion();
 
 const options = {
   definition: {
     openapi: "3.0.0",
     info: {
       title: "DesterLib API",
-      version: "1.0.0",
+      version: apiVersion,
       description:
         "API documentation for DesterLib - A comprehensive media library management system",
       contact: {
@@ -92,6 +106,11 @@ const options = {
             status: {
               type: "string",
               example: "OK",
+            },
+            version: {
+              type: "string",
+              example: "0.1.0",
+              description: "API version",
             },
             timestamp: {
               type: "string",
@@ -231,7 +250,7 @@ try {
     openapi: "3.0.0",
     info: {
       title: "DesterLib API",
-      version: "1.0.0",
+      version: apiVersion,
       description: "API documentation for DesterLib",
     },
     paths: {},
