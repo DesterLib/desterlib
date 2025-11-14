@@ -61,34 +61,12 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
 }
 
 /**
- * Compare two semantic versions
- * Returns: 1 if v1 > v2, -1 if v1 < v2, 0 if equal
- */
-function compareVersions(v1: string, v2: string): number {
-  const parts1 = v1.split(".").map(Number);
-  const parts2 = v2.split(".").map(Number);
-
-  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-    const part1 = parts1[i] || 0;
-    const part2 = parts2[i] || 0;
-
-    if (part1 > part2) return 1;
-    if (part1 < part2) return -1;
-  }
-
-  return 0;
-}
-
-/**
  * Display update notification if a new version is available
  */
 export function displayUpdateNotification(updateInfo: UpdateInfo): void {
   if (!updateInfo.isOutdated || !updateInfo.latestVersion) {
     return;
   }
-
-  const isMajorUpdate =
-    compareVersions(updateInfo.latestVersion, updateInfo.currentVersion) > 0;
 
   console.log(
     chalk.yellow(
@@ -130,19 +108,4 @@ export function displayUpdateNotification(updateInfo: UpdateInfo): void {
       "└─────────────────────────────────────────────────────────┘\n"
     )
   );
-}
-
-/**
- * Check for updates asynchronously (non-blocking)
- * This will check in the background and display a notification if needed
- */
-export async function checkForUpdatesAsync(): Promise<void> {
-  // Run in background, don't await
-  checkForUpdates()
-    .then((updateInfo) => {
-      displayUpdateNotification(updateInfo);
-    })
-    .catch(() => {
-      // Silently fail - don't interrupt the user experience
-    });
 }

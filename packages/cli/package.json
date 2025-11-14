@@ -9,7 +9,22 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
-    "setup": "node dist/index.js"
+    "setup": "node dist/index.js",
+    "build:binary": "pnpm build && pkg dist/index.js --out-path dist/bin",
+    "build:binary:all": "pnpm build && pkg dist/index.js --targets node18-linux-x64,node18-macos-x64,node18-win-x64 --out-path dist/bin"
+  },
+  "pkg": {
+    "scripts": [
+      "dist/**/*.js"
+    ],
+    "assets": [
+      "dist/**/*"
+    ],
+    "targets": [
+      "node18-linux-x64",
+      "node18-macos-x64",
+      "node18-win-x64"
+    ]
   },
   "keywords": [
     "desterlib",
@@ -33,7 +48,9 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "install.sh",
+    "install.ps1"
   ],
   "engines": {
     "node": ">=18"
@@ -48,6 +65,7 @@
   "devDependencies": {
     "@types/inquirer": "^8.2.10",
     "@types/node": "^20.14.10",
+    "pkg": "^5.8.1",
     "tsx": "^4.15.7",
     "typescript": "^5.5.3"
   }
