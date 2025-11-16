@@ -6,6 +6,7 @@
  * This script ensures all version numbers across the monorepo are in sync.
  * It reads the version from the root package.json and updates:
  * - apps/api/package.json
+ * - apps/docs/package.json
  * - packages/cli/package.json
  * - desterlib-flutter/pubspec.yaml
  * - desterlib-flutter/lib/api/pubspec.yaml
@@ -62,6 +63,27 @@ try {
   }
 } catch (error) {
   log(`❌ Error updating apps/api/package.json: ${error.message}`, "red");
+  errors++;
+}
+
+// Update Docs package.json
+try {
+  const docsPackagePath = path.join(__dirname, "../apps/docs/package.json");
+  const docsPackage = JSON.parse(fs.readFileSync(docsPackagePath, "utf8"));
+
+  if (docsPackage.version !== version) {
+    docsPackage.version = version;
+    fs.writeFileSync(
+      docsPackagePath,
+      JSON.stringify(docsPackage, null, 2) + "\n"
+    );
+    log(`✅ Updated apps/docs/package.json: ${version}`, "green");
+    updates++;
+  } else {
+    log(`✓  apps/docs/package.json already at ${version}`, "yellow");
+  }
+} catch (error) {
+  log(`❌ Error updating apps/docs/package.json: ${error.message}`, "red");
   errors++;
 }
 
