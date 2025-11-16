@@ -4,7 +4,14 @@ import { logger } from "@/lib/utils";
 
 interface ScanProgress {
   type: "scan:progress";
-  phase: "scanning" | "fetching-metadata" | "fetching-episodes" | "saving" | "discovering" | "batching" | "batch-complete";
+  phase:
+    | "scanning"
+    | "fetching-metadata"
+    | "fetching-episodes"
+    | "saving"
+    | "discovering"
+    | "batching"
+    | "batch-complete";
   progress: number; // 0-100
   current: number;
   total: number;
@@ -69,7 +76,7 @@ export function initializeWebSocket(server: HTTPServer) {
       JSON.stringify({
         type: "connection:established",
         message: "Connected to Dester API WebSocket",
-      })
+      }),
     );
   });
 
@@ -89,7 +96,7 @@ export function broadcast(message: WebSocketMessage) {
       } catch (error) {
         failCount++;
         logger.error(
-          `Failed to send message to client: ${error instanceof Error ? error.message : error}`
+          `Failed to send message to client: ${error instanceof Error ? error.message : error}`,
         );
       }
     }
@@ -97,7 +104,7 @@ export function broadcast(message: WebSocketMessage) {
 
   if (successCount > 0 || failCount > 0) {
     logger.debug(
-      `📡 Broadcast: ${successCount} successful, ${failCount} failed`
+      `📡 Broadcast: ${successCount} successful, ${failCount} failed`,
     );
   }
 }
@@ -155,4 +162,10 @@ export const wsManager = {
   getClientCount,
   close: closeWebSocket,
 };
-export type { ScanProgress, ScanComplete, ScanError, LogMessage, WebSocketMessage };
+export type {
+  ScanProgress,
+  ScanComplete,
+  ScanError,
+  LogMessage,
+  WebSocketMessage,
+};

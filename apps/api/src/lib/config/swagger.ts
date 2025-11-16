@@ -10,7 +10,7 @@ import { readFileSync } from "fs";
 function getApiVersion(): string {
   try {
     const packageJson = JSON.parse(
-      readFileSync(path.join(__dirname, "../../../package.json"), "utf-8")
+      readFileSync(path.join(__dirname, "../../../package.json"), "utf-8"),
     );
     return packageJson.version;
   } catch (error) {
@@ -241,7 +241,7 @@ let specs: SwaggerSpec;
 try {
   specs = swaggerJsdoc(options) as SwaggerSpec;
   logger.info(
-    `Swagger specs generated successfully with ${Object.keys(specs.paths || {}).length} paths`
+    `Swagger specs generated successfully with ${Object.keys(specs.paths || {}).length} paths`,
   );
 } catch (error) {
   logger.error("Error generating Swagger specs:", error);

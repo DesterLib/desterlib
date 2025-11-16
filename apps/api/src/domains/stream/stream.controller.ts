@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { streamServices } from "./stream.services";
-import { 
-  logger, 
-  mapHostToContainerPath, 
-  asyncHandler, 
+import {
+  logger,
+  mapHostToContainerPath,
+  asyncHandler,
   NotFoundError,
-  getMimeType 
+  getMimeType,
 } from "@/lib/utils";
 import { z } from "zod";
 import { streamMediaSchema } from "./stream.schema";
@@ -57,7 +57,7 @@ export const streamControllers = {
 
       throw new NotFoundError(
         "Media file",
-        `${id}. Host path: ${hostFilePath}, Container path: ${filePath}`
+        `${id}. Host path: ${hostFilePath}, Container path: ${filePath}`,
       );
     }
 
@@ -86,7 +86,7 @@ export const streamControllers = {
       const fileStream = createReadStream(filePath, {
         highWaterMark: 1024 * 1024, // 1MB chunks for better buffering on slow mounts
       });
-      
+
       // Handle stream errors
       fileStream.on("error", (error) => {
         logger.error(`Stream error for ${filePath}:`, error);
@@ -94,12 +94,12 @@ export const streamControllers = {
           res.status(500).end();
         }
       });
-      
+
       // Keep connection alive
       res.on("close", () => {
         fileStream.destroy();
       });
-      
+
       return fileStream.pipe(res);
     }
 

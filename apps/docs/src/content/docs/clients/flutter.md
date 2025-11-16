@@ -8,6 +8,7 @@ The Dester client is a cross-platform application for browsing and streaming you
 ## 📱 Supported Platforms
 
 ### Available Now
+
 - **Android** - Phones and tablets (SDK 21+)
 - **iOS** - iPhone and iPad (iOS 12.0+)
 - **macOS** - Desktop application (10.14+)
@@ -15,6 +16,7 @@ The Dester client is a cross-platform application for browsing and streaming you
 - **Windows** - Desktop application (Windows 10+)
 
 ### In Development
+
 - **Android TV** - TV interface with remote control support
 - **Apple TV / tvOS** - Native TV experience
 
@@ -242,6 +244,7 @@ flutter analyze --fatal-infos
 ### Connection Issues
 
 **Can't connect to server:**
+
 - Check server URL is correct
 - Ensure API is running (`docker-compose up`)
 - Check firewall settings
@@ -250,12 +253,14 @@ flutter analyze --fatal-infos
 ### Video Playback Issues
 
 **Videos won't play:**
+
 - Check internet connection
 - Verify video codec support
 - Try different video file
 - Check server streaming configuration
 
 **Buffering issues:**
+
 - Check network speed
 - Adjust video quality in settings
 - Check server performance
@@ -263,6 +268,7 @@ flutter analyze --fatal-infos
 ### Build Issues
 
 **Flutter build fails:**
+
 ```bash
 # Clean and rebuild
 flutter clean
@@ -272,6 +278,7 @@ flutter run
 ```
 
 **Platform-specific build issues:**
+
 - Android: Check SDK version, update Gradle
 - iOS: Update Xcode, check provisioning profiles
 - Desktop: Check platform dependencies installed
@@ -289,4 +296,3 @@ flutter run
 - [GitHub Issues](https://github.com/DesterLib/desterlib-flutter/issues)
 - [GitHub Discussions](https://github.com/DesterLib/desterlib-flutter/discussions)
 - [Main DesterLib Discussions](https://github.com/DesterLib/desterlib/discussions)
-

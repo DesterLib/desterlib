@@ -12,7 +12,7 @@ import { ScanJobStatus } from "@/lib/database";
  * A scan job is considered stale if it's been IN_PROGRESS for more than the specified timeout
  */
 export async function cleanupStaleJobs(
-  staleTimeoutMs: number = 6 * 60 * 60 * 1000 // 6 hours default
+  staleTimeoutMs: number = 6 * 60 * 60 * 1000, // 6 hours default
 ): Promise<number> {
   try {
     const staleThreshold = new Date(Date.now() - staleTimeoutMs);
@@ -60,24 +60,22 @@ export async function cleanupStaleJobs(
           errorMessage: `Scan job marked as failed due to inactivity (timeout: ${staleTimeoutMs / 1000 / 60} minutes). Last activity: ${job.lastBatchAt?.toISOString() || job.startedAt?.toISOString() || "unknown"}`,
           completedAt: new Date(),
         },
-      })
+      }),
     );
 
     await Promise.all(updatePromises);
 
-    logger.warn(
-      `🧹 Cleaned up ${staleJobs.length} stale scan job(s):`
-    );
+    logger.warn(`🧹 Cleaned up ${staleJobs.length} stale scan job(s):`);
     staleJobs.forEach((job) => {
       logger.warn(
-        `   - ${job.library.name} (${job.currentBatch}/${job.totalBatches} batches, ${job.processedCount}/${job.totalFolders} folders)`
+        `   - ${job.library.name} (${job.currentBatch}/${job.totalBatches} batches, ${job.processedCount}/${job.totalFolders} folders)`,
       );
     });
 
     return staleJobs.length;
   } catch (error) {
     logger.error(
-      `Failed to cleanup stale jobs: ${error instanceof Error ? error.message : error}`
+      `Failed to cleanup stale jobs: ${error instanceof Error ? error.message : error}`,
     );
     return 0;
   }
@@ -106,7 +104,7 @@ export async function getScanJobStatus(scanJobId: string) {
   const progressPercent =
     job.totalFolders > 0
       ? Math.floor(
-          ((job.processedCount + job.failedCount) / job.totalFolders) * 100
+          ((job.processedCount + job.failedCount) / job.totalFolders) * 100,
         )
       : 0;
 
@@ -130,4 +128,3 @@ export async function getScanJobStatus(scanJobId: string) {
     error: job.errorMessage,
   };
 }
-

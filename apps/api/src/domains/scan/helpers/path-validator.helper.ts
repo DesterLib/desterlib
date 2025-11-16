@@ -20,11 +20,13 @@ export interface PathValidationOptions {
 const DEPTH_CONSTRAINTS = {
   movie: {
     max: 2,
-    description: "Movies should be at most 2 levels deep (e.g., /movies/Avengers.mkv or /movies/Avengers/Avengers.mkv)",
+    description:
+      "Movies should be at most 2 levels deep (e.g., /movies/Avengers.mkv or /movies/Avengers/Avengers.mkv)",
   },
   tv: {
     max: 4,
-    description: "TV shows should be at most 4 levels deep (e.g., /tvshows/ShowName/Season 1/S1E1.mkv)",
+    description:
+      "TV shows should be at most 4 levels deep (e.g., /tvshows/ShowName/Season 1/S1E1.mkv)",
   },
 } as const;
 
@@ -55,10 +57,10 @@ const DANGEROUS_ROOT_PATHS = [
  */
 export function isDangerousRootPath(path: string): boolean {
   const normalizedPath = path.replace(/\\/g, "/").toLowerCase();
-  
+
   return DANGEROUS_ROOT_PATHS.some((dangerousPath) => {
     const normalizedDangerous = dangerousPath.toLowerCase();
-    
+
     // Exact match or root drive match
     return (
       normalizedPath === normalizedDangerous ||
@@ -72,7 +74,7 @@ export function isDangerousRootPath(path: string): boolean {
 /**
  * Check if a directory contains media files (videos)
  * Scans up to 2 levels deep to detect media content
- * 
+ *
  * @param dirPath - Directory path to check
  * @param currentDepth - Current recursion depth
  * @param maxDepth - Maximum depth to scan (default: 2)
@@ -81,14 +83,14 @@ export function isDangerousRootPath(path: string): boolean {
 async function containsMediaFiles(
   dirPath: string,
   currentDepth: number = 0,
-  maxDepth: number = 2
+  maxDepth: number = 2,
 ): Promise<boolean> {
   if (currentDepth > maxDepth) return false;
 
   try {
     const { readdir } = await import("fs/promises");
     const entries = await readdir(dirPath, { withFileTypes: true });
-    
+
     // Get video extensions from the centralized source
     const videoExtensions = getDefaultVideoExtensions();
 
@@ -96,7 +98,9 @@ async function containsMediaFiles(
     for (const entry of entries) {
       if (!entry.isDirectory()) {
         const nameLower = entry.name.toLowerCase();
-        if (videoExtensions.some((ext) => nameLower.endsWith(ext.toLowerCase()))) {
+        if (
+          videoExtensions.some((ext) => nameLower.endsWith(ext.toLowerCase()))
+        ) {
           return true;
         }
       }
@@ -108,9 +112,13 @@ async function containsMediaFiles(
         if (entry.isDirectory()) {
           const { join } = await import("path");
           const subDirPath = join(dirPath, entry.name);
-          
+
           // Check if this subdirectory contains media
-          const hasMedia = await containsMediaFiles(subDirPath, currentDepth + 1, maxDepth);
+          const hasMedia = await containsMediaFiles(
+            subDirPath,
+            currentDepth + 1,
+            maxDepth,
+          );
           if (hasMedia) {
             return true;
           }
@@ -128,19 +136,19 @@ async function containsMediaFiles(
 /**
  * Check if a path contains multiple media collection folders
  * This indicates it's a media root that should not be scanned directly
- * 
+ *
  * Strategy: Only check shallow paths (≤ 4 levels deep). If the user is scanning
  * a deeply nested path, we assume they know what they're doing.
- * 
+ *
  * For shallow paths, if we find multiple subdirectories with media (3+), we suggest
  * scanning more specifically. This catches cases like:
  * - /Puff with Movies/, Shows/, Anime/ (broad media root)
  * - /Media with Movies/, TV/, Music/ (multiple collections)
- * 
+ *
  * But allows:
  * - /Users/alken/Mounts/Puff/Movies (deep path = specific intent)
  * - /Movies with Action/, Comedy/ (only 2 subdirectories)
- * 
+ *
  * @param path - Path to check
  * @returns Object with validation result and detected collections
  */
@@ -152,10 +160,10 @@ export async function isMediaRootPath(path: string): Promise<{
   try {
     const { readdir } = await import("fs/promises");
     const { join } = await import("path");
-    
+
     // Calculate path depth (number of directories from root)
     const pathDepth = path.split("/").filter(Boolean).length;
-    
+
     // If path is deep (> 4 levels), assume user knows what they want
     // Example: /Users/alken/Mounts/Puff/Movies is 5 levels deep
     if (pathDepth > 4) {
@@ -164,7 +172,7 @@ export async function isMediaRootPath(path: string): Promise<{
         detectedCollections: [],
       };
     }
-    
+
     // For shallow paths, check if it has many media subdirectories
     const entries = await readdir(path, { withFileTypes: true });
     const detectedCollections: string[] = [];
@@ -174,13 +182,15 @@ export async function isMediaRootPath(path: string): Promise<{
     for (const entry of entries) {
       if (entry.isDirectory()) {
         const dirPath = join(path, entry.name);
-        
+
         // Check if this directory contains media files (up to 2 levels deep)
-        const checkPromise = containsMediaFiles(dirPath, 0, 2).then((hasMedia) => ({
-          name: entry.name,
-          hasMedia,
-        }));
-        
+        const checkPromise = containsMediaFiles(dirPath, 0, 2).then(
+          (hasMedia) => ({
+            name: entry.name,
+            hasMedia,
+          }),
+        );
+
         checkPromises.push(checkPromise);
       }
     }
@@ -234,7 +244,7 @@ export function getRecommendedMaxDepth(mediaType: "movie" | "tv"): number {
 export function isDepthValid(
   depth: number,
   mediaType: "movie" | "tv",
-  maxDepth?: number
+  maxDepth?: number,
 ): boolean {
   const effectiveMaxDepth = maxDepth ?? DEPTH_CONSTRAINTS[mediaType].max;
   return depth <= effectiveMaxDepth;
@@ -245,20 +255,20 @@ export function isDepthValid(
  * Valid patterns:
  * - /movies/Avengers.mkv (depth 1)
  * - /movies/Avengers/Avengers.mkv (depth 2)
- * 
+ *
  * Invalid:
  * - /movies/some/deep/nested/path/movie.mkv (depth > 2)
  */
 export function validateMoviePath(
   rootPath: string,
-  filePath: string
+  filePath: string,
 ): { valid: boolean; reason?: string; relativeDepth: number } {
   const relativePath = relative(rootPath, filePath);
   const pathParts = relativePath.split("/").filter(Boolean);
   const relativeDepth = pathParts.length - 1; // Subtract 1 because the file itself doesn't count as depth
-  
+
   const maxDepth = DEPTH_CONSTRAINTS.movie.max;
-  
+
   if (relativeDepth > maxDepth) {
     return {
       valid: false,
@@ -266,7 +276,7 @@ export function validateMoviePath(
       relativeDepth,
     };
   }
-  
+
   return { valid: true, relativeDepth };
 }
 
@@ -275,7 +285,7 @@ export function validateMoviePath(
  * Valid patterns:
  * - /tvshows/Gravity Falls/S1E1.mkv (depth 2)
  * - /tvshows/Gravity Falls/Season 1/S1E1.mkv (depth 3)
- * 
+ *
  * Invalid:
  * - /tvshows/some/deep/nested/path/episode.mkv (depth > 3)
  * - Files without proper parent show folder
@@ -287,7 +297,7 @@ export function validateTvShowPath(
     season?: number;
     episode?: number;
     title?: string;
-  }
+  },
 ): {
   valid: boolean;
   reason?: string;
@@ -297,9 +307,9 @@ export function validateTvShowPath(
   const relativePath = relative(rootPath, filePath);
   const pathParts = relativePath.split("/").filter(Boolean);
   const relativeDepth = pathParts.length - 1; // Subtract 1 for the file itself
-  
+
   const maxDepth = DEPTH_CONSTRAINTS.tv.max;
-  
+
   // Check depth constraint
   if (relativeDepth > maxDepth) {
     return {
@@ -308,33 +318,36 @@ export function validateTvShowPath(
       relativeDepth,
     };
   }
-  
+
   // For TV shows, we expect at least one parent folder (the show name)
   if (relativeDepth < 1) {
     return {
       valid: false,
-      reason: "TV show files must be inside a show folder (e.g., /tvshows/ShowName/S1E1.mkv)",
+      reason:
+        "TV show files must be inside a show folder (e.g., /tvshows/ShowName/S1E1.mkv)",
       relativeDepth,
     };
   }
-  
+
   // Check if file has episode information
   const hasEpisodeInfo = !!(extractedIds.season && extractedIds.episode);
-  
+
   if (!hasEpisodeInfo) {
     return {
       valid: false,
-      reason: "File does not contain valid season/episode information (e.g., S1E1)",
+      reason:
+        "File does not contain valid season/episode information (e.g., S1E1)",
       relativeDepth,
     };
   }
-  
+
   // The show folder is typically:
   // - Parent folder if structure is /tvshows/ShowName/S1E1.mkv (depth 2)
   // - Grandparent folder if structure is /tvshows/ShowName/Season 1/S1E1.mkv (depth 3)
-  const showFolderIndex = relativeDepth >= 2 ? pathParts.length - 3 : pathParts.length - 2;
+  const showFolderIndex =
+    relativeDepth >= 2 ? pathParts.length - 3 : pathParts.length - 2;
   const showFolder = pathParts[showFolderIndex] || pathParts[0];
-  
+
   return {
     valid: true,
     relativeDepth,
@@ -353,7 +366,7 @@ export function validateMediaPath(
     season?: number;
     episode?: number;
     title?: string;
-  }
+  },
 ): { valid: boolean; reason?: string; metadata?: any } {
   if (mediaType === "movie") {
     return validateMoviePath(rootPath, filePath);
@@ -374,20 +387,21 @@ export function logValidationStats(stats: {
   logger.info("\n📊 Path Validation Statistics:");
   logger.info(`   Total files scanned: ${stats.total}`);
   logger.info(`   Valid files: ${stats.valid}`);
-  
+
   if (stats.depthViolations > 0) {
     logger.warn(`   ⚠️  Depth violations (skipped): ${stats.depthViolations}`);
   }
-  
+
   if (stats.structureViolations > 0) {
-    logger.warn(`   ⚠️  Structure violations (skipped): ${stats.structureViolations}`);
+    logger.warn(
+      `   ⚠️  Structure violations (skipped): ${stats.structureViolations}`,
+    );
   }
-  
+
   const skipped = stats.depthViolations + stats.structureViolations;
   if (skipped > 0) {
     logger.info(
-      `   Hint: Ensure your media follows the recommended structure. Enable debug logging for details.`
+      `   Hint: Ensure your media follows the recommended structure. Enable debug logging for details.`,
     );
   }
 }
-

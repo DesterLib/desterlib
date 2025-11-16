@@ -1,6 +1,6 @@
-import { EnvConfig } from './env.js';
+import { EnvConfig } from "./env.js";
 
-const DOCKER_IMAGE = 'desterlib/api:latest'; // TODO: Update with your actual Docker Hub image
+const DOCKER_IMAGE = "desterlib/api:latest"; // TODO: Update with your actual Docker Hub image
 
 /**
  * Generate docker-compose.yml content
@@ -175,4 +175,3 @@ If you encounter issues:
 For more help, visit: https://desterlib.github.io/desterlib
 `;
 }
-

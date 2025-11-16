@@ -309,7 +309,7 @@ router.get("/", tvshowsControllers.getTVShows);
 router.get(
   "/:id",
   validateParams(getTVShowByIdSchema),
-  tvshowsControllers.getTVShowById
+  tvshowsControllers.getTVShowById,
 );
 
 export default router;

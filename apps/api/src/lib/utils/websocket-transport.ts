@@ -11,8 +11,13 @@ export class WebSocketTransport extends TransportStream {
   }
 
   log(
-    info: { timestamp: string; level: string; message: string; [key: string]: unknown },
-    callback: () => void
+    info: {
+      timestamp: string;
+      level: string;
+      message: string;
+      [key: string]: unknown;
+    },
+    callback: () => void,
   ) {
     setImmediate(() => {
       this.emit("logged", info);
@@ -46,4 +51,3 @@ export class WebSocketTransport extends TransportStream {
     callback();
   }
 }
-

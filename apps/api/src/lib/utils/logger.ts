@@ -36,7 +36,7 @@ const format = winston.format.combine(
     }
 
     return msg;
-  })
+  }),
 );
 
 // Define which transports the logger must use

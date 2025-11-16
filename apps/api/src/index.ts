@@ -15,9 +15,9 @@ const app = express();
 const httpServer = createServer(app);
 
 // Enable SO_REUSEADDR to allow port reuse immediately after restart
-httpServer.on('listening', () => {
+httpServer.on("listening", () => {
   const address = httpServer.address();
-  if (address && typeof address !== 'string') {
+  if (address && typeof address !== "string") {
     // Socket is successfully bound
   }
 });
@@ -35,8 +35,8 @@ const startServer = async () => {
     const tmdbApiKey = await settingsManager.getTmdbApiKey();
 
     // Handle port already in use error
-    httpServer.on('error', (error: NodeJS.ErrnoException) => {
-      if (error.code === 'EADDRINUSE') {
+    httpServer.on("error", (error: NodeJS.ErrnoException) => {
+      if (error.code === "EADDRINUSE") {
         logger.error(`❌ Port ${config.port} is already in use!`);
         logger.error(`💡 To kill the process using this port, run:`);
         logger.error(`   lsof -ti:${config.port} | xargs kill -9`);
@@ -51,7 +51,7 @@ const startServer = async () => {
       logger.info(`🚀 Server running on port ${config.port}`);
       logger.info(`📊 Health check: http://localhost:${config.port}/health`);
       logger.info(
-        `📚 API Documentation: http://localhost:${config.port}/api/docs`
+        `📚 API Documentation: http://localhost:${config.port}/api/docs`,
       );
       logger.info(`🔌 WebSocket endpoint: ws://localhost:${config.port}/ws`);
       logger.info(`🔧 Environment: ${config.nodeEnv}`);
@@ -66,11 +66,13 @@ const startServer = async () => {
       }
 
       // Auto-resume interrupted scan jobs from previous session
-      logger.info("🔍 Checking for interrupted scan jobs from previous session...");
+      logger.info(
+        "🔍 Checking for interrupted scan jobs from previous session...",
+      );
       const interruptedJobs = await prisma.scanJob.findMany({
         where: {
           status: {
-            in: ['IN_PROGRESS', 'PENDING'],
+            in: ["IN_PROGRESS", "PENDING"],
           },
         },
         include: {
@@ -79,48 +81,57 @@ const startServer = async () => {
           },
         },
       });
-      
+
       if (interruptedJobs.length > 0) {
-        logger.info(`⏸️  Found ${interruptedJobs.length} interrupted scan job(s) - auto-resuming...`);
-        
+        logger.info(
+          `⏸️  Found ${interruptedJobs.length} interrupted scan job(s) - auto-resuming...`,
+        );
+
         // Import scanServices dynamically to avoid circular deps
-        const { scanServices } = await import("./domains/scan/scan.services.js");
-        
+        const { scanServices } = await import(
+          "./domains/scan/scan.services.js"
+        );
+
         for (const job of interruptedJobs) {
           logger.info(
-            `🔄 Resuming: ${job.library.name} (${job.processedCount}/${job.totalFolders} folders, Batch ${job.currentBatch}/${job.totalBatches})`
+            `🔄 Resuming: ${job.library.name} (${job.processedCount}/${job.totalFolders} folders, Batch ${job.currentBatch}/${job.totalBatches})`,
           );
-          
+
           // Get TMDB API key
           const tmdbApiKey = await settingsManager.getTmdbApiKey();
           if (!tmdbApiKey) {
-            logger.warn(`   ⚠️  Skipping ${job.library.name} - TMDB API key not configured`);
+            logger.warn(
+              `   ⚠️  Skipping ${job.library.name} - TMDB API key not configured`,
+            );
             continue;
           }
-          
+
           // First, mark as FAILED so resumeScanJob can pick it up
           await prisma.scanJob.update({
             where: { id: job.id },
-            data: { status: 'FAILED' },
+            data: { status: "FAILED" },
           });
-          
+
           // Resume in background (small delay to ensure DB update propagates)
           setTimeout(() => {
-            scanServices.resumeScanJob(job.id, tmdbApiKey)
+            scanServices
+              .resumeScanJob(job.id, tmdbApiKey)
               .then((result) => {
                 logger.info(
-                  `✅ Auto-resumed scan completed: ${result.libraryName} (${result.totalItemsSaved} additional items)`
+                  `✅ Auto-resumed scan completed: ${result.libraryName} (${result.totalItemsSaved} additional items)`,
                 );
               })
               .catch((error: unknown) => {
                 logger.error(
-                  `❌ Auto-resume failed for ${job.library.name}: ${error instanceof Error ? error.message : error}`
+                  `❌ Auto-resume failed for ${job.library.name}: ${error instanceof Error ? error.message : error}`,
                 );
               });
           }, 100);
         }
-        
-        logger.info(`✅ Started auto-resume for ${interruptedJobs.length} scan job(s)`);
+
+        logger.info(
+          `✅ Started auto-resume for ${interruptedJobs.length} scan job(s)`,
+        );
       } else {
         logger.info("✅ No interrupted scans found");
       }
@@ -133,18 +144,18 @@ const startServer = async () => {
 
 const gracefulShutdown = async (signal: string) => {
   logger.info(`Received ${signal}, shutting down gracefully...`);
-  
+
   // Close HTTP server first
   httpServer.close(() => {
     logger.info("HTTP server closed");
   });
-  
+
   // Close WebSocket connections
   wsManager.close();
-  
+
   // Disconnect from database
   await prisma.$disconnect();
-  
+
   logger.info("Shutdown complete");
   process.exit(0);
 };

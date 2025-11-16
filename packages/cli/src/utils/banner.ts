@@ -1,8 +1,9 @@
-import chalk from 'chalk';
+import chalk from "chalk";
 
 export function displayBanner(): void {
   console.clear();
-  console.log(chalk.cyan.bold(`
+  console.log(
+    chalk.cyan.bold(`
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
 ║   🎬  DesterLib Setup                                        ║
@@ -10,7 +11,7 @@ export function displayBanner(): void {
 ║   Your Personal Media Server                                 ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
-  `));
-  console.log(chalk.gray('  Welcome! Let\'s set up your DesterLib server.\n'));
+  `),
+  );
+  console.log(chalk.gray("  Welcome! Let's set up your DesterLib server.\n"));
 }
-

@@ -8,7 +8,7 @@ const router: Router = express.Router();
 const getApiVersion = (): string => {
   try {
     const packageJson = JSON.parse(
-      readFileSync(join(__dirname, "../../package.json"), "utf-8")
+      readFileSync(join(__dirname, "../../package.json"), "utf-8"),
     );
     return packageJson.version;
   } catch (error) {

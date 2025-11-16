@@ -270,7 +270,7 @@ router.get("/", moviesControllers.getMovies);
 router.get(
   "/:id",
   validateParams(getMovieByIdSchema),
-  moviesControllers.getMovieById
+  moviesControllers.getMovieById,
 );
 
 export default router;

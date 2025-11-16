@@ -196,7 +196,10 @@ const router: Router = express.Router();
  *                   type: string
  *                   example: "Failed to search media"
  */
-router.get("/", validateQuery(searchMediaSchema), searchControllers.searchMedia);
+router.get(
+  "/",
+  validateQuery(searchMediaSchema),
+  searchControllers.searchMedia,
+);
 
 export default router;
-

@@ -8,4 +8,3 @@ export const searchMediaSchema = z.object({
 });
 
 export type SearchMediaQuery = z.infer<typeof searchMediaSchema>;
-

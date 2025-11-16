@@ -168,7 +168,7 @@ router.get("/", validate(getSettingsSchema, "query"), settingsControllers.get);
 router.put(
   "/",
   validate(updateSettingsSchema, "body"),
-  settingsControllers.update
+  settingsControllers.update,
 );
 
 /**

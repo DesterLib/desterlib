@@ -26,7 +26,7 @@ export const scanPathSchema = z.object({
       },
       {
         message: "Invalid or unsafe file path",
-      }
+      },
     )
     .refine(
       (path) => {
@@ -36,7 +36,7 @@ export const scanPathSchema = z.object({
       {
         message:
           "Cannot scan system root directories or entire drives. Please specify a media folder (e.g., /Users/username/Movies or C:\\Media\\Movies)",
-      }
+      },
     ),
   options: z
     .object({
@@ -47,7 +47,7 @@ export const scanPathSchema = z.object({
         .max(10)
         .optional()
         .describe(
-          "Maximum directory depth to scan. Defaults to 2 for movies, 4 for TV shows"
+          "Maximum directory depth to scan. Defaults to 2 for movies, 4 for TV shows",
         ),
       mediaType: z.enum(["movie", "tv"]).default("movie"),
       fileExtensions: z.array(sanitizedStringSchema).max(20).optional(),
@@ -57,7 +57,7 @@ export const scanPathSchema = z.object({
         .boolean()
         .optional()
         .describe(
-          "Enable batch scanning mode for large libraries. Automatically enabled for TV shows. Batches: 5 shows or 25 movies per batch."
+          "Enable batch scanning mode for large libraries. Automatically enabled for TV shows. Batches: 5 shows or 25 movies per batch.",
         ),
     })
     .optional(),

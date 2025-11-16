@@ -31,6 +31,7 @@ Your API key will be generated instantly!
 ### 3. Copy Your API Key
 
 You'll see two keys:
+
 - **API Key (v3 auth)** - This is what you need ✅
 - **API Read Access Token** - Not needed
 
@@ -68,6 +69,7 @@ curl -X PUT http://localhost:3001/api/v1/settings \
 ## What TMDB Is Used For
 
 Once configured, DesterLib uses TMDB to fetch:
+
 - 🎬 **Movie/Show Titles** - Proper names and translations
 - 📝 **Descriptions** - Plot summaries and overviews
 - 🎨 **Poster Images** - Cover art for your media
@@ -80,6 +82,7 @@ Once configured, DesterLib uses TMDB to fetch:
 ## Scanning Without TMDB
 
 If you haven't configured TMDB yet:
+
 - ✅ DesterLib will still scan your files
 - ✅ Files will be added to the database
 - ❌ Metadata won't be fetched
@@ -90,6 +93,7 @@ You can configure TMDB later and rescan to fetch metadata.
 ## TMDB API Limits
 
 TMDB's free API has rate limits:
+
 - **40 requests per 10 seconds**
 - DesterLib automatically handles rate limiting
 - Large libraries may take longer to scan due to this
@@ -106,6 +110,7 @@ TMDB's free API has rate limits:
 ### Invalid API Key Error
 
 If you see "Invalid TMDB API key":
+
 1. Verify you copied the **v3 API Key** (not the Read Access Token)
 2. Check for extra spaces or characters
 3. Make sure the key is active in your TMDB account
@@ -113,6 +118,7 @@ If you see "Invalid TMDB API key":
 ### Rate Limit Errors
 
 If scans are slow or failing:
+
 - This is normal for large libraries
 - TMDB limits: 40 requests/10 seconds
 - DesterLib automatically retries failed requests
@@ -121,6 +127,7 @@ If scans are slow or failing:
 ### No Metadata Fetched
 
 If scans complete but metadata is missing:
+
 1. Verify TMDB key is configured
 2. Check API logs for errors: `docker-compose logs -f api`
 3. Try manually fetching for one item
@@ -131,4 +138,3 @@ If scans complete but metadata is missing:
 - [Installation Guide](/getting-started/installation/) - Set up DesterLib
 - [Library Scanning](/guides/scanning/) - How scanning works
 - [Settings API](/api/overview/#api-endpoints) - Configure via API
-

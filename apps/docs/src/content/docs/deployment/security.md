@@ -11,11 +11,12 @@ Security considerations for self-hosting DesterLib.
 DesterLib is in alpha and **does not yet have authentication**. The API is currently open to anyone on your network.
 
 **Planned features:**
+
 - JWT authentication
 - User accounts
 - Access control
 - API keys
-:::
+  :::
 
 ## Network Security
 
@@ -24,6 +25,7 @@ DesterLib is in alpha and **does not yet have authentication**. The API is curre
 **Recommended for:** Most users
 
 Keep DesterLib on your local network:
+
 - ✅ No port forwarding
 - ✅ No public exposure
 - ✅ Access via LAN only
@@ -58,17 +60,19 @@ DATABASE_URL=postgresql://desterlib:GENERATED_PASSWORD_HERE@postgres:5432/dester
 ### Don't Expose Database Port
 
 **Default (Secure):**
+
 ```yaml
 postgres:
   ports:
-    - "127.0.0.1:5432:5432"  # Localhost only
+    - "127.0.0.1:5432:5432" # Localhost only
 ```
 
 **Insecure (Avoid):**
+
 ```yaml
 postgres:
   ports:
-    - "0.0.0.0:5432:5432"  # Exposed to network ❌
+    - "0.0.0.0:5432:5432" # Exposed to network ❌
 ```
 
 ## Docker Security
@@ -79,7 +83,7 @@ Media files are mounted read-only:
 
 ```yaml
 volumes:
-  - /path/to/media:/media:ro  # :ro prevents writes
+  - /path/to/media:/media:ro # :ro prevents writes
 ```
 
 DesterLib can't modify your media files.
@@ -128,12 +132,14 @@ chmod 644 ~/.desterlib/docker-compose.yml
 ### Option 1: Caddy (Easiest)
 
 **Install Caddy:**
+
 ```bash
 sudo apt install caddy  # Ubuntu/Debian
 brew install caddy      # macOS
 ```
 
 **Configure (Caddyfile):**
+
 ```
 desterlib.yourdomain.com {
     reverse_proxy localhost:3001
@@ -141,11 +147,13 @@ desterlib.yourdomain.com {
 ```
 
 **Start:**
+
 ```bash
 sudo caddy start
 ```
 
 Caddy automatically:
+
 - ✅ Gets Let's Encrypt certificate
 - ✅ Renews certificates
 - ✅ Redirects HTTP → HTTPS
@@ -153,16 +161,18 @@ Caddy automatically:
 ### Option 2: Nginx + Certbot
 
 **Install:**
+
 ```bash
 sudo apt install nginx certbot python3-certbot-nginx
 ```
 
 **Configure nginx:**
+
 ```nginx
 server {
     listen 80;
     server_name desterlib.yourdomain.com;
-    
+
     location / {
         proxy_pass http://localhost:3001;
         proxy_set_header Host $host;
@@ -172,6 +182,7 @@ server {
 ```
 
 **Get certificate:**
+
 ```bash
 sudo certbot --nginx -d desterlib.yourdomain.com
 ```
@@ -204,6 +215,7 @@ sudo firewall-cmd --reload
 ### macOS
 
 System Preferences → Security & Privacy → Firewall → Firewall Options
+
 - Add Docker.app
 - Allow incoming connections
 
@@ -246,6 +258,7 @@ When authentication is implemented:
 ### Current Workaround
 
 Use network-level security:
+
 - Keep on private network
 - Use VPN (Tailscale)
 - Use reverse proxy with auth (Authelia, OAuth2 Proxy)
@@ -255,20 +268,24 @@ Use network-level security:
 ### What's Sensitive
 
 **High priority:**
+
 - Database (has your library metadata)
 - `.env` file (has credentials)
 
 **Low priority:**
+
 - Docker images (public)
 - `docker-compose.yml` (no secrets if using .env)
 
 ### Encryption
 
 **Database encryption:**
+
 - PostgreSQL doesn't encrypt by default
 - Use disk encryption at OS level (LUKS, FileVault, BitLocker)
 
 **Transport encryption:**
+
 - Use HTTPS for remote access
 - Tailscale encrypts all traffic automatically
 
@@ -277,6 +294,7 @@ Use network-level security:
 ### If Compromised
 
 1. **Immediately:**
+
    ```bash
    docker-compose down
    ```
@@ -286,6 +304,7 @@ Use network-level security:
    - Update in `.env` and `docker-compose.yml`
 
 3. **Review logs:**
+
    ```bash
    docker-compose logs api > incident-logs.txt
    ```
@@ -328,4 +347,3 @@ We'll respond within 48 hours.
 - [Remote Access](/guides/remote-access/) - Secure remote access
 - [Environment Variables](/api/environment-variables/) - Configuration
 - [Backup & Restore](/guides/backup-restore/) - Data protection
-

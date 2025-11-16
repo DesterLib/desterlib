@@ -58,7 +58,7 @@ export async function getDockerComposeCommand(): Promise<string[]> {
  * Start Docker containers
  */
 export async function startDockerContainers(
-  installDir: string
+  installDir: string,
 ): Promise<boolean> {
   const spinner = ora("Starting Docker containers...").start();
 
@@ -93,7 +93,7 @@ export async function startDockerContainers(
  * Note: Currently unused, reserved for future stop/restart commands
  */
 export async function stopDockerContainers(
-  installDir: string
+  installDir: string,
 ): Promise<boolean> {
   const spinner = ora("Stopping Docker containers...").start();
 

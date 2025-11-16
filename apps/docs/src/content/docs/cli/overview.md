@@ -13,6 +13,7 @@ The DesterLib CLI is an interactive setup tool that installs and configures Dest
 ### What It Does
 
 The CLI handles the entire setup process:
+
 - ✅ Checks Docker prerequisites
 - ✅ Generates configuration files
 - ✅ Pulls pre-built Docker images
@@ -42,6 +43,7 @@ npx @desterlib/cli
 ```
 
 The wizard will ask:
+
 1. 📚 **Media library path** - Where your movies/TV shows are
 2. 🔌 **Server port** - Default is 3001
 3. 🔒 **Database credentials** - Username and password
@@ -55,9 +57,11 @@ That's it! Your server will be installed in `~/.desterlib/`
 Runs the interactive setup wizard.
 
 **Options:**
+
 - `--skip-docker-check` - Skip Docker installation verification (not recommended)
 
 **Example:**
+
 ```bash
 npx @desterlib/cli setup --skip-docker-check
 ```
@@ -69,18 +73,20 @@ npx @desterlib/cli setup --skip-docker-check
 The CLI creates these files in `~/.desterlib/`:
 
 **1. docker-compose.yml** (~50 lines)
+
 ```yaml
 services:
   postgres:
     image: postgres:15-alpine
     # Database configuration
-    
+
   api:
     image: desterlib/api:latest
     # API server configuration
 ```
 
 **2. .env** (~10 lines)
+
 ```env
 DATABASE_URL=postgresql://...
 NODE_ENV=production
@@ -94,10 +100,10 @@ Quick reference with management commands.
 
 ### Installation Directory
 
-| OS | Location |
-|----|----------|
-| macOS/Linux | `~/.desterlib` |
-| Windows | `%USERPROFILE%\.desterlib` |
+| OS          | Location                   |
+| ----------- | -------------------------- |
+| macOS/Linux | `~/.desterlib`             |
+| Windows     | `%USERPROFILE%\.desterlib` |
 
 ## Managing Your Installation
 
@@ -132,6 +138,7 @@ npx @desterlib/cli
 ```
 
 You'll be prompted to:
+
 - **Reconfigure** - Update settings (overwrites config files)
 - **Remove and start fresh** - Delete everything and reinstall
 - **Cancel** - Keep current setup
@@ -139,6 +146,7 @@ You'll be prompted to:
 ## Existing Installation
 
 If DesterLib is already installed, the CLI will:
+
 1. Detect the existing installation
 2. Offer to reconfigure or reinstall
 3. Preserve your database unless you choose full reinstall
@@ -159,6 +167,7 @@ No Git or source code knowledge required!
 ```
 
 **Solution:**
+
 - Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
 - Make sure Docker is running (check system tray/menu bar)
 
@@ -169,12 +178,14 @@ No Git or source code knowledge required!
 ```
 
 **Solution:**
+
 - Docker Desktop includes Compose automatically
 - Linux: `sudo apt install docker-compose-plugin`
 
 ### Port Already in Use
 
 If port 3001 is taken:
+
 1. During setup, choose a different port when prompted
 2. Or kill the process using 3001:
    ```bash
@@ -184,6 +195,7 @@ If port 3001 is taken:
 ### Permission Errors
 
 If you can't access your media path:
+
 - Ensure the directory exists
 - Check permissions: `ls -la /path/to/media`
 - Choose a different directory during setup
@@ -247,4 +259,3 @@ See the [Contributing Guide](/development/contributing/) for more details.
 - [Installation Guide](/getting-started/installation/) - Complete setup guide
 - [Managing Your Server](/guides/managing-server/) - Server management commands
 - [Updating DesterLib](/guides/updating/) - How to update to latest version
-

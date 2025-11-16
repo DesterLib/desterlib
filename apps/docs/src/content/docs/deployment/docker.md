@@ -14,6 +14,7 @@ npx @desterlib/cli
 ```
 
 The CLI configures production-ready settings by default:
+
 - Sets `NODE_ENV=production`
 - Configures restart policies
 - Sets up health checks
@@ -41,17 +42,18 @@ docker-compose up -d
 Add resource limits to prevent overconsumption:
 
 **Edit docker-compose.yml:**
+
 ```yaml
 api:
   image: desterlib/api:latest
   deploy:
     resources:
       limits:
-        cpus: '2.0'
+        cpus: "2.0"
         memory: 2G
       reservations:
         memory: 512M
-        
+
 postgres:
   image: postgres:15-alpine
   deploy:
@@ -83,7 +85,11 @@ Both services include health checks by default:
 ```yaml
 api:
   healthcheck:
-    test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1"]
+    test:
+      [
+        "CMD-SHELL",
+        "wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1",
+      ]
     interval: 30s
     timeout: 10s
     retries: 3
@@ -109,6 +115,7 @@ ports:
 ```
 
 This allows connections from:
+
 - Local machine
 - LAN devices
 - Remote clients (if port forwarded)
@@ -127,11 +134,12 @@ ports:
 ### Nginx
 
 **nginx.conf:**
+
 ```nginx
 server {
     listen 80;
     server_name desterlib.yourdomain.com;
-    
+
     location / {
         proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
@@ -142,7 +150,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
-    
+
     # WebSocket support
     location /ws {
         proxy_pass http://localhost:3001;
@@ -156,6 +164,7 @@ server {
 ### Caddy (Automatic HTTPS)
 
 **Caddyfile:**
+
 ```
 desterlib.yourdomain.com {
     reverse_proxy localhost:3001
@@ -163,6 +172,7 @@ desterlib.yourdomain.com {
 ```
 
 Caddy automatically handles:
+
 - HTTPS certificates (Let's Encrypt)
 - Certificate renewal
 - HTTP to HTTPS redirect
@@ -170,6 +180,7 @@ Caddy automatically handles:
 ### Traefik
 
 **docker-compose.yml:**
+
 ```yaml
 api:
   image: desterlib/api:latest
@@ -209,6 +220,7 @@ api:
 ### External Logging
 
 **To syslog:**
+
 ```yaml
 logging:
   driver: syslog
@@ -217,6 +229,7 @@ logging:
 ```
 
 **To file:**
+
 ```yaml
 logging:
   driver: json-file
@@ -258,7 +271,7 @@ services:
   postgres:
     networks:
       - desterlib-net
-  
+
   api:
     networks:
       - desterlib-net
@@ -270,7 +283,7 @@ Media is mounted read-only for security:
 
 ```yaml
 volumes:
-  - /path/to/media:/media:ro  # :ro = read-only
+  - /path/to/media:/media:ro # :ro = read-only
 ```
 
 ### Non-Root User (Future)
@@ -282,6 +295,7 @@ Running as non-root user is planned for future releases.
 ### Single Server
 
 Current setup is designed for single-server deployment:
+
 - One API instance
 - One PostgreSQL instance
 - Suitable for personal use (1-100 users)
@@ -289,6 +303,7 @@ Current setup is designed for single-server deployment:
 ### Future: Multi-Instance
 
 Horizontal scaling is planned for future releases with:
+
 - Multiple API instances behind load balancer
 - Shared PostgreSQL database
 - Redis for session management
@@ -346,11 +361,13 @@ Recommend updating during low-usage times:
 ### Container Keeps Restarting
 
 **Check logs:**
+
 ```bash
 docker-compose logs --tail=100 api
 ```
 
 **Common causes:**
+
 - Database connection failure
 - Invalid environment variables
 - Port already in use
@@ -359,11 +376,13 @@ docker-compose logs --tail=100 api
 ### High Memory Usage
 
 **Check resource usage:**
+
 ```bash
 docker stats
 ```
 
 **If too high:**
+
 1. Add memory limits (see Resource Limits above)
 2. Check for memory leaks in logs
 3. Restart containers: `docker-compose restart`
@@ -373,6 +392,7 @@ docker stats
 **For large libraries (10,000+ items):**
 
 1. **Increase database resources:**
+
    ```yaml
    postgres:
      deploy:
@@ -393,4 +413,3 @@ docker stats
 - [Managing Server](/guides/managing-server/) - Day-to-day management
 - [Remote Access](/guides/remote-access/) - External access options
 - [Backup & Restore](/guides/backup-restore/) - Data protection
-

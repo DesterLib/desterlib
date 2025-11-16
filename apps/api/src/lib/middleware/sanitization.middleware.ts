@@ -16,7 +16,7 @@ export function sanitizeInput(
       trimWhitespace?: boolean;
       maxLength?: number;
     };
-  } = {}
+  } = {},
 ) {
   const {
     sanitizeBody = true,
@@ -40,7 +40,7 @@ export function sanitizeInput(
       if (sanitizeQuery && req.query && typeof req.query === "object") {
         req.query = sanitizeObject(
           req.query,
-          sanitizeOptions
+          sanitizeOptions,
         ) as typeof req.query;
       }
 
@@ -48,14 +48,14 @@ export function sanitizeInput(
       if (sanitizeParams && req.params && typeof req.params === "object") {
         req.params = sanitizeObject(
           req.params,
-          sanitizeOptions
+          sanitizeOptions,
         ) as typeof req.params;
       }
 
       next();
     } catch (error) {
       logger.error(
-        `Sanitization error: ${error instanceof Error ? error.message : error}`
+        `Sanitization error: ${error instanceof Error ? error.message : error}`,
       );
       return res.status(400).json({
         error: "Invalid input data",

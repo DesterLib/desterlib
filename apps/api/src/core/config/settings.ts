@@ -120,7 +120,10 @@ async function ensureCoreSettings(): Promise<void> {
 /**
  * Get setting value
  */
-async function getSetting<T = string>(key: string, defaultValue?: T): Promise<T> {
+async function getSetting<T = string>(
+  key: string,
+  defaultValue?: T,
+): Promise<T> {
   const setting = await prisma.setting.findUnique({ where: { key } });
   if (!setting) return defaultValue as T;
   return parseValue(setting.value, setting.type) as T;
@@ -129,7 +132,10 @@ async function getSetting<T = string>(key: string, defaultValue?: T): Promise<T>
 /**
  * Set setting value
  */
-async function setSetting(key: string, value: string | number | boolean): Promise<void> {
+async function setSetting(
+  key: string,
+  value: string | number | boolean,
+): Promise<void> {
   const stringValue = serializeValue(value);
   await prisma.setting.update({
     where: { key },
@@ -150,10 +156,17 @@ export async function initializeSettings(): Promise<void> {
  */
 export async function getSettings(): Promise<UserSettings> {
   return {
-    tmdbApiKey: await getSetting<string>(SETTING_KEYS.TMDB_API_KEY) || undefined,
+    tmdbApiKey:
+      (await getSetting<string>(SETTING_KEYS.TMDB_API_KEY)) || undefined,
     port: await getSetting<number>(SETTING_KEYS.PORT, 3001),
-    jwtSecret: await getSetting<string>(SETTING_KEYS.JWT_SECRET, "change-me-in-production"),
-    enableRouteGuards: await getSetting<boolean>(SETTING_KEYS.ENABLE_ROUTE_GUARDS, false),
+    jwtSecret: await getSetting<string>(
+      SETTING_KEYS.JWT_SECRET,
+      "change-me-in-production",
+    ),
+    enableRouteGuards: await getSetting<boolean>(
+      SETTING_KEYS.ENABLE_ROUTE_GUARDS,
+      false,
+    ),
     firstRun: await getSetting<boolean>(SETTING_KEYS.FIRST_RUN, true),
   };
 }
@@ -183,7 +196,9 @@ export function getDefaultSettings(): UserSettings {
 /**
  * Update settings
  */
-export async function updateSettings(updates: Partial<UserSettings>): Promise<void> {
+export async function updateSettings(
+  updates: Partial<UserSettings>,
+): Promise<void> {
   try {
     if (updates.tmdbApiKey !== undefined) {
       await setSetting(SETTING_KEYS.TMDB_API_KEY, updates.tmdbApiKey);
@@ -195,7 +210,10 @@ export async function updateSettings(updates: Partial<UserSettings>): Promise<vo
       await setSetting(SETTING_KEYS.JWT_SECRET, updates.jwtSecret);
     }
     if (updates.enableRouteGuards !== undefined) {
-      await setSetting(SETTING_KEYS.ENABLE_ROUTE_GUARDS, updates.enableRouteGuards);
+      await setSetting(
+        SETTING_KEYS.ENABLE_ROUTE_GUARDS,
+        updates.enableRouteGuards,
+      );
     }
     if (updates.firstRun !== undefined) {
       await setSetting(SETTING_KEYS.FIRST_RUN, updates.firstRun);

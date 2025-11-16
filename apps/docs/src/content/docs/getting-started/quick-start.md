@@ -22,6 +22,7 @@ npx @desterlib/cli
 ```
 
 The wizard will ask you 3 quick questions:
+
 - 📚 Where are your media files?
 - 🔌 What port to use? (default: 3001)
 - 🔒 Database password
@@ -43,15 +44,17 @@ The CLI downloaded everything needed and started your media server in `~/.dester
 - Windows/Linux: Check the releases page
 
 **Then:**
+
 1. Open the app
 2. Enter `http://YOUR_SERVER_IP:3001`
 3. Go to Settings → Scan Library
 4. Start watching! 🎉
 
 :::note[Finding Your Server IP]
+
 - Same device: Use `http://localhost:3001`
 - Different device: Find your IP with `ifconfig` (Mac/Linux) or `ipconfig` (Windows)
-:::
+  :::
 
 ## That's It!
 
@@ -60,8 +63,8 @@ You're done! Browse your movies and TV shows.
 ---
 
 **Need more help?**
+
 - 📖 [Full Installation Guide](/getting-started/installation/) - Detailed setup, troubleshooting, and client builds
 - 🔧 [Managing Your Server](/getting-started/installation/#managing-your-server) - Start, stop, update commands
 - 🐛 [Troubleshooting](/getting-started/installation/#troubleshooting) - Common issues and fixes
 - 💻 [Contributing](/development/contributing/) - Want to help build DesterLib?
-

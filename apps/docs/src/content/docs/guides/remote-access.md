@@ -7,12 +7,12 @@ Access your media library from anywhere! This guide covers secure remote access 
 
 ## Quick Options
 
-| Method | Difficulty | Security | Best For |
-|--------|-----------|----------|----------|
-| Tailscale | ⭐ Easy | 🔒 Excellent | Most users |
-| Cloudflare Tunnel | ⭐⭐ Moderate | 🔒 Excellent | Advanced users |
-| Port Forwarding + DDNS | ⭐⭐⭐ Hard | ⚠️ Manual setup needed | Self-hosters |
-| ngrok | ⭐ Easy | ⚠️ Temporary | Testing only |
+| Method                 | Difficulty    | Security               | Best For       |
+| ---------------------- | ------------- | ---------------------- | -------------- |
+| Tailscale              | ⭐ Easy       | 🔒 Excellent           | Most users     |
+| Cloudflare Tunnel      | ⭐⭐ Moderate | 🔒 Excellent           | Advanced users |
+| Port Forwarding + DDNS | ⭐⭐⭐ Hard   | ⚠️ Manual setup needed | Self-hosters   |
+| ngrok                  | ⭐ Easy       | ⚠️ Temporary           | Testing only   |
 
 ## Option 1: Tailscale (Recommended)
 
@@ -34,10 +34,11 @@ Tailscale creates a secure VPN between your devices. No port forwarding needed!
    - They're now on the same network!
 
 3. **Find your server IP:**
+
    ```bash
    tailscale ip -4
    ```
-   
+
    Example: `100.64.123.45`
 
 4. **Connect from client:**
@@ -61,32 +62,36 @@ Tailscale creates a secure VPN between your devices. No port forwarding needed!
 ### Setup Steps
 
 1. **Install cloudflared:**
+
    ```bash
    # macOS
    brew install cloudflare/cloudflare/cloudflared
-   
+
    # Linux
    wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
    sudo dpkg -i cloudflared-linux-amd64.deb
-   
+
    # Windows - download from Cloudflare
    ```
 
 2. **Authenticate:**
+
    ```bash
    cloudflared tunnel login
    ```
 
 3. **Create tunnel:**
+
    ```bash
    cloudflared tunnel create desterlib
    ```
 
 4. **Configure tunnel** (`~/.cloudflared/config.yml`):
+
    ```yaml
    tunnel: <tunnel-id>
    credentials-file: /path/to/credentials.json
-   
+
    ingress:
      - hostname: desterlib.yourdomain.com
        service: http://localhost:3001
@@ -94,6 +99,7 @@ Tailscale creates a secure VPN between your devices. No port forwarding needed!
    ```
 
 5. **Run tunnel:**
+
    ```bash
    cloudflared tunnel run desterlib
    ```
@@ -130,6 +136,7 @@ Tailscale creates a secure VPN between your devices. No port forwarding needed!
    - Create hostname like: `mydesterlib.duckdns.org`
 
 3. **Update DDNS automatically:**
+
    ```bash
    # Example DuckDNS update script
    curl "https://www.duckdns.org/update?domains=mydesterlib&token=YOUR_TOKEN"
@@ -142,11 +149,12 @@ Tailscale creates a secure VPN between your devices. No port forwarding needed!
 
 :::danger[Security Warning]
 Port forwarding exposes your server to the internet. You MUST:
+
 - Use strong database passwords
 - Enable authentication (when available)
 - Consider using HTTPS (see below)
 - Keep DesterLib updated
-:::
+  :::
 
 ### Add HTTPS (Recommended)
 
@@ -193,25 +201,27 @@ ngrok http 3001
 You'll get a URL like: `https://abc123.ngrok.io`
 
 :::caution[Temporary]
+
 - URL changes every time you restart
 - Free tier has session limits
 - Not suitable for permanent use
-:::
+  :::
 
 ## Comparing Options
 
 ### Speed
 
-| Method | Latency | Throughput |
-|--------|---------|------------|
-| Tailscale | ~20-50ms added | Excellent (direct peer-to-peer) |
-| Cloudflare Tunnel | ~50-100ms added | Good (proxied through CF) |
-| Port Forward | ~0ms added | Excellent (direct) |
-| ngrok | ~50-150ms added | Moderate (free tier) |
+| Method            | Latency         | Throughput                      |
+| ----------------- | --------------- | ------------------------------- |
+| Tailscale         | ~20-50ms added  | Excellent (direct peer-to-peer) |
+| Cloudflare Tunnel | ~50-100ms added | Good (proxied through CF)       |
+| Port Forward      | ~0ms added      | Excellent (direct)              |
+| ngrok             | ~50-150ms added | Moderate (free tier)            |
 
 ### Security
 
 **Most Secure to Least:**
+
 1. Tailscale (encrypted VPN)
 2. Cloudflare Tunnel (proxied + HTTPS)
 3. Port Forward + HTTPS + Auth
@@ -223,18 +233,21 @@ You'll get a URL like: `https://abc123.ngrok.io`
 ### Allow DesterLib Through Firewall
 
 **macOS:**
+
 ```bash
 # Docker Desktop usually handles this
 # If issues, add rule in System Preferences → Security & Privacy → Firewall
 ```
 
 **Linux (ufw):**
+
 ```bash
 sudo ufw allow 3001/tcp
 sudo ufw reload
 ```
 
 **Windows Firewall:**
+
 1. Windows Security → Firewall & network protection
 2. Advanced settings → Inbound Rules
 3. New Rule → Port → TCP 3001 → Allow
@@ -249,8 +262,9 @@ curl http://YOUR_PUBLIC_URL:3001/health
 ```
 
 Expected response:
+
 ```json
-{"status":"OK","timestamp":"...","uptime":12345}
+{ "status": "OK", "timestamp": "...", "uptime": 12345 }
 ```
 
 ### From Browser
@@ -262,6 +276,7 @@ Should show Swagger documentation.
 ## Mobile Data Usage
 
 When streaming remotely:
+
 - **HD movie (2 hours)**: ~2-4GB
 - **SD movie (2 hours)**: ~0.5-1GB
 - **4K movie (2 hours)**: ~10-20GB
@@ -273,6 +288,7 @@ Consider your mobile data plan when streaming!
 ### Can't Connect Remotely
 
 **Checklist:**
+
 1. ✅ Server running? → `docker ps`
 2. ✅ Port forwarded correctly? → Check router settings
 3. ✅ Firewall allows port? → Test with `telnet YOUR_IP 3001`
@@ -282,6 +298,7 @@ Consider your mobile data plan when streaming!
 ### Works Locally, Not Remotely
 
 **Likely causes:**
+
 - Router not forwarding port → Check port forwarding rules
 - ISP blocks port 3001 → Try different port (8080, 8443)
 - CGNAT (Carrier-Grade NAT) → Use Tailscale or Cloudflare Tunnel
@@ -290,6 +307,7 @@ Consider your mobile data plan when streaming!
 ### Slow Streaming
 
 **Fixes:**
+
 - Check upload speed on server → `speedtest-cli`
 - Reduce video quality in client app
 - Consider transcoding (future feature)
@@ -311,4 +329,3 @@ When exposing to internet:
 - [Managing Server](/guides/managing-server/) - Server management
 - [Installation Guide](/getting-started/installation/) - Initial setup
 - [Troubleshooting](/getting-started/installation/#troubleshooting) - Common issues
-

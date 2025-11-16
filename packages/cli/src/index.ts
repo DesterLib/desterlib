@@ -46,14 +46,14 @@ async function runSetup(options: {
       console.log(chalk.yellow("\n📦 Please install Docker Desktop:"));
       console.log(
         chalk.cyan(
-          "  • macOS/Windows: https://www.docker.com/products/docker-desktop"
-        )
+          "  • macOS/Windows: https://www.docker.com/products/docker-desktop",
+        ),
       );
       console.log(
-        chalk.cyan("  • Linux: https://docs.docker.com/engine/install/")
+        chalk.cyan("  • Linux: https://docs.docker.com/engine/install/"),
       );
       console.log(
-        chalk.yellow("\nAfter installing Docker, run this setup again.")
+        chalk.yellow("\nAfter installing Docker, run this setup again."),
       );
       process.exit(1);
     }
@@ -83,8 +83,8 @@ program
     } else {
       console.log(
         chalk.green(
-          `✅ You're using the latest version (${updateInfo.currentVersion})`
-        )
+          `✅ You're using the latest version (${updateInfo.currentVersion})`,
+        ),
       );
     }
   });

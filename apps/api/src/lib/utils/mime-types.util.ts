@@ -16,7 +16,7 @@ const MIME_TYPES: Record<string, string> = {
   ".webm": "video/webm",
   ".flv": "video/x-flv",
   ".ogv": "video/ogg",
-  
+
   // Audio types
   ".mp3": "audio/mpeg",
   ".flac": "audio/flac",
@@ -26,7 +26,7 @@ const MIME_TYPES: Record<string, string> = {
   ".aac": "audio/aac",
   ".wma": "audio/x-ms-wma",
   ".opus": "audio/opus",
-  
+
   // Image types
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
@@ -35,7 +35,7 @@ const MIME_TYPES: Record<string, string> = {
   ".webp": "image/webp",
   ".svg": "image/svg+xml",
   ".bmp": "image/bmp",
-  
+
   // Document types
   ".pdf": "application/pdf",
   ".epub": "application/epub+zip",
@@ -59,7 +59,7 @@ export function getMimeType(extension: string): string {
   const normalizedExt = extension.toLowerCase().startsWith(".")
     ? extension.toLowerCase()
     : `.${extension.toLowerCase()}`;
-  
+
   return MIME_TYPES[normalizedExt] || DEFAULT_MIME_TYPE;
 }
 
@@ -73,12 +73,12 @@ export function getMimeTypeFromFilename(filename: string): string {
   if (parts.length < 2) {
     return DEFAULT_MIME_TYPE;
   }
-  
+
   const lastPart = parts[parts.length - 1];
   if (!lastPart) {
     return DEFAULT_MIME_TYPE;
   }
-  
+
   const extension = `.${lastPart.toLowerCase()}`;
   return MIME_TYPES[extension] || DEFAULT_MIME_TYPE;
 }
@@ -119,16 +119,16 @@ export function isImageFile(extension: string): boolean {
  * @returns Category: 'video', 'audio', 'image', 'document', or 'unknown'
  */
 export function getMediaCategory(
-  extension: string
+  extension: string,
 ): "video" | "audio" | "image" | "document" | "unknown" {
   const mimeType = getMimeType(extension);
-  
+
   if (!mimeType) return "unknown";
   if (mimeType.startsWith("video/")) return "video";
   if (mimeType.startsWith("audio/")) return "audio";
   if (mimeType.startsWith("image/")) return "image";
   if (mimeType.startsWith("application/")) return "document";
-  
+
   return "unknown";
 }
 
@@ -138,17 +138,16 @@ export function getMediaCategory(
  * @returns Array of extensions
  */
 export function getSupportedExtensions(
-  mediaType: "video" | "audio" | "image" | "document" | "all"
+  mediaType: "video" | "audio" | "image" | "document" | "all",
 ): string[] {
   const extensions = Object.keys(MIME_TYPES);
-  
+
   if (mediaType === "all") {
     return extensions;
   }
-  
+
   return extensions.filter((ext) => {
     const mime = MIME_TYPES[ext];
     return mime && mime.startsWith(`${mediaType}/`);
   });
 }
-

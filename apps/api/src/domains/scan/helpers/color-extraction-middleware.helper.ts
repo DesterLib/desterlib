@@ -14,7 +14,7 @@ import { extractAndDarkenMeshColors } from "./color-extraction.helper";
 export async function ensureMeshColors(
   mediaId: string,
   backdropUrl: string | null,
-  mediaTitle?: string
+  mediaTitle?: string,
 ): Promise<string[]> {
   try {
     // Check if media already has colors
@@ -31,7 +31,9 @@ export async function ensureMeshColors(
       Array.isArray(media.meshGradientColors) &&
       media.meshGradientColors.length === 4
     ) {
-      logger.debug(`[${title}] Using cached mesh colors: ${media.meshGradientColors.join(", ")}`);
+      logger.debug(
+        `[${title}] Using cached mesh colors: ${media.meshGradientColors.join(", ")}`,
+      );
       return media.meshGradientColors;
     }
 
@@ -50,12 +52,14 @@ export async function ensureMeshColors(
       data: { meshGradientColors: colors },
     });
 
-    logger.info(`[${title}] ✓ Colors extracted and cached: ${colors.join(", ")}`);
+    logger.info(
+      `[${title}] ✓ Colors extracted and cached: ${colors.join(", ")}`,
+    );
     return colors;
   } catch (error) {
     const title = mediaTitle || mediaId;
     logger.warn(
-      `[${title}] Failed to extract/cache colors: ${error instanceof Error ? error.message : error}`
+      `[${title}] Failed to extract/cache colors: ${error instanceof Error ? error.message : error}`,
     );
     return [];
   }
@@ -65,11 +69,16 @@ export async function ensureMeshColors(
  * Enrich media object with mesh gradient colors
  * Returns immediately - extracts colors in background if needed
  */
-export async function enrichMediaWithColors<T extends { id: string; title?: string; backdropUrl: string | null; meshGradientColors?: string[] | null }>(
-  media: T
-): Promise<T> {
+export async function enrichMediaWithColors<
+  T extends {
+    id: string;
+    title?: string;
+    backdropUrl: string | null;
+    meshGradientColors?: string[] | null;
+  },
+>(media: T): Promise<T> {
   const title = media.title || media.id;
-  
+
   // If colors already exist, return them
   if (
     media.meshGradientColors &&
@@ -83,17 +92,19 @@ export async function enrichMediaWithColors<T extends { id: string; title?: stri
   // No colors yet - trigger background extraction but don't wait for it
   if (media.backdropUrl) {
     logger.info(`[${title}] 🎨 Triggering background color extraction...`);
-    
+
     // Extract in background - don't await!
     ensureMeshColors(media.id, media.backdropUrl, media.title)
       .then((colors) => {
-        logger.info(`[${title}] ✓ Background extraction complete: ${colors.join(", ")}`);
+        logger.info(
+          `[${title}] ✓ Background extraction complete: ${colors.join(", ")}`,
+        );
       })
       .catch((err) => {
         logger.warn(`[${title}] Background extraction failed: ${err.message}`);
       });
   }
-  
+
   // Return immediately without colors (will be available on next request)
   return media;
 }
@@ -102,19 +113,27 @@ export async function enrichMediaWithColors<T extends { id: string; title?: stri
  * Enrich an array of media objects with mesh gradient colors
  * Returns immediately - triggers background extraction for items without colors
  */
-export async function enrichMediaArrayWithColors<T extends { id: string; title?: string; backdropUrl: string | null; meshGradientColors?: string[] | null }>(
-  mediaArray: T[]
-): Promise<T[]> {
-  const withColors = mediaArray.filter((m) => m.meshGradientColors?.length === 4).length;
+export async function enrichMediaArrayWithColors<
+  T extends {
+    id: string;
+    title?: string;
+    backdropUrl: string | null;
+    meshGradientColors?: string[] | null;
+  },
+>(mediaArray: T[]): Promise<T[]> {
+  const withColors = mediaArray.filter(
+    (m) => m.meshGradientColors?.length === 4,
+  ).length;
   const withoutColors = mediaArray.length - withColors;
-  
-  logger.info(`📊 Media colors: ${withColors} cached, ${withoutColors} to extract in background`);
-  
+
+  logger.info(
+    `📊 Media colors: ${withColors} cached, ${withoutColors} to extract in background`,
+  );
+
   // Process all media (returns immediately, extracts in background)
   const enrichedMedia = await Promise.all(
-    mediaArray.map((media) => enrichMediaWithColors(media))
+    mediaArray.map((media) => enrichMediaWithColors(media)),
   );
-  
+
   return enrichedMedia;
 }
-

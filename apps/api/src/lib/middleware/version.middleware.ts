@@ -7,7 +7,7 @@ import { logger } from "../utils";
 function getApiVersion(): string {
   try {
     const packageJson = JSON.parse(
-      readFileSync(join(__dirname, "../../../package.json"), "utf-8")
+      readFileSync(join(__dirname, "../../../package.json"), "utf-8"),
     );
     return packageJson.version;
   } catch (error) {
@@ -16,7 +16,9 @@ function getApiVersion(): string {
 }
 
 // Parse semantic version string to compare
-function parseVersion(version: string): { major: number; minor: number; patch: number } | null {
+function parseVersion(
+  version: string,
+): { major: number; minor: number; patch: number } | null {
   const match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
   if (!match || !match[1] || !match[2] || !match[3]) return null;
   return {
@@ -27,18 +29,21 @@ function parseVersion(version: string): { major: number; minor: number; patch: n
 }
 
 // Check if client version is compatible with API version
-function isVersionCompatible(clientVersion: string, apiVersion: string): boolean {
+function isVersionCompatible(
+  clientVersion: string,
+  apiVersion: string,
+): boolean {
   const client = parseVersion(clientVersion);
   const api = parseVersion(apiVersion);
-  
+
   if (!client || !api) return false;
-  
+
   // Major version must match
   if (client.major !== api.major) return false;
-  
+
   // Minor version must match (we enforce strict minor version matching)
   if (client.minor !== api.minor) return false;
-  
+
   // Patch version can differ (backwards compatible)
   return true;
 }
@@ -47,7 +52,11 @@ function isVersionCompatible(clientVersion: string, apiVersion: string): boolean
  * Middleware to validate client version compatibility
  * Expects a 'X-Client-Version' header from the client
  */
-export function validateVersion(req: Request, res: Response, next: NextFunction): void {
+export function validateVersion(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   const clientVersion = req.headers["x-client-version"] as string;
   const apiVersion = getApiVersion();
 
@@ -61,7 +70,7 @@ export function validateVersion(req: Request, res: Response, next: NextFunction)
   // Check version compatibility
   if (!isVersionCompatible(clientVersion, apiVersion)) {
     logger.warn(
-      `Version mismatch: Client version ${clientVersion} is not compatible with API version ${apiVersion}`
+      `Version mismatch: Client version ${clientVersion} is not compatible with API version ${apiVersion}`,
     );
     res.status(426).json({
       success: false,
@@ -82,9 +91,12 @@ export function validateVersion(req: Request, res: Response, next: NextFunction)
 /**
  * Add API version to response headers
  */
-export function addVersionHeader(req: Request, res: Response, next: NextFunction): void {
+export function addVersionHeader(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   const apiVersion = getApiVersion();
   res.setHeader("X-API-Version", apiVersion);
   next();
 }
-

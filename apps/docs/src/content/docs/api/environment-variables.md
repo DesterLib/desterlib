@@ -18,6 +18,7 @@ DATABASE_URL=postgresql://username:password@host:port/database?schema=public
 **Format:** `postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public`
 
 **Examples:**
+
 ```env
 # Docker Compose (default)
 DATABASE_URL=postgresql://desterlib:password@postgres:5432/desterlib?schema=public
@@ -42,12 +43,14 @@ NODE_ENV=production
 ```
 
 **Values:**
+
 - `production` - Production mode (default)
 - `development` - Development mode with debug logging
 
 **Default:** `development`
 
 **Effects:**
+
 - Logging verbosity
 - Error message details
 - CORS policy (more permissive in dev)
@@ -134,15 +137,19 @@ POSTGRES_DB: desterlib
 These variables are **NOT** read by the DesterLib API:
 
 ### ❌ FRONTEND_URL
+
 Not used. CORS is configured automatically for local network access.
 
 ### ❌ JWT_SECRET
+
 Stored in database settings, not environment variables.
 
 ### ❌ TMDB_API_KEY
+
 Configured via Settings API in the application, not environment variables.
 
 ### ❌ POSTGRES_HOST / POSTGRES_PORT
+
 The API only uses `DATABASE_URL`. Individual postgres connection vars are not read.
 
 ## Configuration Methods
@@ -152,16 +159,19 @@ The API only uses `DATABASE_URL`. Individual postgres connection vars are not re
 Create `.env` in the API directory:
 
 **CLI installation:**
+
 ```bash
 nano ~/.desterlib/.env
 ```
 
 **Git installation:**
+
 ```bash
 nano apps/api/.env
 ```
 
 **Example .env:**
+
 ```env
 DATABASE_URL=postgresql://desterlib:password@postgres:5432/desterlib?schema=public
 NODE_ENV=production
@@ -239,6 +249,7 @@ docker-compose logs api | head -20
 ```
 
 You should see:
+
 ```
 🚀 Server running on port 3001
 🔧 Environment: production
@@ -261,6 +272,7 @@ Should return `{"status":"OK",...}`
 **Error:** `Error: P1001: Can't reach database server`
 
 **Fixes:**
+
 1. Check `DATABASE_URL` format
 2. Verify database is running: `docker ps | grep postgres`
 3. Test connection:
@@ -273,6 +285,7 @@ Should return `{"status":"OK",...}`
 **Error:** `EADDRINUSE: address already in use :::3001`
 
 **Fixes:**
+
 1. Change `PORT` to different number (e.g., `3002`)
 2. Or kill process using port 3001:
    ```bash
@@ -304,6 +317,7 @@ Then restart: `docker-compose restart api`
 ### Database Security
 
 **Generate secure password:**
+
 ```bash
 openssl rand -base64 32
 ```
@@ -316,4 +330,3 @@ Use this for `POSTGRES_PASSWORD` in your database connection.
 - [API Overview](/api/overview/) - API server documentation
 - [Managing Server](/guides/managing-server/) - Server management
 - [CLI Tool](/cli/overview/) - CLI documentation
-

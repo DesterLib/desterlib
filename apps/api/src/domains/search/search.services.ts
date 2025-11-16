@@ -7,10 +7,10 @@ export const searchServices = {
   searchMedia: async (query: string) => {
     // Total limit across all media types
     const TOTAL_LIMIT = 10;
-    
+
     // Fetch more than needed to ensure we get a good mix
     const FETCH_LIMIT = 20;
-    
+
     // Search the Media table directly by title and filter by type
     const [movies, tvShows] = await Promise.all([
       // Search for movies
@@ -92,19 +92,23 @@ export const searchServices = {
     // Interleave movies and TV shows, then limit to TOTAL_LIMIT
     const combined = [];
     const maxLength = Math.max(formattedMovies.length, formattedTvShows.length);
-    
+
     for (let i = 0; i < maxLength && combined.length < TOTAL_LIMIT; i++) {
       if (i < formattedMovies.length && combined.length < TOTAL_LIMIT) {
-        combined.push({ type: 'movie', data: formattedMovies[i] });
+        combined.push({ type: "movie", data: formattedMovies[i] });
       }
       if (i < formattedTvShows.length && combined.length < TOTAL_LIMIT) {
-        combined.push({ type: 'tvShow', data: formattedTvShows[i] });
+        combined.push({ type: "tvShow", data: formattedTvShows[i] });
       }
     }
 
     // Separate back into movies and TV shows
-    const finalMovies = combined.filter(item => item.type === 'movie').map(item => item.data);
-    const finalTvShows = combined.filter(item => item.type === 'tvShow').map(item => item.data);
+    const finalMovies = combined
+      .filter((item) => item.type === "movie")
+      .map((item) => item.data);
+    const finalTvShows = combined
+      .filter((item) => item.type === "tvShow")
+      .map((item) => item.data);
 
     return {
       movies: finalMovies,
@@ -112,4 +116,3 @@ export const searchServices = {
     };
   },
 };
-

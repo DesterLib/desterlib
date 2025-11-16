@@ -1,12 +1,12 @@
 /**
  * Standardized API Response Handlers
- * 
+ *
  * This module provides utilities for consistent API response formatting
  * and centralized error handling across all controllers.
  */
 
 import { Response, Request, NextFunction } from "express";
-import  logger from "./logger";
+import logger from "./logger";
 
 // ==================== Response Interfaces ====================
 
@@ -49,7 +49,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public statusCode: number = 500,
-    public errorType: string = "Internal server error"
+    public errorType: string = "Internal server error",
   ) {
     super(message);
     this.name = "ApiError";
@@ -79,7 +79,7 @@ export class ValidationError extends ApiError {
       field: string;
       message: string;
       received?: unknown;
-    }>
+    }>,
   ) {
     super(message, 400, "Validation failed");
   }
@@ -125,7 +125,7 @@ export class UnprocessableEntityError extends ApiError {
 
 /**
  * Send a standardized success response
- * 
+ *
  * @param res - Express response object
  * @param data - Response data
  * @param statusCode - HTTP status code (default: 200)
@@ -137,7 +137,7 @@ export function sendSuccess<T>(
   data: T,
   statusCode: number = 200,
   message?: string,
-  meta?: SuccessResponse["meta"]
+  meta?: SuccessResponse["meta"],
 ): Response {
   const response: SuccessResponse<T> = {
     success: true,
@@ -157,7 +157,7 @@ export function sendSuccess<T>(
 
 /**
  * Send a standardized error response
- * 
+ *
  * @param res - Express response object
  * @param error - Error object or string
  * @param statusCode - HTTP status code (default: 500)
@@ -169,7 +169,7 @@ export function sendError(
   error: Error | string,
   statusCode: number = 500,
   errorType: string = "Internal server error",
-  details?: ErrorResponse["details"]
+  details?: ErrorResponse["details"],
 ): Response {
   const message = typeof error === "string" ? error : error.message;
 
@@ -195,7 +195,7 @@ export function sendError(
 
 /**
  * Wrapper for async route handlers to catch errors and pass to error middleware
- * 
+ *
  * Usage:
  * ```typescript
  * router.get('/path', asyncHandler(async (req, res) => {
@@ -205,7 +205,7 @@ export function sendError(
  * ```
  */
 export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>,
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -216,7 +216,7 @@ export function asyncHandler(
 
 /**
  * Centralized error handling for controllers
- * 
+ *
  * @param error - Error object
  * @param res - Express response object
  * @param context - Context string for logging (e.g., "Get movies controller")
@@ -225,7 +225,7 @@ export function asyncHandler(
 export function handleControllerError(
   error: unknown,
   res: Response,
-  context: string
+  context: string,
 ): Response {
   // Handle custom API errors
   if (error instanceof ApiError) {
@@ -240,7 +240,7 @@ export function handleControllerError(
         error.message,
         error.statusCode,
         error.errorType,
-        error.details
+        error.details,
       );
     }
 
@@ -262,7 +262,7 @@ export function handleControllerError(
 
 /**
  * Extract pagination parameters from request query
- * 
+ *
  * @param req - Express request object
  * @param defaultLimit - Default page size (default: 20)
  * @param maxLimit - Maximum page size (default: 100)
@@ -271,7 +271,7 @@ export function handleControllerError(
 export function getPaginationParams(
   req: Request,
   defaultLimit: number = 20,
-  maxLimit: number = 100
+  maxLimit: number = 100,
 ): {
   page: number;
   limit: number;
@@ -280,7 +280,7 @@ export function getPaginationParams(
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const limit = Math.min(
     maxLimit,
-    Math.max(1, parseInt(req.query.limit as string) || defaultLimit)
+    Math.max(1, parseInt(req.query.limit as string) || defaultLimit),
   );
   const skip = (page - 1) * limit;
 
@@ -289,7 +289,7 @@ export function getPaginationParams(
 
 /**
  * Create pagination metadata
- * 
+ *
  * @param page - Current page number
  * @param limit - Items per page
  * @param total - Total number of items
@@ -298,7 +298,7 @@ export function getPaginationParams(
 export function createPaginationMeta(
   page: number,
   limit: number,
-  total: number
+  total: number,
 ): {
   page: number;
   limit: number;
@@ -318,4 +318,3 @@ export function createPaginationMeta(
     hasPrev: page > 1,
   };
 }
-

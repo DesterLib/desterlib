@@ -15,7 +15,7 @@ export const tmdbServices = {
       lang?: string;
       abortSignal?: AbortSignal;
       extraParams?: Record<string, string | number | boolean>;
-    }
+    },
   ) => {
     try {
       const response = await axios.get(
@@ -28,7 +28,7 @@ export const tmdbServices = {
             ...extraParams,
           },
           timeout: 8000,
-        }
+        },
       );
       return response.data;
     } catch (error) {
@@ -37,7 +37,7 @@ export const tmdbServices = {
         throw new Error(
           `TMDB ${type} ${id} failed (${error.response.status}): ${
             error.response.data?.status_message || "Unknown error"
-          }`
+          }`,
         );
       }
       throw error;
@@ -53,7 +53,7 @@ export const tmdbServices = {
     }: {
       apiKey: string;
       lang?: string;
-    }
+    },
   ) => {
     try {
       const response = await axios.get(
@@ -64,7 +64,7 @@ export const tmdbServices = {
             language: lang,
           },
           timeout: 8000,
-        }
+        },
       );
       return response.data;
     } catch (error) {
@@ -73,7 +73,7 @@ export const tmdbServices = {
         throw new Error(
           `TMDB episode fetch failed (${error.response.status}): ${
             error.response.data?.status_message || "Unknown error"
-          }`
+          }`,
         );
       }
       throw error;
@@ -88,7 +88,7 @@ export const tmdbServices = {
     }: {
       apiKey: string;
       lang?: string;
-    }
+    },
   ) => {
     try {
       const response = await axios.get(
@@ -99,7 +99,7 @@ export const tmdbServices = {
             language: lang,
           },
           timeout: 8000,
-        }
+        },
       );
       return response.data;
     } catch (error) {
@@ -108,7 +108,7 @@ export const tmdbServices = {
         throw new Error(
           `TMDB season fetch failed (${error.response.status}): ${
             error.response.data?.status_message || "Unknown error"
-          }`
+          }`,
         );
       }
       throw error;
@@ -125,7 +125,7 @@ export const tmdbServices = {
       apiKey: string;
       year?: string;
       lang?: string;
-    }
+    },
   ) => {
     try {
       const params: Record<string, string> = {
@@ -142,7 +142,7 @@ export const tmdbServices = {
         {
           params,
           timeout: 8000,
-        }
+        },
       );
 
       const results = response.data.results || [];
@@ -153,7 +153,7 @@ export const tmdbServices = {
         throw new Error(
           `TMDB search failed (${error.response.status}): ${
             error.response.data?.status_message || "Unknown error"
-          }`
+          }`,
         );
       }
       throw error;

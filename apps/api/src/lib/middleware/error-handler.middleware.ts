@@ -5,7 +5,7 @@ import { logger, ApiError, ValidationError } from "../utils";
 // 404 handler
 export const notFoundHandler = (
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) => {
   res.status(404).json({
     success: false,
@@ -19,7 +19,7 @@ export const errorHandler = (
   error: Error,
   req: express.Request,
   res: express.Response,
-  _next: express.NextFunction // eslint-disable-line @typescript-eslint/no-unused-vars
+  _next: express.NextFunction, // eslint-disable-line @typescript-eslint/no-unused-vars
 ) => {
   // Handle custom API errors
   if (error instanceof ApiError) {

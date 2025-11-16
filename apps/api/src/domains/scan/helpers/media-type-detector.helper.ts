@@ -9,10 +9,10 @@ import { logger } from "@/lib/utils";
 
 interface MediaTypeHints {
   hasSeasonFolders: number; // Count of folders with "Season" pattern
-  hasEpisodeFiles: number;  // Count of files with S##E## pattern
-  hasMovieFiles: number;     // Count of files with year pattern (2020)
-  avgDepth: number;          // Average nesting depth
-  sampleFiles: string[];     // Sample filenames for logging
+  hasEpisodeFiles: number; // Count of files with S##E## pattern
+  hasMovieFiles: number; // Count of files with year pattern (2020)
+  avgDepth: number; // Average nesting depth
+  sampleFiles: string[]; // Sample filenames for logging
 }
 
 /**
@@ -20,7 +20,7 @@ interface MediaTypeHints {
  */
 export function analyzeDirectoryStructure(
   rootPath: string,
-  maxSamples: number = 20
+  maxSamples: number = 20,
 ): MediaTypeHints {
   const hints: MediaTypeHints = {
     hasSeasonFolders: 0,
@@ -38,7 +38,7 @@ export function analyzeDirectoryStructure(
   function scan(currentPath: string, depth: number = 0): void {
     // Limit depth to prevent long scans
     if (depth > 4) return;
-    
+
     // Limit total samples
     if (hints.sampleFiles.length >= maxSamples) return;
 
@@ -59,7 +59,7 @@ export function analyzeDirectoryStructure(
         } else {
           // Check file patterns
           const filename = entry.name.toLowerCase();
-          
+
           // Video extensions only
           if (!/\.(mkv|mp4|avi|mov)$/i.test(filename)) continue;
 
@@ -95,28 +95,28 @@ export function analyzeDirectoryStructure(
  */
 export function detectMediaTypeMismatch(
   rootPath: string,
-  specifiedType: "movie" | "tv"
+  specifiedType: "movie" | "tv",
 ): { mismatch: boolean; warning?: string; confidence: number } {
   logger.info(`🔍 Analyzing directory structure for media type validation...`);
-  
+
   const hints = analyzeDirectoryStructure(rootPath);
-  
+
   logger.info(`   Season folders: ${hints.hasSeasonFolders}`);
   logger.info(`   Episode-pattern files: ${hints.hasEpisodeFiles}`);
   logger.info(`   Movie-pattern files: ${hints.hasMovieFiles}`);
   logger.info(`   Average depth: ${hints.avgDepth.toFixed(1)}`);
-  
+
   if (hints.sampleFiles.length > 0) {
     logger.info(`   Sample files: ${hints.sampleFiles.slice(0, 3).join(", ")}`);
   }
 
   // Calculate confidence scores (0-100)
-  const tvScore = 
+  const tvScore =
     (hints.hasSeasonFolders > 0 ? 40 : 0) +
     (hints.hasEpisodeFiles > 5 ? 30 : hints.hasEpisodeFiles * 6) +
     (hints.avgDepth >= 3 ? 30 : 0);
-  
-  const movieScore = 
+
+  const movieScore =
     (hints.hasMovieFiles > 5 ? 40 : hints.hasMovieFiles * 8) +
     (hints.avgDepth <= 2 ? 30 : 0) +
     (hints.hasSeasonFolders === 0 ? 30 : 0);
@@ -127,9 +127,10 @@ export function detectMediaTypeMismatch(
     if (movieScore > tvScore + 20) {
       return {
         mismatch: true,
-        warning: `⚠️  WARNING: You specified "TV Shows" but this directory looks like MOVIES!\n` +
-                `   Detected: ${hints.hasMovieFiles} movie-pattern files, avg depth ${hints.avgDepth.toFixed(1)}, ${hints.hasSeasonFolders} season folders\n` +
-                `   This may result in incorrect metadata matching. Consider scanning as "movie" type instead.`,
+        warning:
+          `⚠️  WARNING: You specified "TV Shows" but this directory looks like MOVIES!\n` +
+          `   Detected: ${hints.hasMovieFiles} movie-pattern files, avg depth ${hints.avgDepth.toFixed(1)}, ${hints.hasSeasonFolders} season folders\n` +
+          `   This may result in incorrect metadata matching. Consider scanning as "movie" type instead.`,
         confidence: movieScore,
       };
     }
@@ -138,9 +139,10 @@ export function detectMediaTypeMismatch(
     if (tvScore > movieScore + 20) {
       return {
         mismatch: true,
-        warning: `⚠️  WARNING: You specified "Movies" but this directory looks like TV SHOWS!\n` +
-                `   Detected: ${hints.hasSeasonFolders} season folders, ${hints.hasEpisodeFiles} episode files, avg depth ${hints.avgDepth.toFixed(1)}\n` +
-                `   This may result in incorrect metadata matching. Consider scanning as "tv" type instead.`,
+        warning:
+          `⚠️  WARNING: You specified "Movies" but this directory looks like TV SHOWS!\n` +
+          `   Detected: ${hints.hasSeasonFolders} season folders, ${hints.hasEpisodeFiles} episode files, avg depth ${hints.avgDepth.toFixed(1)}\n` +
+          `   This may result in incorrect metadata matching. Consider scanning as "tv" type instead.`,
         confidence: tvScore,
       };
     }
@@ -151,4 +153,3 @@ export function detectMediaTypeMismatch(
     confidence: specifiedType === "tv" ? tvScore : movieScore,
   };
 }
-

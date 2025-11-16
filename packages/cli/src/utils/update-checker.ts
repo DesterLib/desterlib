@@ -39,7 +39,7 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
         headers: {
           Accept: "application/vnd.npm.install-v1+json",
         },
-      }
+      },
     );
 
     if (response.ok) {
@@ -70,42 +70,42 @@ export function displayUpdateNotification(updateInfo: UpdateInfo): void {
 
   console.log(
     chalk.yellow(
-      "\n┌─────────────────────────────────────────────────────────┐"
-    )
+      "\n┌─────────────────────────────────────────────────────────┐",
+    ),
   );
   console.log(
     chalk.yellow("│") +
       chalk.bold("  ⚠️  Update Available!") +
       " ".repeat(35) +
-      chalk.yellow("│")
+      chalk.yellow("│"),
   );
   console.log(
-    chalk.yellow("├─────────────────────────────────────────────────────────┤")
+    chalk.yellow("├─────────────────────────────────────────────────────────┤"),
   );
   console.log(
     chalk.yellow("│") +
       `  Current version: ${chalk.gray(updateInfo.currentVersion)}` +
       " ".repeat(25 - updateInfo.currentVersion.length) +
-      chalk.yellow("│")
+      chalk.yellow("│"),
   );
   console.log(
     chalk.yellow("│") +
       `  Latest version:  ${chalk.green(updateInfo.latestVersion)}` +
       " ".repeat(25 - updateInfo.latestVersion.length) +
-      chalk.yellow("│")
+      chalk.yellow("│"),
   );
   console.log(
-    chalk.yellow("├─────────────────────────────────────────────────────────┤")
+    chalk.yellow("├─────────────────────────────────────────────────────────┤"),
   );
   console.log(
     chalk.yellow("│") +
       `  Run: ${chalk.cyan("npm install -g @desterlib/cli@latest")}` +
       " ".repeat(12) +
-      chalk.yellow("│")
+      chalk.yellow("│"),
   );
   console.log(
     chalk.yellow(
-      "└─────────────────────────────────────────────────────────┘\n"
-    )
+      "└─────────────────────────────────────────────────────────┘\n",
+    ),
   );
 }

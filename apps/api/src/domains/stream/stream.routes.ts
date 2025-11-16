@@ -132,7 +132,7 @@ const router: Router = express.Router();
 router.get(
   "/:id",
   validateParams(streamMediaSchema),
-  streamControllers.streamMedia
+  streamControllers.streamMedia,
 );
 
 export default router;

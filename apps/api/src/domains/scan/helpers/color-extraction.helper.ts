@@ -42,32 +42,34 @@ export async function extractMeshColors(imageUrl: string): Promise<string[]> {
     // Prefer muted/dark tones for better background aesthetics
     // In v4, swatch has direct 'hex' property
     const color1 = (palette.DarkMuted?.hex ||
-        palette.Muted?.hex ||
-        palette.Vibrant?.hex ||
-        DEFAULT_MESH_COLORS[0]) as string;
-    
+      palette.Muted?.hex ||
+      palette.Vibrant?.hex ||
+      DEFAULT_MESH_COLORS[0]) as string;
+
     const color2 = (palette.Muted?.hex ||
-        palette.LightMuted?.hex ||
-        palette.LightVibrant?.hex ||
-        DEFAULT_MESH_COLORS[1]) as string;
-    
+      palette.LightMuted?.hex ||
+      palette.LightVibrant?.hex ||
+      DEFAULT_MESH_COLORS[1]) as string;
+
     const color3 = (palette.DarkVibrant?.hex ||
-        palette.Vibrant?.hex ||
-        palette.DarkMuted?.hex ||
-        DEFAULT_MESH_COLORS[2]) as string;
-    
+      palette.Vibrant?.hex ||
+      palette.DarkMuted?.hex ||
+      DEFAULT_MESH_COLORS[2]) as string;
+
     const color4 = (palette.LightMuted?.hex ||
-        palette.LightVibrant?.hex ||
-        palette.Muted?.hex ||
-        DEFAULT_MESH_COLORS[3]) as string;
+      palette.LightVibrant?.hex ||
+      palette.Muted?.hex ||
+      DEFAULT_MESH_COLORS[3]) as string;
 
     const colors: string[] = [color1, color2, color3, color4];
 
-    logger.debug(`Extracted mesh colors from ${imageUrl}: ${colors.join(", ")}`);
+    logger.debug(
+      `Extracted mesh colors from ${imageUrl}: ${colors.join(", ")}`,
+    );
     return colors;
   } catch (error) {
     logger.warn(
-      `Failed to extract colors from ${imageUrl}: ${error instanceof Error ? error.message : error}`
+      `Failed to extract colors from ${imageUrl}: ${error instanceof Error ? error.message : error}`,
     );
     return DEFAULT_MESH_COLORS;
   }
@@ -80,17 +82,17 @@ export function darkenColor(hex: string, amount: number = 0.3): string {
   try {
     // Remove # if present
     const cleanHex = hex.replace("#", "");
-    
+
     // Parse RGB
     const r = parseInt(cleanHex.substring(0, 2), 16);
     const g = parseInt(cleanHex.substring(2, 4), 16);
     const b = parseInt(cleanHex.substring(4, 6), 16);
-    
+
     // Darken
     const newR = Math.floor(r * (1 - amount));
     const newG = Math.floor(g * (1 - amount));
     const newB = Math.floor(b * (1 - amount));
-    
+
     // Convert back to hex
     const toHex = (n: number) => n.toString(16).padStart(2, "0");
     return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
@@ -104,9 +106,8 @@ export function darkenColor(hex: string, amount: number = 0.3): string {
  */
 export async function extractAndDarkenMeshColors(
   imageUrl: string,
-  darkenAmount: number = 0.3
+  darkenAmount: number = 0.3,
 ): Promise<string[]> {
   const colors = await extractMeshColors(imageUrl);
   return colors.map((color) => darkenColor(color, darkenAmount));
 }
-

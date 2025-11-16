@@ -11,7 +11,7 @@ import { normalizeGenres } from "../../lib/utils/genre-mapping.util";
  */
 export async function assignGenresToMedia(
   mediaId: string,
-  providerGenres: Array<{ id: number | string; name: string }>
+  providerGenres: Array<{ id: number | string; name: string }>,
 ): Promise<{ linked: number; duplicatesAvoided: number }> {
   if (!providerGenres || providerGenres.length === 0) {
     return { linked: 0, duplicatesAvoided: 0 };

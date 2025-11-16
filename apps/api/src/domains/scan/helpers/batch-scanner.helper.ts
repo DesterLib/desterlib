@@ -28,11 +28,13 @@ import type { TmdbSeasonMetadata } from "@/lib/providers/tmdb/tmdb.types";
  */
 export async function discoverFoldersToScan(
   rootPath: string,
-  mediaType: "movie" | "tv"
+  mediaType: "movie" | "tv",
 ): Promise<string[]> {
   return withTimeoutAndRetry(
     async () => {
-      logger.info(`🔍 Listing directory: ${rootPath} (this may take a while on slow mounts)...`);
+      logger.info(
+        `🔍 Listing directory: ${rootPath} (this may take a while on slow mounts)...`,
+      );
       const entries = await readdir(rootPath, { withFileTypes: true });
       const folders: string[] = [];
 
@@ -48,7 +50,7 @@ export async function discoverFoldersToScan(
       }
 
       logger.info(
-        `📂 Discovered ${folders.length} ${mediaType === "tv" ? "show" : "movie"} folders to scan`
+        `📂 Discovered ${folders.length} ${mediaType === "tv" ? "show" : "movie"} folders to scan`,
       );
       return folders;
     },
@@ -56,7 +58,7 @@ export async function discoverFoldersToScan(
       timeoutMs: 600000, // 10 minutes timeout for very slow FTP mounts (initial folder discovery can be slow)
       maxRetries: 2, // Only retry twice (each retry could take 10 min)
       operationName: `Discover folders in ${rootPath}`,
-    }
+    },
   );
 }
 
@@ -67,11 +69,11 @@ export async function createScanJob(
   libraryId: string,
   scanPath: string,
   mediaType: MediaType,
-  folders: string[]
+  folders: string[],
 ): Promise<string> {
   // Determine batch size based on media type
   const batchSize = mediaType === MediaType.TV_SHOW ? 5 : 25;
-  
+
   // Calculate total number of batches
   const totalBatches = Math.ceil(folders.length / batchSize);
 
@@ -91,7 +93,7 @@ export async function createScanJob(
   });
 
   logger.info(
-    `📝 Created scan job ${scanJob.id} for ${folders.length} folders (${totalBatches} batches of ${batchSize})`
+    `📝 Created scan job ${scanJob.id} for ${folders.length} folders (${totalBatches} batches of ${batchSize})`,
   );
   return scanJob.id;
 }
@@ -99,7 +101,9 @@ export async function createScanJob(
 /**
  * Get the next batch of folders to process
  */
-export async function getNextBatch(scanJobId: string): Promise<string[] | null> {
+export async function getNextBatch(
+  scanJobId: string,
+): Promise<string[] | null> {
   const scanJob = await prisma.scanJob.findUnique({
     where: { id: scanJobId },
   });
@@ -129,7 +133,7 @@ export async function markBatchProcessed(
   scanJobId: string,
   processedFolderNames: string[],
   failedFolderNames: string[] = [],
-  itemsSaved: number = 0
+  itemsSaved: number = 0,
 ): Promise<void> {
   const scanJob = await prisma.scanJob.findUnique({
     where: { id: scanJobId },
@@ -145,7 +149,7 @@ export async function markBatchProcessed(
 
   // Remove processed folders from pending
   const newPendingFolders = pendingFolders.filter(
-    (f) => !processedFolderNames.includes(f) && !failedFolderNames.includes(f)
+    (f) => !processedFolderNames.includes(f) && !failedFolderNames.includes(f),
   );
 
   // Add to processed/failed lists
@@ -154,7 +158,7 @@ export async function markBatchProcessed(
 
   const totalProcessed = processedFolders.length + failedFolders.length;
   const isComplete = newPendingFolders.length === 0;
-  
+
   // Increment current batch number
   const newCurrentBatch = scanJob.currentBatch + 1;
 
@@ -177,7 +181,7 @@ export async function markBatchProcessed(
   });
 
   logger.info(
-    `✅ Batch ${newCurrentBatch}/${scanJob.totalBatches} processed: ${processedFolderNames.length} success, ${failedFolderNames.length} failed (${totalProcessed}/${scanJob.totalFolders} folders, ${newTotalItemsSaved} items saved)`
+    `✅ Batch ${newCurrentBatch}/${scanJob.totalBatches} processed: ${processedFolderNames.length} success, ${failedFolderNames.length} failed (${totalProcessed}/${scanJob.totalFolders} folders, ${newTotalItemsSaved} items saved)`,
   );
 }
 
@@ -196,7 +200,7 @@ export async function processFolderBatch(
     fileExtensions: string[];
     rescan?: boolean;
     originalPath?: string;
-  }
+  },
 ): Promise<{
   processedFolders: string[];
   failedFolders: string[];
@@ -225,20 +229,23 @@ export async function processFolderBatch(
   const scanJob = await prisma.scanJob.findUnique({
     where: { id: scanJobId },
   });
-  
+
   const totalFolders = scanJob?.totalFolders || folderNames.length;
-  const currentOffset = scanJob ? (scanJob.processedCount + scanJob.failedCount) : 0;
+  const currentOffset = scanJob
+    ? scanJob.processedCount + scanJob.failedCount
+    : 0;
 
   for (const folderName of folderNames) {
     const folderPath = join(rootPath, folderName);
 
     try {
       logger.info(`\n📁 Processing: ${folderName}`);
-      
+
       // Calculate overall progress (not just batch progress)
-      const overallCurrent = currentOffset + processedFolders.length + failedFolders.length;
+      const overallCurrent =
+        currentOffset + processedFolders.length + failedFolders.length;
       const overallProgress = Math.floor((overallCurrent / totalFolders) * 100);
-      
+
       wsManager.sendScanProgress({
         phase: "scanning",
         progress: overallProgress,
@@ -261,7 +268,7 @@ export async function processFolderBatch(
           timeoutMs: 300000, // 5 minutes timeout per folder for very slow mounts
           maxRetries: 2, // Retry twice if it fails
           operationName: `Scan folder: ${folderName}`,
-        }
+        },
       );
 
       if (mediaEntries.length === 0) {
@@ -279,14 +286,19 @@ export async function processFolderBatch(
           .filter((e) => e.extractedIds.tmdbId)
           .map((e) => e.extractedIds.tmdbId!);
 
-        existingMetadataMap = await fetchExistingMetadata(tmdbIdsToCheck, libraryId);
+        existingMetadataMap = await fetchExistingMetadata(
+          tmdbIdsToCheck,
+          libraryId,
+        );
         existingMetadataMap.forEach((metadata, tmdbId) => {
           metadataCache.set(tmdbId, metadata);
         });
       }
 
       // Step 3: Fetch metadata from TMDB
-      const metadataProgress = Math.floor(((currentOffset + processedFolders.length) / totalFolders) * 100);
+      const metadataProgress = Math.floor(
+        ((currentOffset + processedFolders.length) / totalFolders) * 100,
+      );
       wsManager.sendScanProgress({
         phase: "fetching-metadata",
         progress: metadataProgress,
@@ -317,7 +329,9 @@ export async function processFolderBatch(
       }
 
       // Step 5: Save to database
-      const savingProgress = Math.floor(((currentOffset + processedFolders.length) / totalFolders) * 100);
+      const savingProgress = Math.floor(
+        ((currentOffset + processedFolders.length) / totalFolders) * 100,
+      );
       wsManager.sendScanProgress({
         phase: "saving",
         progress: savingProgress,
@@ -338,12 +352,12 @@ export async function processFolderBatch(
               tmdbApiKey,
               episodeMetadataCache,
               libraryId,
-              originalPath
+              originalPath,
             );
             savedCount++;
           } catch (error) {
             logger.error(
-              `Failed to save ${mediaEntry.name}: ${error instanceof Error ? error.message : error}`
+              `Failed to save ${mediaEntry.name}: ${error instanceof Error ? error.message : error}`,
             );
           }
         }
@@ -352,12 +366,16 @@ export async function processFolderBatch(
       totalSaved += savedCount;
       processedFolders.push(folderName);
 
-      logger.info(`✅ ${folderName}: Saved ${savedCount}/${mediaEntries.length} items`);
+      logger.info(
+        `✅ ${folderName}: Saved ${savedCount}/${mediaEntries.length} items`,
+      );
 
       // Send batch item completion
       const completionCurrent = currentOffset + processedFolders.length;
-      const completionProgress = Math.floor((completionCurrent / totalFolders) * 100);
-      
+      const completionProgress = Math.floor(
+        (completionCurrent / totalFolders) * 100,
+      );
+
       wsManager.sendScanProgress({
         phase: "batch-complete",
         progress: completionProgress,
@@ -374,7 +392,7 @@ export async function processFolderBatch(
       });
     } catch (error) {
       logger.error(
-        `❌ Failed to process ${folderName}: ${error instanceof Error ? error.message : error}`
+        `❌ Failed to process ${folderName}: ${error instanceof Error ? error.message : error}`,
       );
       failedFolders.push(folderName);
 
@@ -391,4 +409,3 @@ export async function processFolderBatch(
     totalSaved,
   };
 }
-

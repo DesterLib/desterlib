@@ -32,7 +32,7 @@ export const scanServices = {
       libraryName?: string;
       rescan?: boolean;
       originalPath?: string; // Store original path for database if different from scanning path
-    }
+    },
   ) => {
     const {
       maxDepth,
@@ -43,7 +43,7 @@ export const scanServices = {
       rescan = false,
       originalPath,
     } = options;
-    
+
     // Set reasonable default maxDepth based on media type if not provided
     // Movies: max 2 levels (/movies/Avengers.mkv or /movies/Avengers/Avengers.mkv)
     // TV Shows: max 4 levels (/tvshows/ShowName/Season 1/S1E1.mkv)
@@ -55,9 +55,10 @@ export const scanServices = {
     }
 
     // Use default extensions if none provided or if empty array
-    const finalFileExtensions = fileExtensions && fileExtensions.length > 0 
-      ? fileExtensions 
-      : getDefaultVideoExtensions();
+    const finalFileExtensions =
+      fileExtensions && fileExtensions.length > 0
+        ? fileExtensions
+        : getDefaultVideoExtensions();
 
     // Use original path for library name and database storage, but scanPath for actual scanning
     const displayPath = originalPath || rootPath;
@@ -94,8 +95,10 @@ export const scanServices = {
 
     // Phase 1: Scan directory structure
     logger.info("📁 Phase 1: Scanning directory structure...");
-    logger.info(`Looking for extensions: ${finalFileExtensions.join(', ')}`);
-    logger.info(`Max depth: ${effectiveMaxDepth} (${mediaType === "tv" ? "TV show" : "movie"} mode)`);
+    logger.info(`Looking for extensions: ${finalFileExtensions.join(", ")}`);
+    logger.info(
+      `Max depth: ${effectiveMaxDepth} (${mediaType === "tv" ? "TV show" : "movie"} mode)`,
+    );
     wsManager.sendScanProgress({
       phase: "scanning",
       progress: 0,
@@ -126,7 +129,7 @@ export const scanServices = {
     // Early exit if no media items found
     if (mediaEntries.length === 0) {
       logger.info("⚠️  No media items found. Scan complete.\n");
-      
+
       wsManager.sendScanComplete({
         libraryId: library.id,
         totalItems: 0,
@@ -147,7 +150,9 @@ export const scanServices = {
     }
 
     // Phase 2: Fetch metadata from TMDB
-    logger.info("🌐 Phase 2: Fetching metadata from TMDB (rate-limited parallel)...");
+    logger.info(
+      "🌐 Phase 2: Fetching metadata from TMDB (rate-limited parallel)...",
+    );
     wsManager.sendScanProgress({
       phase: "fetching-metadata",
       progress: 25,
@@ -165,14 +170,19 @@ export const scanServices = {
         .filter((e) => e.extractedIds.tmdbId)
         .map((e) => e.extractedIds.tmdbId!);
 
-      existingMetadataMap = await fetchExistingMetadata(tmdbIdsToCheck, library.id);
-      
+      existingMetadataMap = await fetchExistingMetadata(
+        tmdbIdsToCheck,
+        library.id,
+      );
+
       // Add existing metadata to cache
       existingMetadataMap.forEach((metadata, tmdbId) => {
         metadataCache.set(tmdbId, metadata);
       });
 
-      logger.info(`Found ${existingMetadataMap.size} items with existing metadata`);
+      logger.info(
+        `Found ${existingMetadataMap.size} items with existing metadata`,
+      );
     }
 
     // Fetch metadata for all entries
@@ -186,7 +196,7 @@ export const scanServices = {
     });
 
     logger.info(
-      `\n✓ Metadata fetching complete (${metadataStats.metadataFromCache} from cache, ${metadataStats.metadataFromTMDB} from TMDB)\n`
+      `\n✓ Metadata fetching complete (${metadataStats.metadataFromCache} from cache, ${metadataStats.metadataFromTMDB} from TMDB)\n`,
     );
 
     // Phase 3: Fetch episode metadata for TV shows
@@ -225,7 +235,7 @@ export const scanServices = {
             tmdbApiKey,
             episodeMetadataCache,
             library.id,
-            originalPath
+            originalPath,
           );
           savedCount++;
 
@@ -244,7 +254,7 @@ export const scanServices = {
           }
         } catch (error) {
           logger.error(
-            `Failed to save ${mediaEntry.name}: ${error instanceof Error ? error.message : error}`
+            `Failed to save ${mediaEntry.name}: ${error instanceof Error ? error.message : error}`,
           );
           savedCount++;
         }
@@ -287,7 +297,7 @@ export const scanServices = {
       libraryName?: string;
       rescan?: boolean;
       originalPath?: string;
-    }
+    },
   ) => {
     const {
       maxDepth,
@@ -377,7 +387,7 @@ export const scanServices = {
       library.id,
       displayPath,
       mediaType === "tv" ? MediaType.TV_SHOW : MediaType.MOVIE,
-      folders
+      folders,
     );
 
     wsManager.sendScanProgress({
@@ -403,7 +413,7 @@ export const scanServices = {
 
       batchNumber++;
       logger.info(
-        `\n📦 Processing batch ${batchNumber} (${batch.length} folders)`
+        `\n📦 Processing batch ${batchNumber} (${batch.length} folders)`,
       );
 
       const result = await processFolderBatch(scanJobId, batch, {
@@ -424,7 +434,7 @@ export const scanServices = {
         scanJobId,
         result.processedFolders,
         result.failedFolders,
-        result.totalSaved
+        result.totalSaved,
       );
 
       // Send batch completion update
@@ -436,7 +446,7 @@ export const scanServices = {
         const progressPercent = Math.floor(
           ((scanJob.processedCount + scanJob.failedCount) /
             scanJob.totalFolders) *
-            100
+            100,
         );
 
         wsManager.sendScanProgress({
@@ -500,7 +510,7 @@ export const scanServices = {
     }
 
     logger.info(
-      `🔄 Resuming scan job ${scanJobId} for library: ${scanJob.library.name}`
+      `🔄 Resuming scan job ${scanJobId} for library: ${scanJob.library.name}`,
     );
 
     // Update status to in progress
@@ -528,8 +538,9 @@ export const scanServices = {
     wsManager.sendScanProgress({
       phase: "batching",
       progress: Math.floor(
-        ((scanJob.processedCount + scanJob.failedCount) / scanJob.totalFolders) *
-          100
+        ((scanJob.processedCount + scanJob.failedCount) /
+          scanJob.totalFolders) *
+          100,
       ),
       current: scanJob.processedCount + scanJob.failedCount,
       total: scanJob.totalFolders,
@@ -547,7 +558,7 @@ export const scanServices = {
 
       batchNumber++;
       logger.info(
-        `\n📦 Processing batch ${batchNumber} (${batch.length} folders)`
+        `\n📦 Processing batch ${batchNumber} (${batch.length} folders)`,
       );
 
       const result = await processFolderBatch(scanJobId, batch, {
@@ -567,7 +578,7 @@ export const scanServices = {
         scanJobId,
         result.processedFolders,
         result.failedFolders,
-        result.totalSaved
+        result.totalSaved,
       );
 
       // Send batch completion update
@@ -579,14 +590,13 @@ export const scanServices = {
         const progressPercent = Math.floor(
           ((updatedScanJob.processedCount + updatedScanJob.failedCount) /
             updatedScanJob.totalFolders) *
-            100
+            100,
         );
 
         wsManager.sendScanProgress({
           phase: "batching",
           progress: progressPercent,
-          current:
-            updatedScanJob.processedCount + updatedScanJob.failedCount,
+          current: updatedScanJob.processedCount + updatedScanJob.failedCount,
           total: updatedScanJob.totalFolders,
           message: `Batch ${updatedScanJob.currentBatch}/${updatedScanJob.totalBatches} complete: ${result.processedFolders.length} success, ${result.failedFolders.length} failed (${updatedScanJob.processedCount + updatedScanJob.failedCount}/${updatedScanJob.totalFolders} folders)`,
           libraryId: scanJob.libraryId,

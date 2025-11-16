@@ -9,10 +9,10 @@ This guide covers common server management tasks for DesterLib.
 
 Commands vary based on how you installed DesterLib:
 
-| Installation Method | Location |
-|---------------------|----------|
-| CLI (`npx @desterlib/cli`) | `~/.desterlib` |
-| Git clone | `./desterlib` (where you cloned) |
+| Installation Method        | Location                         |
+| -------------------------- | -------------------------------- |
+| CLI (`npx @desterlib/cli`) | `~/.desterlib`                   |
+| Git clone                  | `./desterlib` (where you cloned) |
 
 :::tip
 This guide assumes **CLI installation**. If you used git clone, replace `~/.desterlib` with your repo directory.
@@ -48,6 +48,7 @@ docker-compose down
 ```
 
 This stops containers but preserves:
+
 - ✅ Database data
 - ✅ Configuration files
 - ✅ Downloaded images
@@ -73,6 +74,7 @@ docker-compose ps
 ```
 
 Expected output:
+
 ```
 NAME                  STATUS        PORTS
 desterlib-postgres    Up 5 minutes  0.0.0.0:5432->5432/tcp
@@ -82,21 +84,25 @@ desterlib-api         Up 5 minutes  0.0.0.0:3001->3001/tcp
 ### View Logs
 
 **All services:**
+
 ```bash
 docker-compose logs -f
 ```
 
 **API only:**
+
 ```bash
 docker-compose logs -f api
 ```
 
 **Database only:**
+
 ```bash
 docker-compose logs -f postgres
 ```
 
 **Last 100 lines:**
+
 ```bash
 docker-compose logs --tail=100 api
 ```
@@ -150,12 +156,14 @@ docker-compose up -d --build
 ### Edit Configuration
 
 **CLI installation:**
+
 ```bash
 cd ~/.desterlib
 nano .env  # or use your preferred editor
 ```
 
 **After editing**, restart to apply:
+
 ```bash
 docker-compose restart
 ```
@@ -192,7 +200,7 @@ cat desterlib-backup.sql | docker exec -i desterlib-postgres psql -U desterlib d
 # CLI installation
 cp -r ~/.desterlib ~/desterlib-config-backup
 
-# Git installation  
+# Git installation
 tar -czf desterlib-config.tar.gz desterlib/
 ```
 
@@ -216,7 +224,7 @@ api:
   deploy:
     resources:
       limits:
-        cpus: '2.0'
+        cpus: "2.0"
         memory: 2G
 ```
 
@@ -227,11 +235,13 @@ Then restart: `docker-compose up -d`
 ### Change Port
 
 **Edit** `.env`:
+
 ```env
 PORT=3002  # Change from 3001
 ```
 
 **Restart:**
+
 ```bash
 docker-compose down
 docker-compose up -d
@@ -246,6 +256,7 @@ http://192.168.1.100:3001
 ```
 
 Find your IP:
+
 - **macOS/Linux:** `ifconfig | grep "inet "`
 - **Windows:** `ipconfig`
 
@@ -258,6 +269,7 @@ curl http://localhost:3001/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "OK",
@@ -277,12 +289,14 @@ docker exec -it desterlib-postgres psql -U desterlib -d desterlib -c "SELECT COU
 ### Container Won't Start
 
 **Check what failed:**
+
 ```bash
 docker-compose logs api
 docker-compose logs postgres
 ```
 
 **Common issues:**
+
 - Port already in use → Change port in `.env`
 - Database connection failed → Restart postgres first
 - Permission denied → Check media path permissions
@@ -290,6 +304,7 @@ docker-compose logs postgres
 ### Database Connection Issues
 
 **Test database connection:**
+
 ```bash
 docker exec -it desterlib-postgres psql -U desterlib -d desterlib
 ```
@@ -299,11 +314,13 @@ Should open PostgreSQL prompt. Type `\q` to exit.
 ### High CPU/Memory Usage
 
 **During scan:**
+
 - This is normal - scanning is resource-intensive
 - CPU usage is high when processing metadata
 - Will return to normal after scan completes
 
 **Constantly high:**
+
 - Check logs for errors or infinite loops
 - Restart the API: `docker-compose restart api`
 
@@ -313,4 +330,3 @@ Should open PostgreSQL prompt. Type `\q` to exit.
 - [Updating Guide](/guides/updating/) - Update procedures
 - [Backup Guide](/guides/backup-restore/) - Comprehensive backup strategies
 - [Troubleshooting](/getting-started/installation/#troubleshooting) - Common issues
-

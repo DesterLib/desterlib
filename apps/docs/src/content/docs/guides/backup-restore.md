@@ -10,6 +10,7 @@ Protect your media library data with regular backups.
 ### Database (Critical)
 
 Your PostgreSQL database contains:
+
 - Media library catalog
 - Scan job history
 - Settings and preferences
@@ -20,6 +21,7 @@ Your PostgreSQL database contains:
 ### Configuration Files (Important)
 
 Your configuration includes:
+
 - `docker-compose.yml` - Service definitions
 - `.env` - Environment variables
 
@@ -28,6 +30,7 @@ Your configuration includes:
 ### Not Needed
 
 You don't need to backup:
+
 - Docker images (can be re-downloaded)
 - Source code (if using CLI)
 - Actual media files (just metadata is in database)
@@ -64,12 +67,14 @@ echo "Backup completed: $BACKUP_DIR"
 ```
 
 **Make executable and run:**
+
 ```bash
 chmod +x backup-desterlib.sh
 ./backup-desterlib.sh
 ```
 
 **Schedule with cron** (Linux/Mac):
+
 ```bash
 # Run daily at 2 AM
 crontab -e
@@ -167,7 +172,7 @@ git checkout docker-compose.yml
 # 1. Backup database
 docker exec -t desterlib-postgres pg_dump -U desterlib desterlib > migration.sql
 
-# 2. Backup configuration  
+# 2. Backup configuration
 cp ~/.desterlib/.env desterlib-env-backup
 cp ~/.desterlib/docker-compose.yml desterlib-compose-backup
 
@@ -233,10 +238,12 @@ If only some data is corrupted:
 ### Where to Store Backups
 
 **Local (Quick Access):**
+
 - Same machine: `~/desterlib-backups/`
 - External drive: `/Volumes/Backup/desterlib/`
 
 **Remote (Safer):**
+
 - Cloud storage (Dropbox, Google Drive, iCloud)
 - NAS (Synology, QNAP)
 - Another server (rsync, scp)
@@ -244,11 +251,13 @@ If only some data is corrupted:
 ### Rotation Strategy
 
 **Keep:**
+
 - ✅ Daily backups for last 7 days
 - ✅ Weekly backups for last month
 - ✅ Monthly backups for last year
 
 **Example cleanup:**
+
 ```bash
 # Keep daily (last 7 days)
 find ~/desterlib-backups -name "db-*.sql" -mtime +7 -delete
@@ -295,4 +304,3 @@ cd ~ && rm -rf desterlib-test
 - [Updating](/guides/updating/) - Update procedures
 - [Troubleshooting](/getting-started/installation/#troubleshooting) - Common issues
 - [Installation Guide](/getting-started/installation/) - Initial setup
-

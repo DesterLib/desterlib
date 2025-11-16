@@ -12,7 +12,7 @@ import { logger } from "@/lib/utils";
 export async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
-  operationName: string
+  operationName: string,
 ): Promise<T> {
   let timeoutHandle: NodeJS.Timeout;
 
@@ -20,8 +20,8 @@ export async function withTimeout<T>(
     timeoutHandle = setTimeout(() => {
       reject(
         new Error(
-          `Operation "${operationName}" timed out after ${timeoutMs}ms. This may indicate a slow or unresponsive mounted drive.`
-        )
+          `Operation "${operationName}" timed out after ${timeoutMs}ms. This may indicate a slow or unresponsive mounted drive.`,
+        ),
       );
     }, timeoutMs);
   });
@@ -47,7 +47,7 @@ export async function withRetry<T>(
     initialDelayMs?: number;
     maxDelayMs?: number;
     operationName: string;
-  }
+  },
 ): Promise<T> {
   const {
     maxRetries = 3,
@@ -66,7 +66,7 @@ export async function withRetry<T>(
 
       if (attempt === maxRetries) {
         logger.error(
-          `Operation "${operationName}" failed after ${maxRetries + 1} attempts`
+          `Operation "${operationName}" failed after ${maxRetries + 1} attempts`,
         );
         throw error;
       }
@@ -75,7 +75,7 @@ export async function withRetry<T>(
       const delay = Math.min(initialDelayMs * Math.pow(2, attempt), maxDelayMs);
 
       logger.warn(
-        `Operation "${operationName}" failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms... Error: ${error instanceof Error ? error.message : String(error)}`
+        `Operation "${operationName}" failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms... Error: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       await new Promise((resolve) => setTimeout(resolve, delay));
@@ -95,16 +95,12 @@ export async function withTimeoutAndRetry<T>(
     timeoutMs?: number;
     maxRetries?: number;
     operationName: string;
-  }
+  },
 ): Promise<T> {
   const { timeoutMs = 60000, maxRetries = 3, operationName } = options;
 
-  return withRetry(
-    () => withTimeout(operation(), timeoutMs, operationName),
-    {
-      maxRetries,
-      operationName,
-    }
-  );
+  return withRetry(() => withTimeout(operation(), timeoutMs, operationName), {
+    maxRetries,
+    operationName,
+  });
 }
-
