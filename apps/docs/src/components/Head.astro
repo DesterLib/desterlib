@@ -1,14 +1,12 @@
 ---
-import type { Props } from '@astrojs/starlight/props';
-import StarlightHead from '@astrojs/starlight/components/Head.astro';
+import StarlightHead from "@astrojs/starlight/components/Head.astro";
 ---
 
 <StarlightHead {...Astro.props}><slot /></StarlightHead>
 <script is:inline>
-	// Force dark theme immediately on page load (before paint)
-	document.documentElement.setAttribute('data-theme', 'dark');
-	try {
-		localStorage.setItem('starlight-theme', 'dark');
-	} catch {}
+  // Force dark theme immediately on page load (before paint)
+  document.documentElement.setAttribute("data-theme", "dark");
+  try {
+    localStorage.setItem("starlight-theme", "dark");
+  } catch {}
 </script>
-
