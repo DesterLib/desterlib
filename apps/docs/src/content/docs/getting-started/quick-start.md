@@ -15,11 +15,19 @@ Get DesterLib streaming in 5 minutes! ⚡
 
 ### 1. Install the Server
 
-Run this one command:
+**macOS/Linux:**
 
 ```bash
-npx @desterlib/cli
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
 ```
+
+**Windows (PowerShell):**
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.ps1 | iex
+```
+
+The installer will automatically install Node.js if needed, then install the CLI.
 
 The wizard will ask you 3 quick questions:
 

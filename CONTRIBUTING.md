@@ -4,9 +4,9 @@ Thank you for your interest in contributing to DesterLib! 🎉
 
 ## Documentation
 
-📖 **[Contributing Guide](https://desterlib.github.io/desterlib/development/contributing)**
+📖 **[Contributing Guide](https://docs.dester.in/development/contributing)**
 
-All contribution guidelines, setup instructions, and development workflows are maintained in the [DesterLib Documentation](https://desterlib.github.io/desterlib/development/contributing).
+All contribution guidelines, setup instructions, and development workflows are maintained in the [DesterLib Documentation](https://docs.dester.in/development/contributing).
 
 ## License
 

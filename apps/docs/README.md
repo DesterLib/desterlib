@@ -1,13 +1,5 @@
 # DesterLib Documentation
 
-Documentation site for DesterLib, built with [Astro Starlight](https://starlight.astro.build).
+📖 **[Full Documentation](https://docs.dester.in)**
 
-## View Documentation
-
-🌐 **Live Site:** [https://desterlib.github.io/desterlib](https://desterlib.github.io/desterlib)
-
-## Documentation
-
-📖 **[Full Documentation](https://desterlib.github.io/desterlib)**
-
-For contributing to documentation, see the [contributing guide](https://desterlib.github.io/desterlib/development/contributing).
+For contributing to documentation, visit the [documentation site](https://docs.dester.in).

@@ -5,7 +5,7 @@
 ## Key Features
 
 - 📚 **Automatic Organization** - Intelligent media scanning with TMDB metadata and artwork integration
-- 🚀 **Easy Setup** - One command CLI tool (`npx @desterlib/cli`) to get started in minutes
+- 🚀 **Easy Setup** - One command installer to get started in minutes
 - 🎞️ **Direct Streaming** - Stream media files directly with HTTP range support for seamless playback
 - 📱 **Multi-Platform** - Native apps for iOS, Android, macOS, Linux, and Windows
 - 🖥️ **Self-Hosted** - Full control over your media library and data
@@ -13,9 +13,9 @@
 
 ## Documentation
 
-📖 **[Full Documentation](https://desterlib.github.io/desterlib)**
+📖 **[Full Documentation](https://docs.dester.in)**
 
-For installation, usage, API reference, and more, visit the [documentation site](https://desterlib.github.io/desterlib).
+For installation, usage, API reference, and more, visit the [documentation site](https://docs.dester.in).
 
 ## License
 

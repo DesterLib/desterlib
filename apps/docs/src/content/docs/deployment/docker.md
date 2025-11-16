@@ -9,8 +9,16 @@ Production-ready Docker deployment guide for DesterLib.
 
 ### Using CLI (Easiest)
 
+**macOS/Linux:**
+
 ```bash
-npx @desterlib/cli
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.ps1 | iex
 ```
 
 The CLI configures production-ready settings by default:

@@ -22,24 +22,29 @@ The CLI handles the entire setup process:
 
 ### Installation
 
-No installation required! Run directly with npx:
+**macOS/Linux:**
 
 ```bash
-npx @desterlib/cli
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
 ```
 
-Or install globally:
+**Windows (PowerShell):**
 
-```bash
-npm install -g @desterlib/cli
-desterlib
+```powershell
+iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.ps1 | iex
 ```
+
+The installer will automatically:
+
+- Check for Node.js 18+
+- Install Node.js if needed (via nvm, package manager, or Chocolatey/winget)
+- Install the DesterLib CLI globally
 
 ## Quick Usage
 
 ```bash
 # Run the setup wizard
-npx @desterlib/cli
+desterlib
 ```
 
 The wizard will ask:
@@ -63,7 +68,7 @@ Runs the interactive setup wizard.
 **Example:**
 
 ```bash
-npx @desterlib/cli setup --skip-docker-check
+desterlib setup --skip-docker-check
 ```
 
 ## Configuration
@@ -134,7 +139,7 @@ docker-compose up -d
 To update your configuration, run the CLI again:
 
 ```bash
-npx @desterlib/cli
+desterlib
 ```
 
 You'll be prompted to:
@@ -154,7 +159,7 @@ If DesterLib is already installed, the CLI will:
 ## Requirements
 
 - **Docker** and **Docker Compose**
-- **Node.js** 18+ (only for running the CLI via npx)
+- **Node.js** 18+ (the install script will install Node.js for you if needed)
 
 No Git or source code knowledge required!
 
@@ -207,7 +212,7 @@ If you can't access your media path:
 Not recommended, but you can skip the Docker check:
 
 ```bash
-npx @desterlib/cli setup --skip-docker-check
+desterlib setup --skip-docker-check
 ```
 
 ### Custom Installation Directory

@@ -185,7 +185,7 @@ scp desterlib-*-backup user@new-server:/tmp/
 
 ```bash
 # 1. Install DesterLib on new server
-npx @desterlib/cli
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
 
 # 2. Stop the new server
 cd ~/.desterlib && docker-compose down
@@ -210,7 +210,7 @@ If you lose everything but have backups:
 
 ```bash
 # 1. Install DesterLib fresh
-npx @desterlib/cli
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
 
 # 2. Stop and restore database
 cd ~/.desterlib

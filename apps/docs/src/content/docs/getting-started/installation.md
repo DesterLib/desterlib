@@ -29,9 +29,19 @@ See the [Quick Start Guide](/getting-started/quick-start/) for a 5-minute setup!
 
 **Perfect for:** End users who want it working fast
 
+**macOS/Linux:**
+
 ```bash
-npx @desterlib/cli
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
 ```
+
+**Windows (PowerShell):**
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.ps1 | iex
+```
+
+The installer will automatically check for Node.js and install it if needed, then install the CLI.
 
 The interactive wizard will guide you through:
 

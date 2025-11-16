@@ -9,10 +9,10 @@ This guide covers common server management tasks for DesterLib.
 
 Commands vary based on how you installed DesterLib:
 
-| Installation Method        | Location                         |
-| -------------------------- | -------------------------------- |
-| CLI (`npx @desterlib/cli`) | `~/.desterlib`                   |
-| Git clone                  | `./desterlib` (where you cloned) |
+| Installation Method | Location                         |
+| ------------------- | -------------------------------- |
+| CLI installer       | `~/.desterlib`                   |
+| Git clone           | `./desterlib` (where you cloned) |
 
 :::tip
 This guide assumes **CLI installation**. If you used git clone, replace `~/.desterlib` with your repo directory.
@@ -173,7 +173,7 @@ docker-compose restart
 Run the CLI again to regenerate config:
 
 ```bash
-npx @desterlib/cli
+desterlib
 ```
 
 Choose "Reconfigure" when prompted.
