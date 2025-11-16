@@ -55,6 +55,7 @@ jobs:
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
+        continue-on-error: true
         with:
           version: pnpm version
           publish: pnpm release
@@ -82,21 +83,17 @@ jobs:
           draft: false
           prerelease: false
 
-      # Build and deploy docs to GitHub Pages only when a new release is published
+      # Build and deploy docs to GitHub Pages for every push to main
       - name: Setup Pages
-        if: steps.changesets.outputs.published == 'true'
         uses: actions/configure-pages@v4
 
       - name: Build Docs
-        if: steps.changesets.outputs.published == 'true'
         run: pnpm turbo build --filter=docs
 
       - name: Upload Docs Artifact
-        if: steps.changesets.outputs.published == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./apps/docs/dist
 
       - name: Deploy Docs to GitHub Pages
-        if: steps.changesets.outputs.published == 'true'
         uses: actions/deploy-pages@v4
