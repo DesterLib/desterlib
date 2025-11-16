@@ -27,7 +27,7 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
 
       - name: Ensure main branch is available
-        run: git fetch origin main:main
+        run: git fetch origin main
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4

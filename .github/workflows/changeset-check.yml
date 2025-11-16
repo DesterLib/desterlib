@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
 
       - name: Ensure main branch is available
-        run: git fetch origin main:main
+        run: git fetch origin main
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
