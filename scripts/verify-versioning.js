@@ -164,7 +164,29 @@ function checkChangesetStatus() {
       logCheck("Changeset status", true, "Changesets are valid");
     }
   } catch (error) {
-    logCheck("Changeset status", false, error.message);
+    const message =
+      (error && (error.stdout || error.stderr || error.message)) ||
+      "Unknown error running changeset status";
+
+    // When running in CI with a shallow clone, Changesets can fail to find the
+    // base branch (usually "main"). Locally this works fine because the full
+    // git history and all branches are available. In that specific case we
+    // don't want to fail the entire verification, since it doesn't indicate a
+    // real problem with versioning or changesets themselves.
+    const isHeadDivergedFromMainError =
+      typeof message === "string" &&
+      message.includes('Failed to find where HEAD diverged from "main"');
+
+    if (process.env.CI && isHeadDivergedFromMainError) {
+      logCheck(
+        "Changeset status",
+        true,
+        'Skipped in CI: unable to find base branch "main" (likely shallow clone or missing branch in checkout).'
+      );
+      return;
+    }
+
+    logCheck("Changeset status", false, message);
     allChecksPassed = false;
   }
 }

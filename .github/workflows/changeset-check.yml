@@ -1,4 +1,4 @@
-name: Changeset Check
+name: CI
 
 on:
   pull_request:
@@ -6,14 +6,18 @@ on:
       - main
 
 jobs:
-  changeset-check:
-    name: Check for Changeset
+  ci:
+    name: Validate PR (changesets & versioning)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          # Fetch full history of the current ref so git operations behave like locally
           fetch-depth: 0
+
+      - name: Ensure main branch is available
+        run: git fetch origin main:main
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4

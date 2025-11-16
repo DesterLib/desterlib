@@ -1,4 +1,4 @@
-name: Release
+name: Release & Docs
 
 on:
   push:
@@ -11,17 +11,23 @@ permissions:
   contents: write
   pull-requests: write
   packages: write
+  pages: write
+  id-token: write
 
 jobs:
   release:
-    name: Release
+    name: Release packages & deploy docs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          # Fetch full history of the current ref so git operations behave like locally
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Ensure main branch is available
+        run: git fetch origin main:main
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -75,3 +81,22 @@ jobs:
             - [Docs](../blob/main/apps/docs/CHANGELOG.md)
           draft: false
           prerelease: false
+
+      # Build and deploy docs to GitHub Pages only when a new release is published
+      - name: Setup Pages
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/configure-pages@v4
+
+      - name: Build Docs
+        if: steps.changesets.outputs.published == 'true'
+        run: pnpm turbo build --filter=docs
+
+      - name: Upload Docs Artifact
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./apps/docs/dist
+
+      - name: Deploy Docs to GitHub Pages
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/deploy-pages@v4
