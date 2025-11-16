@@ -15,7 +15,7 @@ type ValidateOptions = {
 export function validate(
   schema: z.ZodTypeAny,
   dataSource: "body" | "query" | "params" = "body",
-  options: ValidateOptions = {}
+  options: ValidateOptions = {},
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -72,6 +72,9 @@ export function validateQuery(schema: z.ZodTypeAny, options?: ValidateOptions) {
 /**
  * Utility function to validate route parameters with optional sanitization
  */
-export function validateParams(schema: z.ZodTypeAny, options?: ValidateOptions) {
+export function validateParams(
+  schema: z.ZodTypeAny,
+  options?: ValidateOptions,
+) {
   return validate(schema, "params", options);
 }

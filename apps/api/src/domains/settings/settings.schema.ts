@@ -11,4 +11,3 @@ export const getSettingsSchema = z.object({});
 
 export type UpdateSettingsRequest = z.infer<typeof updateSettingsSchema>;
 export type GetSettingsRequest = z.infer<typeof getSettingsSchema>;
-

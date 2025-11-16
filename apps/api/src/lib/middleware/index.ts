@@ -11,4 +11,5 @@ export {
   validateParams,
 } from "./validation.middleware";
 export { sanitizeInput } from "./sanitization.middleware";
+export { validateVersion, addVersionHeader } from "./version.middleware";
 // Auth middleware exports go here

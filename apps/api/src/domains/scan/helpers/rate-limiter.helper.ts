@@ -9,14 +9,14 @@ export interface RateLimiter {
 
 /**
  * Creates a rate limiter for API calls
- * 
+ *
  * @param maxRequestsPer10Sec - Maximum requests allowed per 10 seconds (default: 38)
  * @param concurrency - Number of concurrent requests (default: 10)
  * @returns RateLimiter instance
  */
 export function createRateLimiter(
-  maxRequestsPer10Sec: number = 38,
-  concurrency: number = 10
+  maxRequestsPer10Sec: number = 30, // Reduced from 38 to be more conservative
+  concurrency: number = 8, // Reduced from 10 to avoid overwhelming TMDB
 ): RateLimiter {
   const queue: Array<() => Promise<void>> = [];
   let processing = false;
@@ -30,13 +30,13 @@ export function createRateLimiter(
       // Clean up old timestamps (older than 10 seconds)
       const now = Date.now();
       requestTimestamps = requestTimestamps.filter(
-        (timestamp) => now - timestamp < 10000
+        (timestamp) => now - timestamp < 10000,
       );
 
       // Calculate how many requests we can make right now
       const availableSlots = Math.max(
         0,
-        maxRequestsPer10Sec - requestTimestamps.length
+        maxRequestsPer10Sec - requestTimestamps.length,
       );
 
       if (availableSlots === 0) {
@@ -81,4 +81,3 @@ export function createRateLimiter(
     },
   };
 }
-

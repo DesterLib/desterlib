@@ -3,123 +3,130 @@ title: Installation Guide
 description: Complete installation guide for DesterLib server and clients
 ---
 
-This guide covers complete installation for both the server and client applications.
+Complete guide for installing and configuring DesterLib.
+
+:::tip[Just want to get started quickly?]
+See the [Quick Start Guide](/getting-started/quick-start/) for a 5-minute setup!
+:::
 
 ## System Requirements
 
-### Server Requirements
+### Server
+
 - **CPU**: 2 cores minimum
 - **RAM**: 2GB minimum
-- **Storage**: Your media collection size + 10% extra
-- **OS**: Linux, macOS, or Windows with Docker support
-- **Network**: Local network or internet access for remote streaming
+- **Storage**: Your media collection size + 10GB
+- **OS**: Linux, macOS, or Windows
+- **Docker**: Version 20.10 or higher
 
-### Software Requirements
-- **Docker** 20.10 or higher
-- **Node.js** 18+ and **pnpm** 9.0+ (only for development)
+### Client Devices
 
-## Part 1: Server Installation
+- Android 5.0+, iOS 12+, macOS 10.15+, Windows 10+, or Linux
 
-### Docker Setup (Recommended)
+## Server Installation
 
-**Best for:** Everyone - simplest way to get started
+### Option 1: CLI Setup (Recommended)
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/DesterLib/desterlib.git
-   cd desterlib
-   ```
-
-2. **Start the server:**
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Verify server is running:**
-   ```bash
-   curl http://localhost:3001/health
-   ```
-   
-   Expected response:
-   ```json
-   {
-     "status": "ok",
-     "timestamp": "2024-01-01T00:00:00.000Z"
-   }
-   ```
-
-That's it! Your server is ready. Now install the client app to scan your library and start watching.
-
-### Optional: Environment Configuration
-
-To customize settings, create `.env` in `apps/api/`:
+**Perfect for:** End users who want it working fast
 
 ```bash
-# Database (uses default Docker settings)
-DATABASE_URL=postgresql://postgres:postgres@db:5432/desterlib
-
-# Server
-NODE_ENV=production
-PORT=3001
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX=100
+npx @desterlib/cli
 ```
 
-## Part 2: Client Installation
+The interactive wizard will guide you through:
 
-### Quick Download (Recommended)
+1. Media library location
+2. Server port (default: 3001)
+3. Database credentials
 
-📥 **[Download Latest Alpha Build](https://github.com/DesterLib/Dester-Flutter/releases/latest)**
+Your server will be installed in `~/.desterlib/` and started automatically.
 
-⚠️ **Alpha Release**: DesterLib is currently in alpha development. Expect bugs, missing features, and frequent updates!
+**Verify it's working:**
 
-Choose your platform:
-- **Android (Phone/Tablet)**: Download `Dester-*-Android-arm64-v8a.apk` and install
-- **Android TV**: Download `Dester-*-AndroidTV-arm64.apk` for TV with remote support  
-- **macOS**: Download `Dester-*-macOS.dmg` and drag to Applications
-- **Linux**: Download `Dester-*-Linux-x64.tar.gz` and extract
-- **Windows**: Download `Dester-*-Windows-x64.zip` and extract
-- **iOS**: See [Building from Source](#building-from-source) below
+```bash
+curl http://localhost:3001/health
+# Should return: {"status":"ok",...}
+```
 
-:::tip
-The `*` in filenames represents the version number (e.g., `v0.1.0-alpha`).
-Download the file matching your platform from the latest release.
+### Option 2: Manual Setup (For Developers)
+
+**Perfect for:** Contributors and advanced users
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/DesterLib/desterlib.git
+cd desterlib
+
+# 2. Start with Docker Compose
+docker-compose up -d
+
+# 3. Access at http://localhost:3001
+```
+
+**Optional:** Customize with `.env` file in `apps/api/`:
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@postgres:5432/desterlib
+NODE_ENV=production
+PORT=3001
+```
+
+## Client Installation
+
+### Pre-built Apps
+
+📥 **[Download from Releases](https://github.com/DesterLib/Dester-Flutter/releases/latest)**
+
+:::caution[Alpha Software]
+DesterLib is in alpha. Expect bugs and frequent updates!
 :::
 
-After installing:
+**Available platforms:**
+
+| Platform             | File                             |
+| -------------------- | -------------------------------- |
+| Android Phone/Tablet | `Dester-*-Android-arm64-v8a.apk` |
+| Android TV           | `Dester-*-AndroidTV-arm64.apk`   |
+| macOS                | `Dester-*-macOS.dmg`             |
+| Windows              | `Dester-*-Windows-x64.zip`       |
+| Linux                | `Dester-*-Linux-x64.tar.gz`      |
+| iOS                  | Build from source (see below)    |
+
+**After installing:**
+
 1. Open the app
-2. Enter server address: `http://YOUR_SERVER_IP:3001`
-3. Go to Settings → Library Management
-4. Tap "Scan Library" to index your media
-5. Start browsing and streaming!
+2. Enter: `http://YOUR_SERVER_IP:3001`
+3. Scan Library from Settings
+4. Start watching!
 
-### Building from Source
+### Build from Source
 
-If you prefer to build from source or need iOS builds:
+For iOS or if you prefer building yourself:
 
 #### Android
 
 1. **Clone the Flutter app repository:**
+
    ```bash
    git clone https://github.com/DesterLib/Dester-Flutter.git
    cd Dester-Flutter
    ```
 
 2. **Install Flutter dependencies:**
+
    ```bash
    flutter pub get
    ```
 
 3. **Build and install APK:**
+
    ```bash
    # Build APK
    flutter build apk --release
-   
+
    # APK will be at: build/app/outputs/flutter-apk/app-release.apk
    # Transfer to your Android device and install
-   
+
    # Or install directly if device is connected:
    flutter install
    ```
@@ -131,6 +138,7 @@ If you prefer to build from source or need iOS builds:
    - Apple Developer account (for device deployment)
 
 2. **Clone and setup:**
+
    ```bash
    git clone https://github.com/DesterLib/Dester-Flutter.git
    cd Dester-Flutter
@@ -138,6 +146,7 @@ If you prefer to build from source or need iOS builds:
    ```
 
 3. **Install CocoaPods dependencies:**
+
    ```bash
    cd ios
    pod install
@@ -145,6 +154,7 @@ If you prefer to build from source or need iOS builds:
    ```
 
 4. **Open in Xcode:**
+
    ```bash
    open ios/Runner.xcworkspace
    ```
@@ -157,6 +167,7 @@ If you prefer to build from source or need iOS builds:
 #### Desktop Platforms
 
 **macOS:**
+
 ```bash
 git clone https://github.com/DesterLib/Dester-Flutter.git
 cd Dester-Flutter
@@ -167,6 +178,7 @@ flutter build macos --release
 ```
 
 **Linux:**
+
 ```bash
 # Install dependencies first
 sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libmpv-dev mpv
@@ -180,6 +192,7 @@ flutter build linux --release
 ```
 
 **Windows:**
+
 ```bash
 git clone https://github.com/DesterLib/Dester-Flutter.git
 cd Dester-Flutter
@@ -189,256 +202,172 @@ flutter build windows --release
 # App will be at: build/windows/x64/runner/Release/
 ```
 
-## Part 3: Connecting Everything
+## Managing Your Server
 
-### Finding Your Server IP
+Commands depend on your installation method:
 
-**On the server machine:**
-
-```bash
-# macOS/Linux
-ifconfig | grep "inet "
-
-# Windows
-ipconfig
-```
-
-Look for your local IP (usually starts with `192.168.x.x` or `10.0.x.x`)
-
-### Configure Client App
-
-1. Open the mobile/desktop app
-2. Go to Settings or initial setup
-3. Enter: `http://YOUR_SERVER_IP:3001`
-   - Example: `http://192.168.1.100:3001`
-   - If on same machine: `http://localhost:3001`
-4. Save and connect
-
-### Test Connection
-
-From the client device, test if the server is reachable:
+**If installed via CLI:**
 
 ```bash
-# Replace with your server IP
-curl http://192.168.1.100:3001/health
+cd ~/.desterlib
+
+docker-compose ps       # View status
+docker-compose logs -f  # View logs
+docker-compose restart  # Restart
+docker-compose down     # Stop
+docker-compose pull && docker-compose up -d  # Update
 ```
 
-Should return:
-```json
-{"status": "ok", "timestamp": "..."}
+**If installed via Git:**
+
+```bash
+cd desterlib
+
+docker ps               # View status
+docker-compose logs -f  # View logs
+docker-compose restart  # Restart
+docker-compose down     # Stop
+git pull && docker-compose up -d --build  # Update
 ```
 
-## Advanced Setup
+## Development Setup
 
-### For Developers
+For contributors who want to modify the code:
 
-If you want to develop and contribute:
+```bash
+# 1. Clone and install
+git clone https://github.com/DesterLib/desterlib.git
+cd desterlib
+pnpm install
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/DesterLib/desterlib.git
-   cd desterlib
-   ```
+# 2. Start test database
+docker-compose -f docker-compose.test.yml up -d
 
-2. **Install dependencies:**
-   ```bash
-   pnpm install
-   ```
+# 3. Configure .env in apps/api/
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test
+NODE_ENV=development
+PORT=3001
 
-3. **Start test database:**
-   ```bash
-   docker-compose -f docker-compose.test.yml up -d
-   ```
+# 4. Run the API
+cd apps/api
+pnpm db:generate
+pnpm db:push
+pnpm dev
+```
 
-4. **Configure environment** (`.env` in `apps/api/`):
-   ```bash
-   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test
-   NODE_ENV=development
-   PORT=3001
-   ```
+See [Contributing Guide](/development/contributing/) for more details.
 
-5. **Run the API:**
-   ```bash
-   cd apps/api
-   pnpm db:generate
-   pnpm db:push
-   pnpm dev
-   ```
+## Remote Access
 
-6. **Run the docs (optional):**
-   ```bash
-   cd apps/docs
-   pnpm dev
-   ```
+To access from outside your network:
 
-### Remote Access Setup
+**Option 1: Port Forwarding**
 
-To access your server from outside your home network:
+- Forward port 3001 on your router
+- Use dynamic DNS (e.g., DuckDNS, No-IP)
 
-1. **Port Forwarding:**
-   - Forward port 3001 on your router to your server
-   - Use your public IP or a dynamic DNS service
+**Option 2: Tunneling (Easier)**
 
-2. **Security (Recommended):**
-   - Set up HTTPS with Let's Encrypt
-   - Use a reverse proxy (nginx/Caddy)
-   - Enable authentication
+- [Tailscale](https://tailscale.com/) (recommended)
+- [ngrok](https://ngrok.com/): `ngrok http 3001`
+- [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
 
-3. **Or use tunneling services:**
-   - ngrok: `ngrok http 3001`
-   - Cloudflare Tunnel
-   - Tailscale
+:::caution[Security]
+If exposing to internet, use HTTPS and enable authentication!
+:::
 
 ## Maintenance
 
-### Updating Server
+### Database Backup
 
 ```bash
-cd desterlib
-git pull origin main
-docker-compose down
-docker-compose build
-docker-compose up -d
+docker exec -t desterlib-postgres pg_dump -U desterlib desterlib > backup.sql
 ```
 
-### Updating Client Apps
-
-Rebuild from source using the same installation steps.
-
-### Backup Database
+### Database Restore
 
 ```bash
-docker exec -t desterlib-db pg_dump -U postgres desterlib > backup.sql
+cat backup.sql | docker exec -i desterlib-postgres psql -U desterlib desterlib
 ```
 
-### Restore Database
+### Uninstall
+
+**CLI installation:**
 
 ```bash
-cat backup.sql | docker exec -i desterlib-db psql -U postgres desterlib
+cd ~/.desterlib && docker-compose down -v
+rm -rf ~/.desterlib
 ```
 
-### View Logs
+**Git installation:**
 
 ```bash
-# Server logs
-docker logs desterlib-api
-
-# Follow logs
-docker logs -f desterlib-api
-
-# Database logs
-docker logs desterlib-db
+cd desterlib && docker-compose down -v
+cd .. && rm -rf desterlib
 ```
-
-## Uninstallation
-
-### Remove Server
-
-```bash
-cd desterlib
-docker-compose down -v  # -v removes volumes (database data)
-cd ..
-rm -rf desterlib
-```
-
-### Remove Client Apps
-
-- **Android/iOS:** Uninstall like any other app
-- **Desktop:** Delete the app from Applications/Programs folder
 
 ## Troubleshooting
 
-### Server Issues
+### Server Won't Start
 
 **Port already in use:**
+
 ```bash
-# Change port in docker-compose.yml or .env
-PORT=3002
+# Find and kill process using port 3001
+lsof -ti:3001 | xargs kill -9  # Mac/Linux
+netstat -ano | findstr :3001   # Windows
 ```
 
-**Server won't start:**
+**Check logs:**
+
 ```bash
-# Check logs
-docker logs desterlib-api
+cd ~/.desterlib  # or your install directory
+docker-compose logs -f
+```
 
-# Restart containers
-docker-compose restart
+**Full reset:**
 
-# Full reset
+```bash
+cd ~/.desterlib
 docker-compose down -v
 docker-compose up -d
 ```
 
-**Database connection failed:**
-```bash
-# Check if database is running
-docker ps | grep postgres
+### Can't Connect from Client
 
-# Restart database
-docker-compose restart db
-```
+**Checklist:**
 
-### Client Connection Issues
+1. Server running? → `docker ps | grep desterlib`
+2. Test connection → `curl http://SERVER_IP:3001/health`
+3. Find server IP:
+   - macOS/Linux: `ifconfig | grep "inet "`
+   - Windows: `ipconfig`
+4. Check firewall → Allow port 3001
+5. Use IP not hostname → `192.168.1.100:3001` not `my-computer:3001`
 
-**Can't connect to server:**
-- Verify server is running: `docker ps`
-- Test connection: `curl http://YOUR_IP:3001/health`
-- Check firewall settings
-- Ensure both devices are on same network
-- Try using server's IP instead of hostname
+### Movies Not Showing
 
-**Movies not showing:**
-- Scan your library from the Flutter app (Settings → Library Management → Scan Library)
-- Check media folder is mounted in `docker-compose.yml`
-- Verify file naming (e.g., `Movie Name (2023).mp4`)
-- Check scan status in the app or API logs for errors
+**Steps:**
 
-**Slow streaming:**
-- Check network bandwidth
-- Reduce video quality in app settings
-- Consider transcoding large files
-- Ensure server has adequate resources
+1. Scan library → Settings → Library Management → Scan Library
+2. Check media mounted → Verify path in `~/.desterlib/docker-compose.yml`
+3. File naming → Use `Movie Name (2023).mp4` format
+4. Check logs → `docker-compose logs -f api` for errors
+5. Verify TMDB key → Set in app Settings if not already configured
 
 ### Build Issues (Development)
 
 ```bash
-# Clear caches
-pnpm clean
-rm -rf node_modules
-pnpm install
+# API
+pnpm clean && rm -rf node_modules && pnpm install
 
-# Flutter issues
-cd desterlib-flutter
-flutter clean
-flutter pub get
+# Flutter
+flutter clean && flutter pub get
 ```
 
-### Permission Issues
+## Need Help?
 
-**Docker permission denied:**
-```bash
-# Add user to docker group
-sudo usermod -aG docker $USER
-
-# Log out and back in, or:
-newgrp docker
-```
-
-## Version Information
-
-### Current Limitation
-⚠️ **Known Issue**: The app version shown in Settings currently doesn't match the release tag. For example, a `v1.0.0` release might still show `0.1.1` internally. This will be fixed in future releases. Check the release page or filename for the actual version.
-
-### Checking Your Version
-- **Release filename**: Check the downloaded file name (e.g., `Dester-v1.0.0-alpha.1-Android-arm64.apk`)
-- **GitHub Release page**: [View all releases](https://github.com/DesterLib/Dester-Flutter/releases)
-- **In-app** (currently shows dev version): Settings → About
-
-## Next Steps
-
-- 🎬 Start watching your media!
-- 📖 Explore the [API Documentation](http://localhost:3001/api/docs)
-- 🛠️ [Project Structure](/development/structure/) if you want to contribute
-- 🔄 [Versioning Guide](/development/versioning/) for contribution guidelines
-- ❓ [Quick Start](/getting-started/quick-start/) for a faster overview
-
+- 📖 [Quick Start](/getting-started/quick-start/) - 5-minute setup guide
+- 🔧 [API Documentation](http://localhost:3001/api/docs) - Full API reference
+- 💬 [GitHub Discussions](https://github.com/DesterLib/desterlib/discussions) - Ask questions
+- 🐛 [Report Issues](https://github.com/DesterLib/desterlib/issues) - Bug reports

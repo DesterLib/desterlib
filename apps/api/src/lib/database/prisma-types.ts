@@ -18,4 +18,3 @@ export interface PrismaErrorEvent {
   message: string;
   target: string;
 }
-

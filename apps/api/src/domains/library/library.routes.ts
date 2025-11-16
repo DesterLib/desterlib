@@ -157,7 +157,7 @@ const router: Router = express.Router();
 router.get(
   "/",
   validateQuery(getLibrariesSchema),
-  libraryControllers.getLibraries
+  libraryControllers.getLibraries,
 );
 
 /**
@@ -269,7 +269,7 @@ router.put("/", validateBody(updateLibrarySchema), libraryControllers.update);
 router.delete(
   "/",
   validateBody(deleteLibrarySchema),
-  libraryControllers.delete
+  libraryControllers.delete,
 );
 
 export default router;

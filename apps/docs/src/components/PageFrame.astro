@@ -1,0 +1,170 @@
+---
+import MobileMenuToggle from "@astrojs/starlight/components/MobileMenuToggle.astro";
+import backgroundImage from "../assets/background.png";
+import logoSvg from "../assets/logo.svg?raw";
+
+const isHomepage = Astro.locals.starlightRoute.id === "";
+const { hasSidebar } = Astro.locals.starlightRoute;
+---
+
+<div class:list={["page", "sl-flex", { homepage: isHomepage }]}>
+  {
+    isHomepage ? (
+      <header class="lg:max-w-xl w-full mx-auto p-2 flex lg:rounded-full justify-between items-center bg-white/10 top-0 sticky lg:top-8 z-10 backdrop-blur-lg">
+        <div class="flex items-center gap-1">
+          <div class="logo" set:html={logoSvg} />
+          <span class="text-white text-xl font-semibold">Dester</span>
+          <span class="text-white/50 text-xs px-1.5 py-0.5 rounded-full bg-white/10 font-semibold">
+            v{import.meta.env.VITE_APP_VERSION}
+          </span>
+        </div>
+        <div class="flex items-center gap-4 pr-3">
+          <a class="inline-flex" href="https://github.com/DesterLib/desterlib">
+            <svg
+              class="w-6 h-6 fill-white"
+              role="img"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <>
+                <title>GitHub</title>
+                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+              </>
+            </svg>
+          </a>
+          <a class="inline-flex" href="https://t.me/Dester_Community">
+            <svg
+              class="w-6 h-6 fill-white"
+              role="img"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <>
+                <title>Discord</title>
+                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+              </>
+            </svg>
+          </a>
+        </div>
+      </header>
+    ) : (
+      <header class="header">
+        <slot name="header" />
+      </header>
+    )
+  }
+  {
+    hasSidebar && (
+      <nav
+        class="sidebar print:hidden"
+        aria-label={Astro.locals.t("sidebarNav.accessibleLabel")}
+      >
+        <MobileMenuToggle />
+        <div id="starlight__sidebar" class="sidebar-pane">
+          <div class="sidebar-content sl-flex">
+            <slot name="sidebar" />
+          </div>
+        </div>
+      </nav>
+    )
+  }
+  <div class="main-frame"><slot /></div>
+</div>
+
+<style define:vars={{ backgroundImage: `url(${backgroundImage.src})` }}>
+  @layer starlight.core {
+    .page {
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .page.homepage {
+      background-image: var(--backgroundImage);
+      background-size: contain;
+      background-position: top center;
+      background-repeat: no-repeat;
+    }
+
+    .logo {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .logo :global(svg) {
+      width: 48px;
+      height: 48px;
+    }
+
+    .header {
+      z-index: var(--sl-z-index-navbar);
+      position: fixed;
+      inset-inline-start: 0;
+      inset-block-start: 0;
+      width: 100%;
+      height: var(--sl-nav-height);
+      border-bottom: 1px solid var(--sl-color-hairline-shade);
+      padding: var(--sl-nav-pad-y) var(--sl-nav-pad-x);
+      padding-inline-end: var(--sl-nav-pad-x);
+      background-color: var(--sl-color-bg-nav);
+    }
+
+    :global([data-has-sidebar]) .header {
+      padding-inline-end: calc(
+        var(--sl-nav-gap) + var(--sl-nav-pad-x) + var(--sl-menu-button-size)
+      );
+    }
+
+    .sidebar-pane {
+      visibility: var(--sl-sidebar-visibility, hidden);
+      position: fixed;
+      z-index: var(--sl-z-index-menu);
+      inset-block: var(--sl-nav-height) 0;
+      inset-inline-start: 0;
+      width: 100%;
+      background-color: var(--sl-color-black);
+      overflow-y: auto;
+    }
+
+    :global([aria-expanded="true"]) ~ .sidebar-pane {
+      --sl-sidebar-visibility: visible;
+    }
+
+    .sidebar-content {
+      height: 100%;
+      min-height: max-content;
+      padding: 1rem var(--sl-sidebar-pad-x) 0;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    @media (min-width: 50rem) {
+      .sidebar-content::after {
+        content: "";
+        padding-bottom: 1px;
+      }
+    }
+
+    .main-frame {
+      padding-top: calc(var(--sl-nav-height) + var(--sl-mobile-toc-height));
+      padding-inline-start: var(--sl-content-inline-start);
+    }
+
+    .page.homepage .main-frame {
+      padding-top: 0;
+      padding-inline-start: 0;
+    }
+
+    @media (min-width: 50rem) {
+      :global([data-has-sidebar]) .header {
+        padding-inline-end: var(--sl-nav-pad-x);
+      }
+      .sidebar-pane {
+        --sl-sidebar-visibility: visible;
+        width: var(--sl-sidebar-width);
+        background-color: var(--sl-color-bg-sidebar);
+        border-inline-end: 1px solid var(--sl-color-hairline-shade);
+      }
+    }
+  }
+</style>

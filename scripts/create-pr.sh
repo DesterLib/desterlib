@@ -1,12 +1,21 @@
 #!/bin/bash
 
-# Auto-generate and create a PR using GitHub CLI
-# Usage: ./scripts/create-pr.sh [target-branch]
+# Create a PR using GitHub CLI
+# Usage: ./scripts/create-pr.sh [target-branch] [--skip-checks]
 
 set -e
 
-# Default target branch is main
 TARGET_BRANCH="${1:-main}"
+SKIP_CHECKS=false
+
+# Parse flags
+for arg in "$@"; do
+    case $arg in
+        --skip-checks)
+            SKIP_CHECKS=true
+            ;;
+    esac
+done
 
 # Get current branch
 CURRENT_BRANCH=$(git branch --show-current)
@@ -21,8 +30,17 @@ fi
 # Check if we're on a branch
 if [ "$CURRENT_BRANCH" == "main" ]; then
     echo "❌ Cannot create PR from main branch"
-    echo "Please switch to a feature branch"
     exit 1
+fi
+
+# Run pre-PR checks (unless skipped)
+if [ "$SKIP_CHECKS" != "true" ]; then
+    if ! pnpm pre-pr; then
+        echo ""
+        echo "❌ Pre-PR checks failed. Fix issues or use --skip-checks"
+        exit 1
+    fi
+    echo ""
 fi
 
 # Get commits that will be in the PR
@@ -66,6 +84,7 @@ $COMMITS
 - [ ] Documentation updated (if needed)
 - [ ] No new warnings generated
 - [ ] Changeset added (if applicable)
+- [ ] Pre-PR checks passed
 
 ---
 

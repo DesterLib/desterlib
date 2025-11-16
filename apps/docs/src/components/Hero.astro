@@ -1,0 +1,98 @@
+---
+const { data } = Astro.locals.starlightRoute.entry;
+const { title = data.title, tagline, actions = [] } = data.hero || {};
+---
+
+<div
+  class="flex flex-col items-center justify-center pb-0 py-12 md:pb-0 md:py-20 lg:pb-0 lg:py-24 px-4"
+>
+  <div
+    class="flex flex-col items-center justify-center gap-6 md:gap-8 max-w-4xl w-full"
+  >
+    <div
+      class="text-white text-xs md:text-sm font-medium py-2 md:py-2.5 backdrop-blur-lg px-4 md:px-5 bg-white/10 rounded-full"
+    >
+      <span class="animated-gradient-text"
+        >v{import.meta.env.VITE_APP_VERSION}</span
+      > Alpha is live 🎉
+    </div>
+    <div class="flex flex-col items-center justify-center text-center">
+      <h1
+        data-page-title
+        set:html={title}
+        class="font-normal text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight"
+      />
+      {
+        tagline && (
+          <div
+            class="font-normal text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl leading-relaxed"
+            set:html={tagline}
+          />
+        )
+      }
+    </div>
+    {
+      actions.length > 0 && (
+        <div class="flex flex-row gap-3 md:gap-4 mt-4 md:mt-6 lg:mt-8">
+          {actions.map(({ link: href, text, icon, variant }) => {
+            const isPrimary = variant === "primary" || !variant;
+            const buttonClass = isPrimary
+              ? "inline-flex items-center justify-center gap-2 px-6 py-3 md:px-8 md:py-3.5 bg-white text-gray-900 font-medium hover:bg-white/90 text-sm md:text-base"
+              : "inline-flex items-center justify-center gap-2 px-6 py-3 md:px-8 md:py-3.5 text-white font-medium hover:bg-white/10 text-sm md:text-base";
+            return (
+              <a
+                {href}
+                class:list={[
+                  buttonClass,
+                  "no-underline rounded-full button-spring",
+                ]}
+              >
+                {text}
+                {icon?.html && <Fragment set:html={icon.html} />}
+              </a>
+            );
+          })}
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  .button-spring {
+    transform: scale(1);
+    transition:
+      transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+      background-color 0.2s ease;
+  }
+
+  .button-spring:hover {
+    transform: scale(1.02);
+  }
+
+  .button-spring:active {
+    transform: scale(0.98);
+    transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .animated-gradient-text {
+    background: linear-gradient(90deg, #00ffb3, #009dff, #00ffb3, #009dff);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-animation 3s linear infinite;
+  }
+
+  @keyframes gradient-animation {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+</style>

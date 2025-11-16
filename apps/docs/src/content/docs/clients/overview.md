@@ -8,6 +8,7 @@ The DesterLib client is a cross-platform application that connects to your Deste
 ## What is the Client?
 
 The client provides:
+
 - **Media Browsing** - Explore your movies and TV shows
 - **Video Streaming** - Watch your content with smooth playback
 - **Watch Progress** - Automatic progress tracking across devices
@@ -19,15 +20,18 @@ The client provides:
 ## Supported Platforms
 
 ### 📱 Mobile
+
 - **Android** - Phones and tablets
 - **iOS** - iPhone and iPad
 
 ### 💻 Desktop
+
 - **macOS** - Native desktop application
 - **Linux** - Native desktop application
 - **Windows** - Native desktop application
 
 ### 📺 TV (In Development)
+
 - **Android TV** - TV interface with remote control
 - **Apple TV / tvOS** - Native TV experience
 
@@ -54,9 +58,9 @@ The client communicates with the DesterLib API using REST API and WebSocket conn
 
 ### Version Compatibility
 
-| Platform | Min API Version | Recommended API Version |
-|----------|----------------|------------------------|
-| All Platforms | 0.1.0+ | Latest |
+| Platform      | Min API Version | Recommended API Version |
+| ------------- | --------------- | ----------------------- |
+| All Platforms | 0.1.0+          | Latest                  |
 
 :::caution
 Keep your client updated to match your API version for the best experience and latest features.
@@ -70,15 +74,17 @@ See the [contributing guide](https://github.com/DesterLib/desterlib-flutter/blob
 
 :::tip
 The client follows the same [DesterLib contribution guidelines](/development/contributing) as all other projects:
+
 - Commit conventions
 - Version management
 - Code review process
 - Documentation standards
-:::
+  :::
 
 ### Platform-Specific Development
 
 Platform-specific setup and requirements:
+
 - **Android**: Android Studio, Android SDK 21+
 - **iOS**: Xcode 14+, iOS 12.0+
 - **macOS**: Xcode, macOS 10.14+
@@ -93,19 +99,19 @@ Check out the [platform-specific setup guide](/clients/flutter) for detailed bui
 
 ## Platform Feature Status
 
-| Feature | Mobile | Desktop | TV |
-|---------|--------|---------|-----|
-| Browse Library | ✅ | ✅ | 🔜 |
-| Stream Videos | ✅ | ✅ | 🔜 |
-| Search | ✅ | ✅ | 🔜 |
-| Watch Progress | ✅ | ✅ | 🔜 |
-| Offline Downloads | 🔜 | 🔜 | ❌ |
-| Chromecast | 🔜 | 🔜 | N/A |
-| Picture-in-Picture | 🔜 | 🔜 | N/A |
-| System Integration | ✅ | ✅ | ✅ |
-| Remote Control | Touch | KB/Mouse | 🔜 |
+| Feature            | Mobile | Desktop  | TV  |
+| ------------------ | ------ | -------- | --- |
+| Browse Library     | ✅     | ✅       | 🔜  |
+| Stream Videos      | ✅     | ✅       | 🔜  |
+| Search             | ✅     | ✅       | 🔜  |
+| Watch Progress     | ✅     | ✅       | 🔜  |
+| Offline Downloads  | 🔜     | 🔜       | ❌  |
+| Chromecast         | 🔜     | 🔜       | N/A |
+| Picture-in-Picture | 🔜     | 🔜       | N/A |
+| System Integration | ✅     | ✅       | ✅  |
+| Remote Control     | Touch  | KB/Mouse | 🔜  |
 
-Legend: ✅ Available | 🔜 Planned | ❌ Not Available
+**Legend:** ✅ Available | 🔜 Planned | ❌ Not Available
 
 ## Requesting Features
 
@@ -123,4 +129,3 @@ Need help?
 - **General questions**: [GitHub Discussions](https://github.com/DesterLib/desterlib/discussions)
 - **Bug reports**: [Client Issues](https://github.com/DesterLib/desterlib-flutter/issues)
 - **Feature requests**: [Ideas Discussion](https://github.com/DesterLib/desterlib/discussions/categories/ideas)
-

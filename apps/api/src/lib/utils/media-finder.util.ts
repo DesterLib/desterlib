@@ -126,7 +126,7 @@ const MEDIA_QUERIES = [
 
 /**
  * Find media file by ID across all media types
- * 
+ *
  * @param id - Media file ID
  * @returns Media file information
  * @throws NotFoundError if media file is not found
@@ -137,11 +137,11 @@ export async function findMediaFileById(id: string): Promise<MediaFileInfo> {
   // Try each media type in sequence
   for (const query of MEDIA_QUERIES) {
     const result = await query.finder(id);
-    
+
     // Type assertion needed because each mapper expects a specific Prisma result type
     // but TypeScript sees a union of all possible types from the array
     let mediaInfo: MediaFileInfo | null = null;
-    
+
     if (query.type === "movie") {
       mediaInfo = query.mapper(result as MovieWithMedia);
     } else if (query.type === "episode") {
@@ -162,4 +162,3 @@ export async function findMediaFileById(id: string): Promise<MediaFileInfo> {
   logger.error(`❌ Media file not found with ID: ${id}`);
   throw new NotFoundError("Media file", id);
 }
-

@@ -1,0 +1,72 @@
+{
+  "name": "@desterlib/cli",
+  "version": "0.0.1",
+  "description": "DesterLib setup CLI for easy Docker configuration",
+  "type": "module",
+  "bin": {
+    "desterlib": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "setup": "node dist/index.js",
+    "build:binary": "pnpm build && pkg dist/index.js --out-path dist/bin",
+    "build:binary:all": "pnpm build && pkg dist/index.js --targets node18-linux-x64,node18-macos-x64,node18-win-x64 --out-path dist/bin"
+  },
+  "pkg": {
+    "scripts": [
+      "dist/**/*.js"
+    ],
+    "assets": [
+      "dist/**/*"
+    ],
+    "targets": [
+      "node18-linux-x64",
+      "node18-macos-x64",
+      "node18-win-x64"
+    ]
+  },
+  "keywords": [
+    "desterlib",
+    "cli",
+    "setup",
+    "docker"
+  ],
+  "author": "DesterLib",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DesterLib/desterlib.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://desterlib.github.io/desterlib/cli/overview",
+  "bugs": {
+    "url": "https://github.com/DesterLib/desterlib/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "install.sh",
+    "install.ps1"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1",
+    "execa": "^5.1.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^8.2.10",
+    "@types/node": "^20.14.10",
+    "pkg": "^5.8.1",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.3"
+  }
+}

@@ -62,7 +62,7 @@ export function createGenreSlug(genreName: string): string {
  * Normalize genres from any provider and remove duplicates
  */
 export function normalizeGenres(
-  genres: Array<{ id: number | string; name: string }>
+  genres: Array<{ id: number | string; name: string }>,
 ): Array<{ name: string; slug: string }> {
   const uniqueGenres = new Map<string, { name: string; slug: string }>();
 

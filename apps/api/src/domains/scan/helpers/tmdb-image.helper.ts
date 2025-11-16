@@ -8,11 +8,13 @@ const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
 /**
  * Constructs a proper TMDB image URL from a path
  * Handles cases where the path might already be a full URL or be malformed with repeated prefixes
- * 
+ *
  * @param path - TMDB image path (can be partial path, full URL, or null)
  * @returns Full TMDB image URL or null
  */
-export function getTmdbImageUrl(path: string | null | undefined): string | null {
+export function getTmdbImageUrl(
+  path: string | null | undefined,
+): string | null {
   if (!path) return null;
 
   // If it's already a full URL, check if it's malformed with repeated prefixes
@@ -22,7 +24,9 @@ export function getTmdbImageUrl(path: string | null | undefined): string | null 
       // Extract the actual path part after the last occurrence of the base URL
       const lastIndex = path.lastIndexOf(TMDB_IMAGE_BASE_URL);
       if (lastIndex >= 0) {
-        const actualPath = path.substring(lastIndex + TMDB_IMAGE_BASE_URL.length);
+        const actualPath = path.substring(
+          lastIndex + TMDB_IMAGE_BASE_URL.length,
+        );
         return `${TMDB_IMAGE_BASE_URL}${actualPath}`;
       }
     }
@@ -38,12 +42,12 @@ export function getTmdbImageUrl(path: string | null | undefined): string | null 
 /**
  * Extracts just the path from a TMDB URL or returns the original path
  * Useful for storing paths in database without the full URL
- * 
+ *
  * @param fullUrlOrPath - Full TMDB URL or partial path
  * @returns Extracted path or null
  */
 export function extractTmdbPath(
-  fullUrlOrPath: string | null | undefined
+  fullUrlOrPath: string | null | undefined,
 ): string | null {
   if (!fullUrlOrPath) return null;
 
@@ -55,4 +59,3 @@ export function extractTmdbPath(
   // Otherwise return as-is (should be just a path)
   return fullUrlOrPath.startsWith("/") ? fullUrlOrPath : `/${fullUrlOrPath}`;
 }
-

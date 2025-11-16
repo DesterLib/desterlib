@@ -1,0 +1,138 @@
+---
+interface Feature {
+  title: string;
+  subtitle: string;
+  description: string;
+  icon?: string;
+  href?: string;
+}
+
+// Icon mapping function
+function getIconSvg(iconName: string): string {
+  const icons: Record<string, string> = {
+    building: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>`,
+    shield: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>`,
+    zap: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`,
+    code: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>`,
+    device: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`,
+    server: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>`,
+    terminal: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`,
+    folder: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>`,
+    rightArrow: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`,
+  };
+  return icons[iconName] || "";
+}
+
+const features: Feature[] = [
+  {
+    title: "Automatic Organization",
+    subtitle: "Intelligent media scanning",
+    description:
+      "Automatically scans your media library, organizes movies and TV shows, and enriches metadata from TMDB with artwork and details.",
+    icon: "folder",
+    href: "/getting-started/quick-start",
+  },
+  {
+    title: "Easy Setup",
+    subtitle: "One command to get started",
+    description:
+      "Get up and running in minutes with our interactive CLI tool. No manual configuration needed - just run and go.",
+    icon: "terminal",
+    href: "/cli/overview",
+  },
+  {
+    title: "Direct Streaming",
+    subtitle: "Efficient playback experience",
+    description:
+      "Stream your media files directly with HTTP range request support for seamless seeking and playback. No server-side processing needed.",
+    icon: "zap",
+    href: "/getting-started/quick-start",
+  },
+  {
+    title: "Open Source",
+    subtitle: "Built with transparency",
+    description:
+      "Fully open source with active community development. Contribute, customize, and extend DesterLib to fit your needs.",
+    icon: "code",
+    href: "https://github.com/DesterLib/desterlib",
+  },
+  {
+    title: "Multi-Platform",
+    subtitle: "Works everywhere",
+    description:
+      "Access your media library from any device. Native apps for iOS, Android, macOS, Linux, and Windows with seamless synchronization.",
+    icon: "device",
+    href: "/clients/overview",
+  },
+  {
+    title: "Self-Hosted",
+    subtitle: "Your data, your control",
+    description:
+      "Full control over your media library. Host on your own infrastructure, maintain complete privacy, and own your data.",
+    icon: "server",
+    href: "/getting-started/installation",
+  },
+];
+---
+
+<section>
+  <style>
+    .feature-grid > * {
+      border-bottom: 1px solid rgb(255 255 255 / 0.1);
+    }
+    .feature-grid > *:last-child {
+      border-bottom: none;
+    }
+    @media (min-width: 768px) {
+      .feature-grid > * {
+        border-right: 1px solid rgb(255 255 255 / 0.1);
+      }
+      .feature-grid > *:nth-child(2n) {
+        border-right: none;
+      }
+      .feature-grid > *:nth-last-child(-n + 2) {
+        border-bottom: none;
+      }
+    }
+    @media (min-width: 1024px) {
+      .feature-grid > *:nth-child(2n) {
+        border-right: 1px solid rgb(255 255 255 / 0.1);
+      }
+      .feature-grid > *:nth-child(3n) {
+        border-right: none;
+      }
+      .feature-grid > *:nth-last-child(-n + 2) {
+        border-bottom: 1px solid rgb(255 255 255 / 0.1);
+      }
+      .feature-grid > *:nth-last-child(-n + 3) {
+        border-bottom: none;
+      }
+    }
+  </style>
+  <div
+    class="feature-grid bg-white/10 grid grid-cols-1 overflow-hidden rounded-4xl md:grid-cols-2 lg:grid-cols-3 border border-white/10"
+  >
+    {
+      features.map((feature) => (
+        <div class="h-full transition-colors p-6 mt-0">
+          <h3 class="text-xl font-semibold mb-2 flex items-center gap-2">
+            {feature.icon && <Fragment set:html={getIconSvg(feature.icon)} />}
+
+            {feature.title}
+          </h3>
+          <p class="text-sm text-gray-400 mb-1">{feature.subtitle}</p>
+          <p class="text-sm text-gray-300">{feature.description}</p>
+          <a
+            href={feature.href}
+            class="text-sm group text-white/70 underline underline-offset-4 decoration-white/30 hover:text-white/90 hover:decoration-white/50 transition-colors inline-flex items-center gap-2 w-fit"
+          >
+            <span>Learn more</span>
+            <span class="group-hover:translate-x-1 transition-transform duration-300">
+              <Fragment set:html={getIconSvg("rightArrow")} />
+            </span>
+          </a>
+        </div>
+      ))
+    }
+  </div>
+</section>

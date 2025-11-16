@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { streamServices } from "./stream.services";
-import { 
-  logger, 
-  mapHostToContainerPath, 
-  asyncHandler, 
+import {
+  logger,
+  mapHostToContainerPath,
+  asyncHandler,
   NotFoundError,
-  getMimeType 
+  getMimeType,
 } from "@/lib/utils";
 import { z } from "zod";
 import { streamMediaSchema } from "./stream.schema";
@@ -57,7 +57,7 @@ export const streamControllers = {
 
       throw new NotFoundError(
         "Media file",
-        `${id}. Host path: ${hostFilePath}, Container path: ${filePath}`
+        `${id}. Host path: ${hostFilePath}, Container path: ${filePath}`,
       );
     }
 
@@ -83,7 +83,23 @@ export const streamControllers = {
     if (!range) {
       // No range requested, send entire file
       res.status(200);
-      const fileStream = createReadStream(filePath);
+      const fileStream = createReadStream(filePath, {
+        highWaterMark: 1024 * 1024, // 1MB chunks for better buffering on slow mounts
+      });
+
+      // Handle stream errors
+      fileStream.on("error", (error) => {
+        logger.error(`Stream error for ${filePath}:`, error);
+        if (!res.headersSent) {
+          res.status(500).end();
+        }
+      });
+
+      // Keep connection alive
+      res.on("close", () => {
+        fileStream.destroy();
+      });
+
       return fileStream.pipe(res);
     }
 
@@ -109,8 +125,12 @@ export const streamControllers = {
     res.setHeader("Content-Range", `bytes ${start}-${end}/${fileSize}`);
     res.setHeader("Content-Length", chunkSize);
 
-    // Create stream for the requested range
-    const fileStream = createReadStream(filePath, { start, end });
+    // Create stream for the requested range with optimized settings for remote mounts
+    const fileStream = createReadStream(filePath, {
+      start,
+      end,
+      highWaterMark: 1024 * 1024, // 1MB chunks for better buffering on slow mounts
+    });
 
     fileStream.on("error", (error) => {
       logger.error(`Stream error for ${filePath}:`, error);
@@ -121,6 +141,12 @@ export const streamControllers = {
           message: "Failed to stream file",
         });
       }
+    });
+
+    // Keep connection alive and cleanup on close
+    res.on("close", () => {
+      logger.debug(`Client disconnected, destroying stream for ${filePath}`);
+      fileStream.destroy();
     });
 
     return fileStream.pipe(res);

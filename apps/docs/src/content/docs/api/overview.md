@@ -8,10 +8,11 @@ The DesterLib API Server is the backend that powers your personal media library.
 ## What is the API Server?
 
 The API Server handles:
+
 - **Media Library Management** - Scan, organize, and index your media files
 - **Metadata Fetching** - Automatic metadata and artwork from TMDB
-- **Video Streaming** - Adaptive streaming endpoints
-- **Watch Progress** - Track viewing history and resume points
+- **Video Streaming** - Direct video streaming endpoints
+- **Search** - Search across movies and TV shows
 - **WebSocket Events** - Real-time updates for scans and library changes
 
 **Repository**: [desterlib](https://github.com/DesterLib/desterlib) (monorepo)
@@ -23,6 +24,7 @@ The API is fully documented using **Swagger/OpenAPI**. When the API server is ru
 🔗 **[http://localhost:3001/api/docs](http://localhost:3001/api/docs)**
 
 The interactive documentation allows you to:
+
 - 📖 Browse all available endpoints
 - 🧪 Test API requests directly from your browser
 - 📋 View request/response schemas
@@ -54,85 +56,152 @@ pnpm start
 
 ## API Base URL
 
-**Development:** `http://localhost:3001`  
-**Production:** Configure via `FRONTEND_URL` environment variable
+All endpoints: `http://localhost:3001`
 
 ## Authentication
 
-The API uses JWT (JSON Web Tokens) for authentication. See the Swagger docs for authentication endpoints and token management.
+**Current Status:** Authentication is not yet implemented. The API is currently open for local network access.
+
+:::note[Planned Feature]
+JWT authentication is planned and can be enabled via the `enableRouteGuards` setting. Currently disabled by default.
+:::
 
 ## Rate Limiting
 
 API requests are rate-limited to prevent abuse. Default limits:
+
 - **Window:** 15 minutes
 - **Max requests:** 100 requests per window
 
 Configure via environment variables:
+
 - `RATE_LIMIT_WINDOW_MS`
 - `RATE_LIMIT_MAX`
 
-## API Domains
+## API Endpoints
 
 The API is organized into the following domains:
 
-### 🎬 Movies
-Manage your movie collection:
-- List movies with filtering and sorting
-- Get movie details
-- Update metadata
-- Delete movies
-- Search movies
+### 🔍 `/api/v1/search`
 
-### 📺 TV Shows
-Manage TV shows, seasons, and episodes:
-- List TV shows
-- Get show, season, and episode details
-- Track episode progress
-- Manage metadata
+Search across your media library:
 
-### 📚 Library
-Overall library management:
-- Get library statistics
-- Manage media libraries
-- Configure library settings
+- Search movies and TV shows by title
+- Case-insensitive search
+- Returns enriched metadata with mesh gradient colors
 
-### 🔍 Scan
+### 🔢 `/api/v1/scan`
+
 Media scanning and indexing:
-- Trigger media scans
-- Check scan status
-- View scan history
-- Configure scan settings
 
-### 🎞️ Stream
-Video streaming endpoints:
-- Stream video content
-- Get video information
-- Manage streaming sessions
+- Trigger media scans (movies or TV shows)
+- Resume interrupted scans
+- Check scan job status
+- Cleanup stale jobs
+- Real-time progress via WebSocket
 
-### ⚙️ Settings
+### 📚 `/api/v1/library`
+
+Library management:
+
+- Get library statistics
+- List all libraries
+- Create and delete libraries
+- Get library details
+
+### 🎬 `/api/v1/movies`
+
+Movie management:
+
+- List all movies (10 most recent)
+- Get movie details by ID
+- Includes poster, backdrop, metadata
+- Returns stream URL
+
+### 📺 `/api/v1/tvshows`
+
+TV show management:
+
+- List all TV shows (10 most recent)
+- Get show details by ID
+- Season and episode information
+- Enriched metadata
+
+### 🎞️ `/api/v1/stream`
+
+Video streaming:
+
+- Stream media files directly
+- Supports range requests for seeking
+- Optimized for playback
+
+### ⚙️ `/api/v1/settings`
+
 Application settings:
+
 - Get and update settings
-- Configure TMDB integration
+- Configure TMDB API key
 - Manage system preferences
+- Enable/disable features
+
+### 📋 `/api/v1/logs`
+
+Server logs access:
+
+- View application logs
+- Monitor system activity
 
 ## WebSocket API
 
-DesterLib also provides WebSocket support for real-time updates:
+Real-time updates for scan progress and library changes:
+
+**Connection:** `ws://localhost:3001/ws`
+
+**Events:**
+
+- `scan:progress` - Scan progress updates with phases and percentages
+- `scan:complete` - Scan job completed
+- `scan:error` - Scan job failed
+
+**Example:**
 
 ```javascript
-const ws = new WebSocket('ws://localhost:3001/ws');
+const ws = new WebSocket("ws://localhost:3001/ws");
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
-  console.log('Received:', data);
+  if (data.type === "scan:progress") {
+    console.log(`${data.phase}: ${data.progress}%`);
+  }
 };
 ```
 
-See the Swagger documentation for WebSocket event types and payloads.
+## Special Features
+
+### Mesh Gradient Colors
+
+All media items include `meshGradientColors` - an array of 4 hex colors extracted from poster images for beautiful UI backgrounds:
+
+```json
+{
+  "media": {
+    "title": "The Matrix",
+    "meshGradientColors": ["#7C3AED", "#2563EB", "#EC4899", "#8B5CF6"]
+  }
+}
+```
+
+These colors are generated on-demand when fetching media and cached for performance.
 
 ## CORS Configuration
 
-The API supports CORS for cross-origin requests. Configure allowed origins via the `FRONTEND_URL` environment variable.
+The API automatically allows:
+
+- **Localhost** - All localhost origins in development
+- **Local Network** - LAN IPs (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+- **Mobile Apps** - Requests with no origin header
+
+No configuration needed for local network access!
 
 ## API Versioning
 
@@ -144,25 +213,50 @@ Example: `http://localhost:3001/api/v1/movies`
 
 ## Example Requests
 
-### Get All Movies
+### Search Media
+
+```bash
+curl "http://localhost:3001/api/v1/search?query=matrix"
+```
+
+### List Movies
 
 ```bash
 curl http://localhost:3001/api/v1/movies
 ```
 
-### Get Movie by ID
+### Get Movie Details
 
 ```bash
 curl http://localhost:3001/api/v1/movies/{movieId}
 ```
 
-### Get TV Shows
+### Trigger Scan
 
 ```bash
-curl http://localhost:3001/api/v1/tvshows
+curl -X POST http://localhost:3001/api/v1/scan/path \
+  -H "Content-Type: application/json" \
+  -d '{"path": "/media/movies", "mediaType": "movie"}'
 ```
 
-For complete endpoint documentation with all parameters, request/response schemas, and interactive testing, visit the **[Swagger Documentation](http://localhost:3001/api/docs)** when your API server is running.
+### Get Libraries
+
+```bash
+curl http://localhost:3001/api/v1/library
+```
+
+## Complete API Reference
+
+For full endpoint documentation with all parameters, request/response schemas, and interactive testing:
+
+**[Swagger Documentation →](http://localhost:3001/api/docs)**
+
+The Swagger UI includes:
+
+- Complete API schema
+- Request/response examples
+- Try it out functionality
+- Authentication details (when implemented)
 
 ## Client Libraries
 
@@ -177,4 +271,3 @@ Currently, the DesterLib Flutter app uses the API directly. If you're building y
 - 🐛 [Report API Issues](https://github.com/DesterLib/desterlib/issues)
 - 💬 [Ask Questions](https://github.com/DesterLib/desterlib/discussions)
 - 📖 [View API Source](https://github.com/DesterLib/desterlib/tree/main/apps/api/src)
-

@@ -1,469 +1,241 @@
 ---
-title: Versioning Guide
-description: How to track changes and manage releases across all DesterLib projects
+title: Version Management
+description: How DesterLib manages versions across the API and clients
 ---
 
-DesterLib uses different versioning tools for different projects, but all follow semantic versioning and conventional commits.
+DesterLib uses **centralized version management** with strict version matching between the API and all client applications.
 
-## Overview by Project
+## Overview
 
-### API Server (Node.js/TypeScript)
-Uses **[Changesets](https://github.com/changesets/changesets)** to:
-- Track changes across monorepo packages
-- Generate changelogs automatically
-- Version packages based on changes
-- Simplify the release process
+All versions are managed from a single source of truth: the root `package.json`. A sync script automatically propagates version changes to all dependent projects.
 
-### Client Applications (Flutter/Dart)
-Uses **conventional-changelog** to:
-- Generate changelogs from commit history
-- Automate version bumping in `pubspec.yaml`
-- Create releases with automated builds
-- Maintain semantic versioning
+**Current Version:** `0.1.0`
 
----
+## Version Format
 
-## Semantic Versioning
-
-All projects follow [Semantic Versioning 2.0.0](https://semver.org/):
+We follow [Semantic Versioning 2.0.0](https://semver.org/):
 
 ```
 MAJOR.MINOR.PATCH
-
-API Server:     1.2.3
-Client (Flutter): 1.2.3+4  (includes build number)
 ```
 
-| Version | When to Bump | Example |
-|---------|-------------|---------|
-| **MAJOR** | Breaking changes | 0.9.0 → 1.0.0 |
-| **MINOR** | New features (backward-compatible) | 1.0.0 → 1.1.0 |
-| **PATCH** | Bug fixes | 1.1.0 → 1.1.1 |
-| **BUILD** | Flutter only - build number | 1.1.0+1 → 1.1.0+2 |
+- **MAJOR**: Incompatible API changes
+- **MINOR**: Backward-compatible functionality additions
+- **PATCH**: Backward-compatible bug fixes
 
----
+## Version Matching Rules
 
-## API Server Versioning (Changesets)
+The system enforces **strict semantic versioning**:
 
-Each significant change should have an associated changeset file that describes what changed and the impact level (patch, minor, or major).
+- ✅ **Major.Minor** must match exactly
+- ✅ **Patch** can differ (backwards compatible)
 
-## Branching Strategy
+### Compatibility Examples
 
-:::note[Alpha Development Workflow]
-During alpha development, we use a simplified workflow. Once we reach stable releases (v1.0.0), we'll introduce a `dev` branch for staging.
-:::
+| Client | API   | Compatible? | Reason                 |
+| ------ | ----- | ----------- | ---------------------- |
+| 0.1.0  | 0.1.0 | ✅ Yes      | Exact match            |
+| 0.1.0  | 0.1.5 | ✅ Yes      | Patch difference OK    |
+| 0.1.0  | 0.2.0 | ❌ No       | Minor version mismatch |
+| 0.1.0  | 1.0.0 | ❌ No       | Major version mismatch |
 
-- **main** - Production code, auto-deploys docs, tagged releases
-- **feat/** - Feature branches created from `main`
-- **fix/** - Bug fix branches created from `main`
-- **chore/** - Maintenance branches created from `main`
-- **docs/** - Documentation branches created from `main`
+## Updating Versions
 
-## Making Changes
-
-### 1. Create a feature branch
+### Quick Process
 
 ```bash
-git checkout main
-git pull origin main
-git checkout -b feat/your-feature-name
-```
-
-### 2. Make your changes
-
-Write your code, tests, and documentation.
-
-### 3. Commit using conventional commits
-
-```bash
-pnpm commit
-```
-
-This will guide you through creating a properly formatted commit message.
-
-### 4. Create a changeset
-
-See the [Creating a Changeset](#creating-a-changeset) section below.
-
-## Creating a Changeset
-
-After making changes that affect users, create a changeset:
-
-```bash
+# 1. Create a changeset for your changes
 pnpm changeset
-```
 
-Or:
-```bash
-pnpm changeset:add
-```
+# 2. Commit changes and changeset
+pnpm commit
+git push origin dev
 
-This will prompt you to:
-1. **Select packages** that were changed
-2. **Choose bump type** (patch, minor, or major) for each package
-3. **Write a summary** of the changes (this will appear in the changelog)
-
-### Example Changeset Flow
-
-```bash
-$ pnpm changeset
-
-🦋  Which packages would you like to include?
-◉ api
-◯ @repo/eslint-config
-◯ @repo/typescript-config
-
-🦋  Which packages should have a major bump?
-◯ api
-
-🦋  Which packages should have a minor bump?
-◉ api
-
-🦋  Please enter a summary for this change:
-Add WebSocket support for real-time notifications
-
-✔ Changeset added! - see .changeset/random-words-here.md
-```
-
-### When to Create Changesets
-
-**Create a changeset for:**
-- ✅ New features
-- ✅ Bug fixes
-- ✅ Breaking changes
-- ✅ Performance improvements
-- ✅ Dependency updates that affect users
-
-**Skip changesets for:**
-- ❌ Documentation updates
-- ❌ Internal refactoring (no API changes)
-- ❌ Test additions/updates
-- ❌ CI/CD changes
-
-## Version Bump Types
-
-Follow [Semantic Versioning](https://semver.org/) (SemVer):
-
-### Patch (0.0.X)
-
-Bug fixes and minor changes that don't affect the API:
-- Bug fixes
-- Documentation updates
-- Internal refactoring
-- Performance improvements (non-breaking)
-
-**Example:** `1.2.3` → `1.2.4`
-
-### Minor (0.X.0)
-
-New features that are backward-compatible:
-- New features
-- New API endpoints
-- New optional parameters
-- Deprecations (with backward compatibility)
-
-**Example:** `1.2.3` → `1.3.0`
-
-### Major (X.0.0)
-
-Breaking changes that require users to modify their code:
-- Breaking API changes
-- Removed features
-- Changed behavior of existing features
-- Required parameter changes
-
-**Example:** `1.2.3` → `2.0.0`
-
-## Versioning Packages
-
-When you're ready to create a new version:
-
-### 1. Check changeset status
-
-```bash
-pnpm changeset:status
-```
-
-### 2. Apply version bumps
-
-```bash
+# 3. After merge, version packages (maintainers only)
 pnpm version
+
+# 4. Version bump generates package CHANGELOG.md files automatically
 ```
 
-This command will:
-- Read all changeset files in `.changeset/`
-- Bump package versions according to semantic versioning
-- Update `CHANGELOG.md` files
-- Delete consumed changeset files
-- Update lockfile
+### What Gets Synced
 
-### 3. Review the changes
+The `pnpm version:sync` script automatically updates:
 
-- Check updated `package.json` files
-- Review generated `CHANGELOG.md` entries
-- Verify version numbers are correct
+- ✅ `apps/api/package.json` - API version
+- ✅ `../desterlib-flutter/pubspec.yaml` - Flutter app version
+- ✅ `../desterlib-flutter/lib/api/pubspec.yaml` - Generated client version
+- ✅ `../desterlib-flutter/lib/core/config/api_config.dart` - Client version constant
 
-### 4. Commit version changes
+### Changelog Management
 
-```bash
-git add .
-git commit -m "chore: version packages"
-git push
-```
+DesterLib uses [Changesets](https://github.com/changesets/changesets) for automatic changelog generation:
 
-## Publishing Releases
+- 📝 Package changelogs are auto-generated in:
+  - `apps/api/CHANGELOG.md` - API changes
+  - `packages/cli/CHANGELOG.md` - CLI changes
+  - `apps/docs/CHANGELOG.md` - Documentation changes
+- 📝 Aggregated changelog synced to docs site
+- 📝 Use `pnpm changeset` to document your changes
 
-### Manual Release
+## How It Works
 
-1. Merge to main:
-   ```bash
-   # Not needed in alpha - PRs merge directly to main
-   # In the future with dev branch:
-   # git checkout main
-   # git merge dev
+### API Side
+
+1. **Version Exposure**
+   - `/health` endpoint returns: `{ status, version, timestamp, uptime }`
+   - All responses include `X-API-Version` header
+   - Swagger docs display current version
+
+2. **Version Validation**
+   - Middleware checks `X-Client-Version` header on all `/api/v1` requests
+   - Returns HTTP 426 (Upgrade Required) if incompatible
+   - Provides clear error message with upgrade instructions
+
+3. **Compatibility Check**
+   ```typescript
+   // Major and minor must match exactly
+   client.major === api.major && client.minor === api.minor;
    ```
 
-2. Build and publish:
-   ```bash
-   pnpm release
-   ```
+### Client Side
 
-3. Push with tags:
-   ```bash
-   git push --follow-tags
-   ```
+1. **Version Declaration**
+   - All requests include `X-Client-Version: 0.1.0` header
+   - Version constant synced from root package.json
 
-### Automated Release (Recommended)
+2. **Version Detection**
+   - Dio interceptor reads `X-API-Version` from responses
+   - Automatically updates version provider
+   - Handles HTTP 426 errors gracefully
 
-GitHub Actions automatically handles releases:
+3. **User Experience**
+   - Shows friendly error when version mismatch occurs
+   - Suggests updating the app
+   - Provides clear instructions
 
-1. Merge PR to `main` that contains version bump commits
-2. GitHub Action automatically:
-   - Builds packages
-   - Publishes to npm (if configured)
-   - Creates GitHub releases
-   - Tags commits
+## Error Handling
 
-## Workflow Examples
+### API Response (HTTP 426)
 
-### Example 1: Adding a Feature
+When versions are incompatible:
+
+```json
+{
+  "success": false,
+  "error": "Version mismatch",
+  "message": "Client version 0.1.0 is not compatible with API version 0.2.0. Please update your client.",
+  "data": {
+    "clientVersion": "0.1.0",
+    "apiVersion": "0.2.0",
+    "upgradeRequired": true
+  }
+}
+```
+
+### Client Behavior
+
+The Flutter client:
+
+1. Detects version mismatch (HTTP 426)
+2. Updates version provider
+3. Shows user-friendly error
+4. Suggests app update
+
+## Version Sync Script
+
+### Usage
+
+Check and sync versions:
 
 ```bash
-# 1. Create feature branch
-git checkout main
-git pull origin main
-git checkout -b feat/add-user-search
-
-# 2. Make changes
-# ... code changes ...
-
-# 3. Commit changes
-git add .
-pnpm commit
-# Select: feat
-# Scope: api
-# Description: add user search endpoint
-
-# 4. Create changeset
-pnpm changeset
-# Select: api
-# Bump: minor
-# Summary: Add user search endpoint with filters
-
-# 5. Commit changeset
-git add .
-git commit -m "chore: add changeset for user search"
-
-# 6. Push and create PR
-git push -u origin feat/add-user-search
+pnpm version:sync
 ```
 
-### Example 2: Fixing a Bug
+### Output Example
 
 ```bash
-# 1. Create fix branch
-git checkout main
-git pull origin main
-git checkout -b fix/authentication-error
+📦 Syncing version: 0.1.0
+──────────────────────────────────────────────────
+✅ Updated apps/api/package.json: 0.1.0
+✅ Updated desterlib-flutter/pubspec.yaml: 0.1.0
+✅ Updated desterlib-flutter/lib/api/pubspec.yaml: 0.1.0
+✅ Updated desterlib-flutter/lib/core/config/api_config.dart: 0.1.0
 
-# 2. Fix the bug
-# ... code changes ...
-
-# 3. Commit fix
-git add .
-pnpm commit
-# Select: fix
-# Scope: api
-# Description: resolve JWT token validation error
-
-# 4. Create changeset
-pnpm changeset
-# Select: api
-# Bump: patch
-# Summary: Fix JWT token validation error causing 401s
-
-# 5. Commit changeset
-git add .
-git commit -m "chore: add changeset for auth fix"
-
-# 6. Push and create PR
-git push -u origin fix/authentication-error
+──────────────────────────────────────────────────
+✅ Successfully updated 4 file(s)
 ```
 
-### Example 3: Breaking Change
+## API Route Version vs Semantic Version
 
-```bash
-# 1. Create feature branch
-git checkout main
-git checkout -b feat/api-v2-breaking
+Don't confuse these two concepts:
 
-# 2. Make breaking changes
-# ... code changes ...
+- **API Route Version:** `v1` in `/api/v1/...` - Rarely changes, represents API schema version
+- **Semantic Version:** `0.1.0` - Changes with each release, represents application version
 
-# 3. Commit with breaking change marker
-git add .
-pnpm commit
-# Select: feat
-# Scope: api
-# Description: redesign authentication API
-# Breaking change?: Yes
+In `api_config.dart`:
 
-# 4. Create changeset with major bump
-pnpm changeset
-# Select: api
-# Bump: major
-# Summary: |
-#   BREAKING CHANGE: Redesign authentication API
-#   
-#   - Replace /auth/login with OAuth2 flow
-#   - Remove /auth/register endpoint
-#   - Update response format
-
-# 5. Commit and push
-git add .
-git commit -m "chore: add changeset for breaking change"
-git push -u origin feat/api-v2-breaking
+```dart
+static const String apiRouteVersion = 'v1';     // API endpoint version
+static const String clientVersion = '0.1.0';    // Semantic version
 ```
 
----
+## Development
 
-## Client Versioning (Flutter)
+### Skipping Version Checks
 
-The Flutter client uses a simpler, automated workflow with `conventional-changelog`.
+For local development, you can temporarily disable validation:
 
-### Quick Workflow
+1. Comment out `validateVersion` middleware in `setup.middleware.ts`
+2. Or omit the `X-Client-Version` header (logs warning but allows request)
 
-```bash
-# 1. Work on feature branch
-git checkout -b feat/subtitle-support
-# ... make changes ...
-npm run commit  # Conventional commits
+### Testing Version Mismatches
 
-# 2. Create PR, get it merged to main
+To test the version mismatch flow:
 
-# 3. After merge, create release from main
-git checkout main
-git pull origin main
-npm run release  # Interactive script
-```
-
-### Release Script
-
-The `npm run release` command:
-1. ✅ Checks you're on `main` branch
-2. ✅ Shows current version
-3. ✅ Prompts for bump type (patch/minor/major/build)
-4. ✅ Updates `pubspec.yaml`
-5. ✅ Generates changelog from commits
-6. ✅ Creates release commit and tag
-7. ✅ Prompts you to push
-
-### Version Format
-
-```yaml
-version: 1.2.3+4
-#         │ │ │ │
-#         │ │ │ └─ Build number (auto-incremented)
-#         │ │ └─── PATCH
-#         │ └───── MINOR
-#         └─────── MAJOR
-```
-
-### Automated Builds
-
-When you push a tag, GitHub Actions automatically:
-- Creates GitHub Release with changelog
-- Builds for all platforms (Android, iOS, macOS, Linux, Windows)
-- Attaches builds to the release
-
-### Example: Feature Release
-
-```bash
-# After PRs are merged to main
-git checkout main
-git pull origin main
-
-# Run release script
-npm run release
-
-# Interactive prompts:
-# Current version: 0.1.5+3
-# Select version bump type:
-#   1) Patch (bug fixes)         - 0.1.5 → 0.1.6+1
-#   2) Minor (new features)      - 0.1.5 → 0.2.0+1
-#   3) Major (breaking changes)  - 0.1.5 → 1.0.0+1
-# 
-# Enter choice: 2
-
-# Changelog is generated from commits:
-# ## [0.2.0] - 2024-10-27
-# 
-# ### Features
-# * **player:** add subtitle support
-# * **ui:** add dark mode theme
-# 
-# ### Bug Fixes
-# * **auth:** resolve token refresh
-
-# Confirm and push
-git push origin main --tags
-
-# Check: https://github.com/DesterLib/desterlib-flutter/releases
-```
-
-### Client Commands Reference
-
-| Command | Description |
-|---------|-------------|
-| `npm run commit` | Create conventional commit |
-| `npm run release` | Interactive release (must be on main) |
-| `npm run version:bump patch` | Manual version bump |
-| `npm run changelog:generate` | Generate changelog only |
-
----
-
-## API Commands Reference
-
-| Command | Description |
-|---------|-------------|
-| `pnpm changeset` | Create a new changeset |
-| `pnpm changeset:add` | Alias for `pnpm changeset` |
-| `pnpm changeset:status` | Check which packages will be versioned |
-| `pnpm version` | Apply version bumps and update changelogs |
-| `pnpm release` | Build and publish packages |
+1. Change `clientVersion` in `api_config.dart` to a different version
+2. Make an API request
+3. Verify HTTP 426 response
+4. Verify client handles error appropriately
 
 ## Best Practices
 
-1. **Write clear changeset summaries** - They become your changelog entries
-2. **Create changesets per feature** - Don't bundle multiple features
-3. **Version frequently** - Don't let changesets pile up
-4. **Review generated CHANGELOGs** - Make sure they're clear for users
-5. **Use conventional commits** - Makes history easier to understand
+1. **Create changesets** - Always run `pnpm changeset` for user-facing changes
+2. **Use conventional commits** - Helps with changelog generation
+3. **Test thoroughly** - Test both compatible and incompatible scenarios
+4. **Clear communication** - Inform users about breaking changes
+5. **Review generated changelogs** - Verify changesets generate correct entries
 
-## Additional Resources
+## Troubleshooting
 
-- [Changesets Documentation](https://github.com/changesets/changesets)
-- [Semantic Versioning](https://semver.org/)
-- [Conventional Commits](https://www.conventionalcommits.org/)
-- [Quick Reference](/development/quick-reference/) for a shorter guide
+### Versions Out of Sync
 
+```bash
+# Fix it
+pnpm version:sync
+```
+
+### Script Not Found
+
+```bash
+# Make executable
+chmod +x scripts/sync-version.js
+
+# Or run directly
+node scripts/sync-version.js
+```
+
+### Manual Verification
+
+Check these files if sync seems incorrect:
+
+1. `package.json` - Root version (source of truth)
+2. `apps/api/package.json` - Should match root
+3. `desterlib-flutter/pubspec.yaml` - Should match root
+4. `desterlib-flutter/lib/api/pubspec.yaml` - Should match root
+5. `desterlib-flutter/lib/core/config/api_config.dart` - `clientVersion` should match root
+
+## Related Documentation
+
+- [Contributing Guide](/development/contributing)
+- [Commit Guidelines](/development/commit-guidelines)
+- [API Documentation](/api/overview)

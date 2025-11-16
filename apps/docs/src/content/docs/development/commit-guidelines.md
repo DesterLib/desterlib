@@ -29,25 +29,26 @@ This will guide you through creating a properly formatted commit message.
 
 The type must be one of the following:
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `feat` | ✨ A new feature | `feat(api): add user search endpoint` |
-| `fix` | 🐛 A bug fix | `fix(auth): resolve JWT validation error` |
-| `docs` | 📝 Documentation changes | `docs: update installation guide` |
-| `style` | 💄 Code style changes | `style(api): format with prettier` |
-| `refactor` | ♻️ Code refactoring | `refactor(db): simplify query logic` |
-| `perf` | ⚡ Performance improvements | `perf(stream): optimize video buffering` |
-| `test` | ✅ Adding or updating tests | `test(api): add auth integration tests` |
-| `build` | 📦 Build system changes | `build: update dependencies` |
-| `ci` | 👷 CI/CD changes | `ci: add automated release workflow` |
-| `chore` | 🔧 Other changes | `chore: update gitignore` |
-| `revert` | ⏪ Revert a commit | `revert: revert "feat: add feature"` |
+| Type       | Description                 | Example                                   |
+| ---------- | --------------------------- | ----------------------------------------- |
+| `feat`     | ✨ A new feature            | `feat(api): add user search endpoint`     |
+| `fix`      | 🐛 A bug fix                | `fix(auth): resolve JWT validation error` |
+| `docs`     | 📝 Documentation changes    | `docs: update installation guide`         |
+| `style`    | 💄 Code style changes       | `style(api): format with prettier`        |
+| `refactor` | ♻️ Code refactoring         | `refactor(db): simplify query logic`      |
+| `perf`     | ⚡ Performance improvements | `perf(stream): optimize video buffering`  |
+| `test`     | ✅ Adding or updating tests | `test(api): add auth integration tests`   |
+| `build`    | 📦 Build system changes     | `build: update dependencies`              |
+| `ci`       | 👷 CI/CD changes            | `ci: add automated release workflow`      |
+| `chore`    | 🔧 Other changes            | `chore: update gitignore`                 |
+| `revert`   | ⏪ Revert a commit          | `revert: revert "feat: add feature"`      |
 
 ### Scope
 
 The scope is optional and represents the area of the codebase affected:
 
 **Available scopes:**
+
 - `api` - Backend API
 - `database` - Database changes
 - `websocket` - WebSocket functionality
@@ -78,6 +79,7 @@ The subject contains a succinct description of the change:
 - Keep it under 100 characters
 
 **Good examples:**
+
 ```
 add user authentication
 fix memory leak in stream handler
@@ -85,6 +87,7 @@ update API documentation
 ```
 
 **Bad examples:**
+
 ```
 Added user authentication (past tense)
 Fix Memory Leak (capitalized)
@@ -94,6 +97,7 @@ updated API documentation. (period at end)
 ### Body
 
 The body is optional and should include:
+
 - Motivation for the change
 - Contrast with previous behavior
 - Implementation details (if complex)
@@ -103,6 +107,7 @@ Use `|` to break lines in the interactive commit tool.
 ### Footer
 
 The footer is optional and should include:
+
 - Breaking changes (prefixed with `BREAKING CHANGE:`)
 - Issue references (e.g., `Closes #123`)
 
@@ -111,11 +116,13 @@ The footer is optional and should include:
 Breaking changes must be indicated in two ways:
 
 1. Add `!` after the type/scope:
+
    ```
    feat(api)!: redesign authentication API
    ```
 
 2. Add `BREAKING CHANGE:` in the footer:
+
    ```
    feat(api)!: redesign authentication API
 
@@ -240,4 +247,3 @@ Commits are automatically validated using commitlint. If your commit message doe
 - [Commitizen](https://github.com/commitizen/cz-cli)
 - [Commitlint](https://commitlint.js.org/)
 - [Versioning Guide](/development/versioning/)
-

@@ -16,4 +16,3 @@ export const searchControllers = {
     return sendSuccess(res, results);
   }),
 };
-

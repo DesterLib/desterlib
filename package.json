@@ -1,22 +1,28 @@
 {
   "name": "desterlib",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md}\" --ignore-path .gitignore",
     "check-types": "turbo run check-types",
     "commit": "TERM=dumb git-cz",
     "commit:retry": "TERM=dumb git-cz --retry",
     "prepare": "husky",
     "changeset": "changeset",
-    "changeset:add": "changeset add",
     "changeset:status": "changeset status",
-    "version": "changeset version && pnpm install --lockfile-only",
+    "version": "changeset version && pnpm install --lockfile-only && pnpm changelog:sync",
+    "version:sync": "node scripts/sync-version.js",
+    "changelog:sync": "node scripts/sync-changelog.js",
+    "verify:versioning": "node scripts/verify-versioning.js",
+    "pre-pr": "node scripts/pre-pr-check.js",
     "release": "pnpm build && changeset publish",
     "pr:create": "bash scripts/create-pr.sh",
-    "pr:create:main": "bash scripts/create-pr.sh main"
+    "pr:create:main": "bash scripts/create-pr.sh main",
+    "setup:docker": "tsx packages/cli/src/index.ts"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
@@ -28,6 +34,7 @@
     "cz-customizable": "^7.5.1",
     "husky": "^9.1.7",
     "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
     "turbo": "^2.5.8",
     "typescript": "5.9.2"
   },
@@ -39,5 +46,10 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "pnpm": {
+    "overrides": {
+      "lightningcss": "^1.30.2"
+    }
   }
 }

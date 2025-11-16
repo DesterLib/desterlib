@@ -54,8 +54,14 @@ export function extractIds(name: string): ExtractedIds {
     // Remove release group tags at start [GroupName]
     .replace(/^\[[\w\s-]+\]\s*/i, "")
     // Remove quality/codec info in brackets/parentheses (1080p, AV1, BD, etc.)
-    .replace(/\([^)]*(?:1080p|720p|480p|2160p|4K|AV1|x264|x265|HEVC|BD|BluRay|WEB-?DL|WEBRip)[^)]*\)/gi, "")
-    .replace(/\[[^\]]*(?:1080p|720p|480p|2160p|4K|AV1|x264|x265|HEVC|BD|BluRay|WEB-?DL|WEBRip)[^\]]*\]/gi, "")
+    .replace(
+      /\([^)]*(?:1080p|720p|480p|2160p|4K|AV1|x264|x265|HEVC|BD|BluRay|WEB-?DL|WEBRip)[^)]*\)/gi,
+      "",
+    )
+    .replace(
+      /\[[^\]]*(?:1080p|720p|480p|2160p|4K|AV1|x264|x265|HEVC|BD|BluRay|WEB-?DL|WEBRip)[^\]]*\]/gi,
+      "",
+    )
     // Remove hash codes in brackets [A1B2C3D4]
     .replace(/\[[0-9A-F]{8}\]/gi, "")
     // Remove episode tags like (OAD1), (OVA), (Special), etc.
@@ -82,7 +88,10 @@ export function extractIds(name: string): ExtractedIds {
     // Remove resolution and quality (2160p, 1080p, 720p, 480p, 4K, UHD, HD, SD, etc.)
     .replace(/\b(2160p|1080p|1440p|720p|480p|360p|4K|8K|UHD|FHD|HD|SD)\b/gi, "")
     // Remove source/release type (BluRay, BDRip, WEB-DL, WEBRip, HDTV, DVDRip, etc.)
-    .replace(/\b(BluRay|Blu-?Ray|BDRip|BD|BRRip|WEB-?DL|WEBRip|WEB|HDTV|DVDRip|DVD|AMZN|ATVP|MA|DS4K|35mm|IMAX)\b/gi, "")
+    .replace(
+      /\b(BluRay|Blu-?Ray|BDRip|BD|BRRip|WEB-?DL|WEBRip|WEB|HDTV|DVDRip|DVD|AMZN|ATVP|MA|DS4K|35mm|IMAX)\b/gi,
+      "",
+    )
     // Remove video codecs (H.264, H.265, x264, x265, AV1, HEVC, etc.)
     .replace(/\b(H\.?26[45]|x26[45]|AV1|HEVC|AVC|10bit|8bit)\b/gi, "")
     // Remove audio codecs and channels - MUST handle both "5.1" and "5 1" formats (after dot-to-space conversion)
@@ -93,7 +102,10 @@ export function extractIds(name: string): ExtractedIds {
     // Remove HDR/color info (HDR, HDR10, DV, Dolby Vision, SDR, etc.)
     .replace(/\b(HDR10\+?|HDR|DV|Dolby\s*Vision|SDR)\b/gi, "")
     // Remove remaster/cut/version info (REMASTERED, EXTENDED, IMAX, Director's Cut, etc.)
-    .replace(/\b(REMASTERED|EXTENDED|UNRATED|THEATRICAL|Director'?s?\s*Cut|Open\s*Matte|The\s*Super\s*Duper\s*Cut|PROPER)\b/gi, "")
+    .replace(
+      /\b(REMASTERED|EXTENDED|UNRATED|THEATRICAL|Director'?s?\s*Cut|Open\s*Matte|The\s*Super\s*Duper\s*Cut|PROPER)\b/gi,
+      "",
+    )
     // Remove media type keywords
     .replace(/\b(bluray|brrip|webrip|web)\b/gi, "")
     // Remove common tags and metadata
@@ -107,12 +119,12 @@ export function extractIds(name: string): ExtractedIds {
     // Remove multiple spaces
     .replace(/\s+/g, " ")
     .trim();
-    
+
   // Final cleanup: Remove release group tags at the end
   // They're usually all caps or mixed case names after a dash or space at the end
   // Examples: KIMJI, RAV1NE, PSA, FLUX, CRUCiBLE, Ralphy, etc.
   cleanTitle = cleanTitle.replace(/\s+[A-Z][A-Za-z0-9]*$/i, "").trim();
-  
+
   // Fix common movie title patterns that may have been mangled
   cleanTitle = cleanTitle
     // Fix possessives that got mangled (Sorcerer s -> Sorcerer's)

@@ -32,6 +32,7 @@ pnpm release
 - ⚡ Performance (no breaking change)
 
 **Example:**
+
 ```
 🦋  Summary: Fix authentication token expiry bug
 🦋  Bump: patch
@@ -45,6 +46,7 @@ pnpm release
 - 📦 New optional parameters
 
 **Example:**
+
 ```
 🦋  Summary: Add user profile image upload endpoint
 🦋  Bump: minor
@@ -58,6 +60,7 @@ pnpm release
 - ⚠️ Required parameter changes
 
 **Example:**
+
 ```
 🦋  Summary: Replace REST auth with OAuth2 (BREAKING)
 🦋  Bump: major
@@ -69,6 +72,10 @@ pnpm release
 Make Changes → Create Changeset → Commit & Push → Create PR to main
     → Review & Merge → Auto Deploy (docs) → Version Bump → Release
 ```
+
+:::tip[Complete Workflow]
+See the [Development Workflow](/development/workflow/) for the complete step-by-step guide.
+:::
 
 ## Example Changeset File
 
@@ -104,18 +111,21 @@ BREAKING CHANGE: Replace /auth/login with OAuth2
 ## PR Workflow
 
 1. **Create feature branch from `main`**
+
    ```bash
    git checkout main && git pull
    git checkout -b feat/my-feature
    ```
 
 2. **Make changes and commit**
+
    ```bash
    git add .
    pnpm commit
    ```
 
 3. **Add changeset**
+
    ```bash
    pnpm changeset
    git add .changeset
@@ -123,11 +133,13 @@ BREAKING CHANGE: Replace /auth/login with OAuth2
    ```
 
 4. **Push and create PR**
+
    ```bash
    git push -u origin feat/my-feature
    ```
 
 5. **After merge to main**
+
    ```bash
    # Docs auto-deploy via GitHub Actions
    # Version bump via automated PR when ready
@@ -177,6 +189,7 @@ cat .changeset/some-changeset.md
 ### Undo a Changeset
 
 Simply delete the changeset file:
+
 ```bash
 rm .changeset/some-changeset.md
 ```
@@ -187,4 +200,3 @@ rm .changeset/some-changeset.md
 - 📚 [Commit Guidelines](/development/commit-guidelines/)
 - 🔗 [Changesets Docs](https://github.com/changesets/changesets)
 - 🔗 [Semantic Versioning](https://semver.org/)
-

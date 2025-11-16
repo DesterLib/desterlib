@@ -68,6 +68,7 @@ Domains represent distinct features or business areas:
 - **settings/** - User and system settings
 
 Each domain typically contains:
+
 - Controllers (route handlers)
 - Services (business logic)
 - Models/Types (data structures)
@@ -86,6 +87,7 @@ The `lib/` directory contains code shared across domains:
 #### Core
 
 The `core/` directory contains:
+
 - Application configuration
 - Service initialization
 - Dependency injection setup
@@ -117,6 +119,7 @@ apps/docs/
 Location: `packages/eslint-config/`
 
 Provides shared ESLint configurations:
+
 - `base.js` - Base rules for all projects
 - `next.js` - Next.js specific rules
 - `react-internal.js` - React component rules
@@ -126,6 +129,7 @@ Provides shared ESLint configurations:
 Location: `packages/typescript-config/`
 
 Provides shared TypeScript configurations:
+
 - `base.json` - Base TypeScript config
 - `nextjs.json` - Next.js specific config
 - `react-library.json` - React library config
@@ -210,10 +214,10 @@ Use TypeScript path aliases (configured in `tsconfig.json`):
 
 ```typescript
 // Instead of:
-import { db } from '../../../lib/database/client';
+import { db } from "../../../lib/database/client";
 
 // Use:
-import { db } from '@/lib/database/client';
+import { db } from "@/lib/database/client";
 ```
 
 ## Build System
@@ -245,4 +249,3 @@ pnpm dev
 - [Versioning Guide](/development/versioning/) - Learn how to contribute
 - [Quick Reference](/development/quick-reference/) - Common commands
 - [Commit Guidelines](/development/commit-guidelines/) - Commit message format
-

@@ -27,7 +27,7 @@ export const settingsControllers = {
       res,
       updatedSettings,
       200,
-      "Settings updated successfully"
+      "Settings updated successfully",
     );
   }),
 

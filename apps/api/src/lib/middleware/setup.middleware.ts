@@ -5,12 +5,32 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import os from "os";
 import { config } from "../../core/config/env";
-import { sanitizeInput } from ".";
+import { sanitizeInput, addVersionHeader, validateVersion } from ".";
+import { logger } from "../utils";
 
 const limiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
   max: config.rateLimitMax,
   message: "Too many requests from this IP, please try again later.",
+  // Skip rate limiting for localhost, scan routes, stream routes, and WebSocket
+  skip: (req) => {
+    // Skip for localhost/127.0.0.1
+    const isLocalhost =
+      req.ip === "127.0.0.1" ||
+      req.ip === "::1" ||
+      req.ip === "localhost" ||
+      req.hostname === "localhost" ||
+      req.hostname === "127.0.0.1";
+
+    if (isLocalhost) return true;
+
+    // Skip for specific routes
+    return (
+      req.path.startsWith("/api/v1/scan") ||
+      req.path.startsWith("/api/v1/stream") ||
+      req.path.startsWith("/ws") // WebSocket
+    );
+  },
 });
 
 // Get local machine IP address for LAN access
@@ -32,6 +52,18 @@ function getLocalIpAddress(): string {
 const localIp = getLocalIpAddress();
 
 export function setupMiddleware(app: express.Application) {
+  // HTTP Request logging (skip health checks and websocket)
+  app.use((req, res, next) => {
+    if (
+      req.path !== "/health" &&
+      req.path !== "/ws" &&
+      !req.path.includes("/api/docs")
+    ) {
+      logger.debug(`${req.method} ${req.path}`);
+    }
+    next();
+  });
+
   // Only trust loopback proxies to satisfy express-rate-limit validation
   app.set("trust proxy", "loopback");
   app.use(
@@ -39,7 +71,7 @@ export function setupMiddleware(app: express.Application) {
       // Disable HSTS in development to prevent HTTPS forcing
       hsts: config.nodeEnv === "production" ? undefined : false,
       contentSecurityPolicy: false, // Disable CSP to prevent upgrade-insecure-requests
-    })
+    }),
   );
   app.use(compression());
   app.use(limiter);
@@ -72,7 +104,7 @@ export function setupMiddleware(app: express.Application) {
         // Allow LAN IP access in all environments (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
         const isLocalNetwork =
           /^https?:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/.test(
-            origin
+            origin,
           );
         if (isLocalNetwork) {
           return callback(null, true);
@@ -87,9 +119,21 @@ export function setupMiddleware(app: express.Application) {
       credentials: true,
       optionsSuccessStatus: 200,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    })
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "X-Client-Version",
+      ],
+      exposedHeaders: ["X-API-Version"],
+    }),
   );
+
+  // Add API version to response headers
+  app.use(addVersionHeader);
+
+  // Validate client version (only for /api/v1 routes)
+  app.use("/api/v1", validateVersion);
 
   // JSON parsing middleware - skip for static assets and image/media files
   app.use((req, res, next) => {
@@ -127,6 +171,6 @@ export function setupMiddleware(app: express.Application) {
         trimWhitespace: true,
         maxLength: 50000, // Higher limit for global middleware
       },
-    })
+    }),
   );
 }

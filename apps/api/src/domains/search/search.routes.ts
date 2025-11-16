@@ -86,6 +86,12 @@ const router: Router = express.Router();
  *                               backdropUrl:
  *                                 type: string
  *                                 nullable: true
+ *                               meshGradientColors:
+ *                                 type: array
+ *                                 items:
+ *                                   type: string
+ *                                 description: Hex color strings for mesh gradient (4 corners)
+ *                                 example: ["#7C3AED", "#2563EB", "#EC4899", "#8B5CF6"]
  *                               releaseDate:
  *                                 type: string
  *                                 format: date-time
@@ -137,6 +143,12 @@ const router: Router = express.Router();
  *                               backdropUrl:
  *                                 type: string
  *                                 nullable: true
+ *                               meshGradientColors:
+ *                                 type: array
+ *                                 items:
+ *                                   type: string
+ *                                 description: Hex color strings for mesh gradient (4 corners)
+ *                                 example: ["#7C3AED", "#2563EB", "#EC4899", "#8B5CF6"]
  *                               releaseDate:
  *                                 type: string
  *                                 format: date-time
@@ -184,7 +196,10 @@ const router: Router = express.Router();
  *                   type: string
  *                   example: "Failed to search media"
  */
-router.get("/", validateQuery(searchMediaSchema), searchControllers.searchMedia);
+router.get(
+  "/",
+  validateQuery(searchMediaSchema),
+  searchControllers.searchMedia,
+);
 
 export default router;
-

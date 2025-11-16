@@ -16,7 +16,7 @@ const SKIP_DIRECTORIES = [
   ".Trashes",
   ".fseventsd",
   ".TemporaryItems",
-  
+
   // Hidden/config directories
   ".git",
   ".svn",
@@ -24,7 +24,7 @@ const SKIP_DIRECTORIES = [
   "node_modules",
   ".cache",
   ".tmp",
-  
+
   // Media-specific
   "@eaDir", // Synology
   "#recycle",
@@ -46,23 +46,23 @@ const SKIP_DIRECTORIES = [
  */
 const SKIP_FILE_PATTERNS = [
   // System files
-  /^\./,  // Hidden files
-  /^~\$/,  // Temp files
+  /^\./, // Hidden files
+  /^~\$/, // Temp files
   /^Thumbs\.db$/i,
   /^\.DS_Store$/,
   /^desktop\.ini$/i,
-  
+
   // Media-specific
-  /\.(nfo|txt|srt|sub|idx|ass|ssa|vtt)$/i,  // Metadata/subtitles
-  /\.(jpg|jpeg|png|gif|bmp)$/i,  // Images
-  /^sample\./i,  // Sample files
+  /\.(nfo|txt|srt|sub|idx|ass|ssa|vtt)$/i, // Metadata/subtitles
+  /\.(jpg|jpeg|png|gif|bmp)$/i, // Images
+  /^sample\./i, // Sample files
   /-sample\./i,
   /\bsample\b/i,
 ];
 
 /**
  * Checks if a directory or file should be skipped during scanning
- * 
+ *
  * @param name - File or directory name
  * @param isDirectory - Whether this is a directory
  * @returns True if should skip, false otherwise
@@ -82,7 +82,7 @@ export function shouldSkipEntry(name: string, isDirectory: boolean): boolean {
     if (SKIP_DIRECTORIES.includes(name)) {
       return true;
     }
-    
+
     // Skip directories matching patterns
     if (name.toLowerCase().includes("@eadir")) {
       return true;
@@ -123,16 +123,15 @@ export function getDefaultVideoExtensions(): string[] {
 
 /**
  * Check if a file has a valid video extension
- * 
+ *
  * @param filename - Name of the file
  * @param allowedExtensions - Optional array of allowed extensions
  * @returns True if file has video extension
  */
 export function isVideoFile(
   filename: string,
-  allowedExtensions: string[] = getDefaultVideoExtensions()
+  allowedExtensions: string[] = getDefaultVideoExtensions(),
 ): boolean {
   const ext = filename.toLowerCase().substring(filename.lastIndexOf("."));
   return allowedExtensions.includes(ext);
 }
-

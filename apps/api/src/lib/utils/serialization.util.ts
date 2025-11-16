@@ -6,7 +6,7 @@
  * Cleans TMDB image URLs that might have repeated prefixes
  */
 export function cleanTmdbImageUrl(
-  url: string | null | undefined
+  url: string | null | undefined,
 ): string | null {
   if (!url) return null;
 

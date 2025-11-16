@@ -19,7 +19,7 @@ export const libraryControllers = {
   delete: asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.validatedData as DeleteLibraryRequest;
     const result = await libraryServices.delete(id);
-    
+
     return sendSuccess(res, result, 200, result.message);
   }),
 

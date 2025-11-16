@@ -21,7 +21,7 @@ export interface SanitizeOptions {
  */
 export function sanitizeString(
   input: string,
-  options: SanitizeOptions = {}
+  options: SanitizeOptions = {},
 ): string {
   const {
     stripHtml = true,
@@ -46,13 +46,13 @@ export function sanitizeString(
     // Remove script tags and their content
     sanitized = sanitized.replace(
       /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-      ""
+      "",
     );
 
     // Remove other potentially dangerous HTML tags
     sanitized = sanitized.replace(
       /<(iframe|object|embed|form|input|meta|link|style)\b[^>]*>.*?<\/\1>/gi,
-      ""
+      "",
     );
 
     // Remove remaining HTML tags but keep content
@@ -85,7 +85,7 @@ export function sanitizeString(
   // Using unicode escapes - intentionally includes control characters for security
   sanitized = sanitized.replace(
     /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,
-    ""
+    "",
   );
 
   // Limit length
@@ -104,7 +104,7 @@ export function sanitizeString(
  */
 export function sanitizeObject(
   obj: unknown,
-  options: SanitizeOptions = {}
+  options: SanitizeOptions = {},
 ): unknown {
   const { maxDepth = 10 } = options;
 
@@ -122,7 +122,7 @@ export function sanitizeObject(
 
   if (Array.isArray(obj)) {
     return obj.map((item) =>
-      sanitizeObject(item, { ...options, maxDepth: maxDepth - 1 })
+      sanitizeObject(item, { ...options, maxDepth: maxDepth - 1 }),
     );
   }
 

@@ -1,12 +1,14 @@
 {
   "name": "api",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Express API with TypeScript",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
+    "kill-port": "(lsof -ti:3001 | xargs kill -9 2>/dev/null && sleep 1 && lsof -ti:3001 | xargs kill -9 2>/dev/null) || echo 'Port cleared or not in use'",
+    "dev:clean": "pnpm kill-port && pnpm dev",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:push:force": "prisma db push --accept-data-loss",
@@ -36,10 +38,12 @@
     "express-rate-limit": "^7.4.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "node-vibrant": "^4.0.2",
     "pg": "^8.16.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.18.3",
+    "winston-transport": "^4.9.0",
     "ws": "^8.18.3",
     "zod": "^4.1.12"
   },
