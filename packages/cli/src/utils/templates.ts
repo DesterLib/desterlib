@@ -138,7 +138,7 @@ docker-compose up -d
 To change your configuration, run:
 
 \`\`\`bash
-npx @desterlib/cli
+desterlib
 \`\`\`
 
 ## Useful Commands
@@ -172,6 +172,6 @@ If you encounter issues:
 3. Restart services: \`docker-compose restart\`
 4. Check port availability: \`lsof -i :${port}\`
 
-For more help, visit: https://desterlib.github.io/desterlib
+For more help, visit: https://docs.dester.in
 `;
 }

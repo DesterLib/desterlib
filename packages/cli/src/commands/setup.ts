@@ -41,7 +41,7 @@ export async function setupWizard(): Promise<void> {
           type: "list",
           name: "action",
           message: chalk.yellow(
-            "⚠️  DesterLib configuration already exists. What would you like to do?",
+            "⚠️  DesterLib configuration already exists. What would you like to do?"
           ),
           choices: [
             { name: "Reconfigure (update settings)", value: "reconfigure" },
@@ -147,25 +147,25 @@ export async function setupWizard(): Promise<void> {
     console.log(chalk.cyan.bold("\n📋 Configuration Review\n"));
     console.log(chalk.gray("Please review your configuration:\n"));
     console.log(
-      chalk.white("  Media Path:       ") + chalk.cyan(config.mediaPath),
+      chalk.white("  Media Path:       ") + chalk.cyan(config.mediaPath)
     );
     console.log(
-      chalk.white("  API Port:         ") + chalk.cyan(config.port.toString()),
+      chalk.white("  API Port:         ") + chalk.cyan(config.port.toString())
     );
     console.log(
-      chalk.white("  Database User:    ") + chalk.cyan(config.postgresUser),
+      chalk.white("  Database User:    ") + chalk.cyan(config.postgresUser)
     );
     console.log(
-      chalk.white("  Database Name:    ") + chalk.cyan(config.postgresDb),
+      chalk.white("  Database Name:    ") + chalk.cyan(config.postgresDb)
     );
     console.log(
-      chalk.white("  Database Password:") + chalk.cyan("***hidden***"),
+      chalk.white("  Database Password:") + chalk.cyan("***hidden***")
     );
     console.log("");
     console.log(
       chalk.gray(
-        "Note: TMDB API key and JWT secret are configured in-app, not here.",
-      ),
+        "Note: TMDB API key and JWT secret are configured in-app, not here."
+      )
     );
     console.log("");
 
@@ -190,7 +190,7 @@ export async function setupWizard(): Promise<void> {
     const configCreated = await createConfigFiles(config, installDir);
     if (!configCreated) {
       console.log(
-        chalk.red("\n❌ Failed to create configuration. Setup aborted."),
+        chalk.red("\n❌ Failed to create configuration. Setup aborted.")
       );
       process.exit(1);
     }
@@ -234,14 +234,14 @@ export async function setupWizard(): Promise<void> {
   } catch (error: any) {
     if (error.isTtyError) {
       console.error(
-        chalk.red("\n❌ Interactive prompts not supported in this environment"),
+        chalk.red("\n❌ Interactive prompts not supported in this environment")
       );
     } else if (error.message === "User force closed the prompt") {
       console.log(chalk.yellow("\n\n👋 Setup cancelled by user."));
     } else {
       console.error(
         chalk.red("\n❌ An error occurred during setup:"),
-        error.message,
+        error.message
       );
     }
     process.exit(1);
@@ -258,32 +258,32 @@ function displaySuccessMessage(port: number, installDir: string): void {
   console.log(chalk.bold("🔗 Quick Links:"));
   console.log(
     chalk.gray("  ├─") +
-      chalk.cyan(` API Server:      http://localhost:${port}`),
+      chalk.cyan(` API Server:      http://localhost:${port}`)
   );
   console.log(
     chalk.gray("  ├─") +
-      chalk.cyan(` API Docs:        http://localhost:${port}/api/docs`),
+      chalk.cyan(` API Docs:        http://localhost:${port}/api/docs`)
   );
   console.log(
     chalk.gray("  ├─") +
-      chalk.cyan(` Health Check:    http://localhost:${port}/health`),
+      chalk.cyan(` Health Check:    http://localhost:${port}/health`)
   );
   console.log(
     chalk.gray("  └─") +
-      chalk.cyan(` WebSocket:       ws://localhost:${port}/ws`),
+      chalk.cyan(` WebSocket:       ws://localhost:${port}/ws`)
   );
 
   console.log(chalk.bold("\n📱 Next Steps:"));
   console.log(
     chalk.gray("  1.") +
-      chalk.white(" Open the API docs and configure your media library"),
+      chalk.white(" Open the API docs and configure your media library")
   );
   console.log(
     chalk.gray("  2.") +
-      chalk.white(" Download the DesterLib mobile/desktop app"),
+      chalk.white(" Download the DesterLib mobile/desktop app")
   );
   console.log(
-    chalk.gray("  3.") + chalk.white(` Connect to: http://localhost:${port}`),
+    chalk.gray("  3.") + chalk.white(` Connect to: http://localhost:${port}`)
   );
 
   console.log(chalk.bold("\n📂 Installation Location:"));
@@ -293,27 +293,26 @@ function displaySuccessMessage(port: number, installDir: string): void {
   console.log(
     chalk.gray("  ├─") +
       chalk.white(" Stop:    ") +
-      chalk.cyan(`cd ${installDir} && docker-compose down`),
+      chalk.cyan(`cd ${installDir} && docker-compose down`)
   );
   console.log(
     chalk.gray("  ├─") +
       chalk.white(" Restart: ") +
-      chalk.cyan(`cd ${installDir} && docker-compose restart`),
+      chalk.cyan(`cd ${installDir} && docker-compose restart`)
   );
   console.log(
     chalk.gray("  ├─") +
       chalk.white(" Logs:    ") +
-      chalk.cyan(`cd ${installDir} && docker-compose logs -f`),
+      chalk.cyan(`cd ${installDir} && docker-compose logs -f`)
   );
   console.log(
     chalk.gray("  └─") +
       chalk.white(" Status:  ") +
-      chalk.cyan(`cd ${installDir} && docker-compose ps`),
+      chalk.cyan(`cd ${installDir} && docker-compose ps`)
   );
 
   console.log(
-    chalk.gray("\n📖 Documentation: ") +
-      chalk.cyan("https://desterlib.github.io/desterlib"),
+    chalk.gray("\n📖 Documentation: ") + chalk.cyan("https://docs.dester.in")
   );
   console.log("");
 }

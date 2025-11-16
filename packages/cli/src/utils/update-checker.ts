@@ -39,7 +39,7 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
         headers: {
           Accept: "application/vnd.npm.install-v1+json",
         },
-      },
+      }
     );
 
     if (response.ok) {
@@ -70,42 +70,67 @@ export function displayUpdateNotification(updateInfo: UpdateInfo): void {
 
   console.log(
     chalk.yellow(
-      "\n┌─────────────────────────────────────────────────────────┐",
-    ),
+      "\n┌─────────────────────────────────────────────────────────┐"
+    )
   );
   console.log(
     chalk.yellow("│") +
       chalk.bold("  ⚠️  Update Available!") +
       " ".repeat(35) +
-      chalk.yellow("│"),
+      chalk.yellow("│")
   );
   console.log(
-    chalk.yellow("├─────────────────────────────────────────────────────────┤"),
+    chalk.yellow("├─────────────────────────────────────────────────────────┤")
   );
   console.log(
     chalk.yellow("│") +
       `  Current version: ${chalk.gray(updateInfo.currentVersion)}` +
       " ".repeat(25 - updateInfo.currentVersion.length) +
-      chalk.yellow("│"),
+      chalk.yellow("│")
   );
   console.log(
     chalk.yellow("│") +
       `  Latest version:  ${chalk.green(updateInfo.latestVersion)}` +
       " ".repeat(25 - updateInfo.latestVersion.length) +
-      chalk.yellow("│"),
+      chalk.yellow("│")
   );
   console.log(
-    chalk.yellow("├─────────────────────────────────────────────────────────┤"),
+    chalk.yellow("├─────────────────────────────────────────────────────────┤")
   );
-  console.log(
-    chalk.yellow("│") +
-      `  Run: ${chalk.cyan("npm install -g @desterlib/cli@latest")}` +
-      " ".repeat(12) +
-      chalk.yellow("│"),
-  );
+
+  const updateCommand =
+    process.platform === "win32"
+      ? "iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.ps1 | iex"
+      : "curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash";
+
+  // Split long commands across multiple lines if needed
+  const maxLineLength = 55;
+  if (updateCommand.length <= maxLineLength) {
+    console.log(
+      chalk.yellow("│") +
+        `  Run: ${chalk.cyan(updateCommand)}` +
+        " ".repeat(Math.max(0, maxLineLength - updateCommand.length - 6)) +
+        chalk.yellow("│")
+    );
+  } else {
+    // Show instruction on one line, command on next
+    console.log(
+      chalk.yellow("│") +
+        "  Run the installer script:" +
+        " ".repeat(32) +
+        chalk.yellow("│")
+    );
+    console.log(
+      chalk.yellow("│") +
+        `  ${chalk.cyan(updateCommand)}` +
+        " ".repeat(Math.max(0, maxLineLength - updateCommand.length - 2)) +
+        chalk.yellow("│")
+    );
+  }
+
   console.log(
     chalk.yellow(
-      "└─────────────────────────────────────────────────────────┘\n",
-    ),
+      "└─────────────────────────────────────────────────────────┘\n"
+    )
   );
 }

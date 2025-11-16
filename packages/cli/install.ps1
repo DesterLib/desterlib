@@ -128,8 +128,7 @@ if (Test-CommandExists "desterlib") {
     Write-ColorOutput Green "  desterlib        - Run the setup wizard"
     Write-ColorOutput Green "  desterlib setup  - Run the setup wizard"
     Write-Output ""
-    Write-ColorOutput Cyan "Or use npx (no installation needed):"
-    Write-ColorOutput Green "  npx @desterlib/cli"
+    Write-ColorOutput Cyan "To update the CLI in the future, run this installer again."
     Write-Output ""
 } else {
     Write-ColorOutput Red "❌ Installation completed but 'desterlib' command not found."

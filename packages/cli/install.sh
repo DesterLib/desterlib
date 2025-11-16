@@ -159,8 +159,7 @@ if command_exists desterlib; then
     echo -e "  ${GREEN}desterlib${NC}        - Run the setup wizard"
     echo -e "  ${GREEN}desterlib setup${NC}  - Run the setup wizard"
     echo ""
-    echo -e "${CYAN}Or use npx (no installation needed):${NC}"
-    echo -e "  ${GREEN}npx @desterlib/cli${NC}"
+    echo -e "${CYAN}To update the CLI in the future, run this installer again.${NC}"
     echo ""
 else
     echo -e "${RED}❌ Installation completed but 'desterlib' command not found.${NC}"
