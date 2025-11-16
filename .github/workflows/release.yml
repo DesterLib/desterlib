@@ -27,6 +27,14 @@ jobs:
           # Fetch full history of the current ref so git operations behave like locally
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
+          # Explicitly set repository to ensure proper authentication
+          repository: ${{ github.repository }}
+
+      - name: Configure Git for authentication
+        run: |
+          git config --global url."https://${{ secrets.PAT_TOKEN }}@github.com/".insteadOf "https://github.com/"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Ensure main branch is available
         run: git fetch origin main
