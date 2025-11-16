@@ -26,7 +26,7 @@ export function getCurrentVersion(): string {
 }
 
 /**
- * Check for updates from npm registry
+ * Check for updates from GitHub releases
  */
 export async function checkForUpdates(): Promise<UpdateInfo> {
   const currentVersion = getCurrentVersion();
@@ -34,17 +34,20 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
 
   try {
     const response = await fetch(
-      "https://registry.npmjs.org/@desterlib/cli/latest",
+      "https://api.github.com/repos/DesterLib/desterlib/releases/latest",
       {
         headers: {
-          Accept: "application/vnd.npm.install-v1+json",
+          Accept: "application/vnd.github+json",
         },
       }
     );
 
     if (response.ok) {
-      const data = (await response.json()) as { version?: string };
-      latestVersion = data.version || null;
+      const data = (await response.json()) as { tag_name?: string };
+      // Extract version from tag (e.g., "v0.2.0" -> "0.2.0")
+      if (data.tag_name) {
+        latestVersion = data.tag_name.replace(/^v/, "");
+      }
     }
   } catch (error) {
     // Silently fail - network issues shouldn't block the CLI
