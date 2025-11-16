@@ -15,6 +15,7 @@ import {
   removeDirectory,
   ensureDirectory,
 } from "../utils/paths.js";
+import { getApiVersion } from "../utils/update-checker.js";
 
 /**
  * Main setup wizard
@@ -144,6 +145,7 @@ export async function setupWizard(): Promise<void> {
     };
 
     // Display configuration review
+    const apiVersion = getApiVersion();
     console.log(chalk.cyan.bold("\n📋 Configuration Review\n"));
     console.log(chalk.gray("Please review your configuration:\n"));
     console.log(
@@ -152,6 +154,7 @@ export async function setupWizard(): Promise<void> {
     console.log(
       chalk.white("  API Port:         ") + chalk.cyan(config.port.toString())
     );
+    console.log(chalk.white("  API Version:      ") + chalk.cyan(apiVersion));
     console.log(
       chalk.white("  Database User:    ") + chalk.cyan(config.postgresUser)
     );
@@ -252,8 +255,11 @@ export async function setupWizard(): Promise<void> {
  * Display success message with next steps
  */
 function displaySuccessMessage(port: number, installDir: string): void {
+  const apiVersion = getApiVersion();
   console.log(chalk.green.bold("\n✅ Setup Complete!\n"));
   console.log(chalk.cyan("📚 Your DesterLib server is now running!\n"));
+  console.log(chalk.gray("  API Version:      ") + chalk.cyan(apiVersion));
+  console.log("");
 
   console.log(chalk.bold("🔗 Quick Links:"));
   console.log(

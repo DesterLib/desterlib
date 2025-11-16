@@ -26,6 +26,33 @@ export function getCurrentVersion(): string {
 }
 
 /**
+ * Get the API version from the root package.json
+ * The API version is synced with the root package.json version
+ * Falls back to CLI version if root package.json is not accessible
+ */
+export function getApiVersion(): string {
+  try {
+    // Navigate from packages/cli/dist/utils to root package.json
+    const rootPackagePath = join(__dirname, "../../../../package.json");
+    const packageJson = JSON.parse(readFileSync(rootPackagePath, "utf-8"));
+    return packageJson.version || getCurrentVersion();
+  } catch (error) {
+    // Fallback: try to read from apps/api/package.json
+    try {
+      const apiPackagePath = join(
+        __dirname,
+        "../../../../apps/api/package.json"
+      );
+      const packageJson = JSON.parse(readFileSync(apiPackagePath, "utf-8"));
+      return packageJson.version || getCurrentVersion();
+    } catch (fallbackError) {
+      // Final fallback: use CLI version (versions are synced)
+      return getCurrentVersion();
+    }
+  }
+}
+
+/**
  * Check for updates from GitHub releases
  */
 export async function checkForUpdates(): Promise<UpdateInfo> {
