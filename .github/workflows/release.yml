@@ -37,7 +37,9 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Ensure main branch is available
-        run: git fetch origin main
+        run: |
+          git fetch origin main
+          git fetch --tags
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -75,14 +77,25 @@ jobs:
 
       - name: Get Version from Package.json
         id: version
-        if: steps.changesets.outputs.hasChangesets == 'true'
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
+      - name: Check if Release Tag Exists
+        id: check_tag
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+            echo "Tag $TAG already exists"
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+            echo "Tag $TAG does not exist, will create release"
+          fi
+
       - name: Create GitHub Release
-        if: steps.changesets.outputs.hasChangesets == 'true' && steps.version.outputs.version != ''
+        if: steps.version.outputs.version != '' && steps.check_tag.outputs.tag_exists == 'false'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
