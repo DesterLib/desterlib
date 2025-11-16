@@ -10,13 +10,12 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
-  packages: write
   pages: write
   id-token: write
 
 jobs:
   release:
-    name: Release packages & deploy docs
+    name: Version bump & deploy docs
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -55,29 +54,35 @@ jobs:
       - name: Verify Versioning Setup
         run: pnpm verify:versioning
 
-      - name: Create Release Pull Request or Publish
+      - name: Create Release Pull Request or Version Bump
         id: changesets
         uses: changesets/action@v1
         continue-on-error: true
         with:
           version: pnpm version
-          publish: pnpm release
           commit: "chore: version packages"
           title: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Get Version from Package.json
+        id: version
+        if: steps.changesets.outputs.hasChangesets == 'true'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
 
       - name: Create GitHub Release
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.hasChangesets == 'true' && steps.version.outputs.version != ''
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
-          tag_name: v${{ steps.changesets.outputs.publishedPackages[0].version }}
-          release_name: Release v${{ steps.changesets.outputs.publishedPackages[0].version }}
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: Release v${{ steps.version.outputs.version }}
           body: |
-            See [Changelog](https://desterlib.github.io/desterlib/changelog) for details.
+            See [Changelog](https://docs.dester.in/changelog) for details.
 
             Package changelogs:
             - [API](../blob/main/apps/api/CHANGELOG.md)
