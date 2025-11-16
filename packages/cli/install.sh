@@ -185,10 +185,58 @@ fi
 
 # Install globally
 echo -e "${CYAN}Installing CLI globally...${NC}"
-if ! npm install -g .; then
-    echo -e "${RED}❌ Failed to install CLI globally.${NC}"
-    exit 1
+
+# Try installing without sudo first
+NPM_LOG=$(mktemp)
+set +e  # Temporarily disable exit on error
+npm install -g . > "$NPM_LOG" 2>&1
+NPM_EXIT_CODE=$?
+set -e  # Re-enable exit on error
+
+if [ $NPM_EXIT_CODE -eq 0 ]; then
+    # Installation succeeded
+    :
+else
+    # Show the error
+    cat "$NPM_LOG"
+    # Check if the error was due to permissions
+    if grep -q "EACCES\|permission denied" "$NPM_LOG" 2>/dev/null; then
+        echo ""
+        echo -e "${YELLOW}⚠️  Permission denied. Trying with sudo...${NC}"
+        echo -e "${CYAN}You may be prompted for your password.${NC}"
+        set +e  # Temporarily disable exit on error
+        sudo npm install -g .
+        SUDO_EXIT_CODE=$?
+        set -e  # Re-enable exit on error
+        
+        if [ $SUDO_EXIT_CODE -eq 0 ]; then
+            # Installation succeeded with sudo
+            :
+        else
+            echo -e "${RED}❌ Failed to install CLI globally even with sudo.${NC}"
+            echo ""
+            echo -e "${YELLOW}Alternative installation methods:${NC}"
+            echo -e "  1. Configure npm to use a different directory (no sudo needed):"
+            echo -e "     ${CYAN}mkdir -p ~/.npm-global${NC}"
+            echo -e "     ${CYAN}npm config set prefix '~/.npm-global'${NC}"
+            echo -e "     ${CYAN}echo 'export PATH=~/.npm-global/bin:\$PATH' >> ~/.zshrc${NC}"
+            echo -e "     ${CYAN}source ~/.zshrc${NC}"
+            echo -e "     Then run this installer again."
+            echo ""
+            echo -e "  2. Or install manually:"
+            echo -e "     ${CYAN}cd $TEMP_DIR/desterlib/packages/cli${NC}"
+            echo -e "     ${CYAN}sudo npm install -g .${NC}"
+            rm -f "$NPM_LOG"
+            exit 1
+        fi
+    else
+        echo -e "${RED}❌ Failed to install CLI globally.${NC}"
+        echo -e "${YELLOW}Check the error message above for details.${NC}"
+        rm -f "$NPM_LOG"
+        exit 1
+    fi
 fi
+rm -f "$NPM_LOG"
 
 # Verify installation
 if command_exists desterlib; then

@@ -157,9 +157,27 @@ try {
     
     # Install globally
     Write-ColorOutput Cyan "Installing CLI globally..."
-    npm install -g .
-    if ($LASTEXITCODE -ne 0) {
-        Write-ColorOutput Red "❌ Failed to install CLI globally."
+    $npmOutput = npm install -g . 2>&1
+    $npmExitCode = $LASTEXITCODE
+    
+    if ($npmExitCode -ne 0) {
+        Write-Output $npmOutput
+        Write-Output ""
+        
+        # Check if the error was due to permissions
+        $errorText = $npmOutput -join " "
+        if ($errorText -match "EACCES|permission denied|access is denied") {
+            Write-ColorOutput Yellow "⚠️  Permission denied. You may need to run PowerShell as Administrator."
+            Write-Output ""
+            Write-ColorOutput Yellow "Alternative: Configure npm to use a user directory (no admin needed):"
+            Write-ColorOutput Cyan "  npm config set prefix `"$env:APPDATA\npm`""
+            Write-ColorOutput Cyan "  Then add `"$env:APPDATA\npm`" to your PATH"
+            Write-Output ""
+            Write-ColorOutput Yellow "Or run this installer as Administrator."
+        } else {
+            Write-ColorOutput Red "❌ Failed to install CLI globally."
+            Write-ColorOutput Yellow "Check the error message above for details."
+        }
         exit 1
     }
     
