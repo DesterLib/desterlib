@@ -107,7 +107,6 @@ jobs:
 
             Package changelogs:
             - [API](../blob/main/apps/api/CHANGELOG.md)
-            - [CLI](../blob/main/packages/cli/CHANGELOG.md)
             - [Docs](../blob/main/apps/docs/CHANGELOG.md)
           draft: false
           prerelease: false

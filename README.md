@@ -13,23 +13,28 @@
 
 ## Quick Start
 
-### Install the CLI
+### Simple Setup (Recommended)
 
-The DesterLib CLI makes it easy to set up and manage your media server.
+The easiest way to get started - no installation required, just run the setup script:
 
 **macOS/Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/unix.sh | bash
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/windows.ps1 | iex
 ```
 
-The installer will automatically install Node.js if needed, then install the CLI globally. Once installed, run `desterlib` to start the setup wizard.
+This script will:
+
+- ✅ Check Docker installation
+- ✅ Clone the repository
+- ✅ Prompt for configuration (media path, port, database)
+- ✅ Set up and start DesterLib
 
 ### Download Client Apps
 

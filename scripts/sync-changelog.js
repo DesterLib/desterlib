@@ -37,17 +37,6 @@ const packageChangelogs = [
     description: "Changelog for the DesterLib API Server",
   },
   {
-    name: "CLI Tool",
-    packageName: "@desterlib/cli",
-    changelogPath: path.join(__dirname, "../packages/cli/CHANGELOG.md"),
-    docsPath: path.join(
-      __dirname,
-      "../apps/docs/src/content/docs/cli/changelog.md"
-    ),
-    githubPath: "packages/cli/CHANGELOG.md",
-    description: "Changelog for the DesterLib CLI Tool",
-  },
-  {
     name: "Documentation",
     packageName: "docs",
     changelogPath: path.join(__dirname, "../apps/docs/CHANGELOG.md"),

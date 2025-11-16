@@ -72,7 +72,6 @@ DesterLib uses [Changesets](https://github.com/changesets/changesets) for automa
 
 - 📝 Package changelogs are auto-generated in:
   - `apps/api/CHANGELOG.md` - API changes
-  - `packages/cli/CHANGELOG.md` - CLI changes
   - `apps/docs/CHANGELOG.md` - Documentation changes
 - 📝 Aggregated changelog synced to docs site
 - 📝 Use `pnpm changeset` to document your changes

@@ -7,7 +7,6 @@
  * It reads the version from the root package.json and updates:
  * - apps/api/package.json
  * - apps/docs/package.json
- * - packages/cli/package.json
  * - desterlib-flutter/pubspec.yaml
  * - desterlib-flutter/lib/api/pubspec.yaml
  * - desterlib-flutter/lib/core/config/api_config.dart
@@ -84,27 +83,6 @@ try {
   }
 } catch (error) {
   log(`❌ Error updating apps/docs/package.json: ${error.message}`, "red");
-  errors++;
-}
-
-// Update CLI package.json
-try {
-  const cliPackagePath = path.join(__dirname, "../packages/cli/package.json");
-  const cliPackage = JSON.parse(fs.readFileSync(cliPackagePath, "utf8"));
-
-  if (cliPackage.version !== version) {
-    cliPackage.version = version;
-    fs.writeFileSync(
-      cliPackagePath,
-      JSON.stringify(cliPackage, null, 2) + "\n"
-    );
-    log(`✅ Updated packages/cli/package.json: ${version}`, "green");
-    updates++;
-  } else {
-    log(`✓  packages/cli/package.json already at ${version}`, "yellow");
-  }
-} catch (error) {
-  log(`❌ Error updating packages/cli/package.json: ${error.message}`, "red");
   errors++;
 }
 

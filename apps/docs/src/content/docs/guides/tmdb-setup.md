@@ -39,9 +39,9 @@ Copy the **API Key (v3 auth)** - it looks like: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p
 
 ## Configuring in DesterLib
 
-### During CLI Setup
+### During Setup
 
-The CLI doesn't ask for TMDB during initial setup. You'll configure it in the app after installation.
+The setup script doesn't ask for TMDB during initial setup. You'll configure it in the app after installation.
 
 ### In the Mobile/Desktop App
 

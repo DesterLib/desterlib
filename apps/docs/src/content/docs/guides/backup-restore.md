@@ -32,7 +32,7 @@ Your configuration includes:
 You don't need to backup:
 
 - Docker images (can be re-downloaded)
-- Source code (if using CLI)
+- Source code (if using setup script)
 - Actual media files (just metadata is in database)
 
 ## Database Backup
@@ -85,7 +85,7 @@ crontab -e
 
 ## Configuration Backup
 
-### CLI Installation
+### Setup Script Installation
 
 ```bash
 # Backup entire config directory
@@ -139,7 +139,7 @@ docker exec -it desterlib-postgres psql -U desterlib -d desterlib \
 
 ## Restore Configuration
 
-### CLI Installation
+### Setup Script Installation
 
 ```bash
 # Stop server
@@ -185,7 +185,7 @@ scp desterlib-*-backup user@new-server:/tmp/
 
 ```bash
 # 1. Install DesterLib on new server
-curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/unix.sh | bash
 
 # 2. Stop the new server
 cd ~/.desterlib && docker-compose down
@@ -210,7 +210,7 @@ If you lose everything but have backups:
 
 ```bash
 # 1. Install DesterLib fresh
-curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/unix.sh | bash
 
 # 2. Stop and restore database
 cd ~/.desterlib

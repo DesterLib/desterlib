@@ -21,8 +21,7 @@
     "pre-pr": "node scripts/pre-pr-check.js",
     "release": "pnpm build && changeset publish",
     "pr:create": "bash scripts/create-pr.sh",
-    "pr:create:main": "bash scripts/create-pr.sh main",
-    "setup:docker": "tsx packages/cli/src/index.ts"
+    "pr:create:main": "bash scripts/create-pr.sh main"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",

@@ -11,18 +11,18 @@ Commands vary based on how you installed DesterLib:
 
 | Installation Method | Location                         |
 | ------------------- | -------------------------------- |
-| CLI installer       | `~/.desterlib`                   |
+| Setup script        | `~/.desterlib` (or custom path)  |
 | Git clone           | `./desterlib` (where you cloned) |
 
 :::tip
-This guide assumes **CLI installation**. If you used git clone, replace `~/.desterlib` with your repo directory.
+This guide assumes **setup script installation**. If you used git clone, replace `~/.desterlib` with your repo directory.
 :::
 
 ## Starting the Server
 
 ### First Time Start
 
-During CLI setup, you're asked if you want to start the server. If you chose "No":
+During setup script execution, the server starts automatically. If you need to start it manually:
 
 ```bash
 cd ~/.desterlib
@@ -127,7 +127,7 @@ docker-compose restart postgres  # Database only
 
 ## Updating DesterLib
 
-### CLI Installation
+### Setup Script Installation
 
 ```bash
 cd ~/.desterlib
@@ -155,7 +155,7 @@ docker-compose up -d --build
 
 ### Edit Configuration
 
-**CLI installation:**
+**Setup script installation:**
 
 ```bash
 cd ~/.desterlib
@@ -168,15 +168,9 @@ nano .env  # or use your preferred editor
 docker-compose restart
 ```
 
-### Reconfigure via CLI
+### Reconfigure
 
-Run the CLI again to regenerate config:
-
-```bash
-desterlib
-```
-
-Choose "Reconfigure" when prompted.
+To reconfigure, edit the `.env` file and `docker-compose.yml` directly, or run the setup script again in a new directory.
 
 ## Backup & Restore
 
@@ -197,7 +191,7 @@ cat desterlib-backup.sql | docker exec -i desterlib-postgres psql -U desterlib d
 ### Backup Configuration
 
 ```bash
-# CLI installation
+# Setup script installation
 cp -r ~/.desterlib ~/desterlib-config-backup
 
 # Git installation
@@ -326,7 +320,6 @@ Should open PostgreSQL prompt. Type `\q` to exit.
 
 ## Related Documentation
 
-- [CLI Tool](/cli/overview/) - CLI usage and options
 - [Updating Guide](/guides/updating/) - Update procedures
 - [Backup Guide](/guides/backup-restore/) - Comprehensive backup strategies
 - [Troubleshooting](/getting-started/installation/#troubleshooting) - Common issues

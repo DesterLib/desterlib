@@ -18,10 +18,6 @@ DesterLib consists of multiple packages, each with its own changelog:
 
 Changelog for the DesterLib API Server. Contains all API changes, new features, bug fixes, and breaking changes.
 
-### [CLI Tool Changelog](/cli/changelog)
-
-Changelog for the DesterLib CLI Tool. Contains all CLI changes, new commands, and improvements.
-
 ### [Documentation Changelog](/docs/changelog)
 
 Changelog for the DesterLib Documentation. Contains all documentation updates and improvements.
@@ -31,7 +27,6 @@ Changelog for the DesterLib Documentation. Contains all documentation updates an
 - **On this site**: Use the links above to view each package's changelog
 - **On GitHub**: View the source changelog files:
   - [API Changelog](https://github.com/DesterLib/desterlib/blob/main/apps/api/CHANGELOG.md)
-  - [CLI Changelog](https://github.com/DesterLib/desterlib/blob/main/packages/cli/CHANGELOG.md)
   - [Documentation Changelog](https://github.com/DesterLib/desterlib/blob/main/apps/docs/CHANGELOG.md)
 
 ## Contributing

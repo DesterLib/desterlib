@@ -52,20 +52,14 @@ const rootDir = path.join(__dirname, "..");
 const changesetDir = path.join(rootDir, ".changeset");
 const packageJsonPath = path.join(rootDir, "package.json");
 const apiPackageJsonPath = path.join(rootDir, "apps/api/package.json");
-const cliPackageJsonPath = path.join(rootDir, "packages/cli/package.json");
 const docsPackageJsonPath = path.join(rootDir, "apps/docs/package.json");
 
 const apiChangelogPath = path.join(rootDir, "apps/api/CHANGELOG.md");
-const cliChangelogPath = path.join(rootDir, "packages/cli/CHANGELOG.md");
 const docsChangelogPath = path.join(rootDir, "apps/docs/CHANGELOG.md");
 
 const apiDocsChangelogPath = path.join(
   rootDir,
   "apps/docs/src/content/docs/api/changelog.md"
-);
-const cliDocsChangelogPath = path.join(
-  rootDir,
-  "apps/docs/src/content/docs/cli/changelog.md"
 );
 const docsDocsChangelogPath = path.join(
   rootDir,
@@ -200,7 +194,6 @@ function checkPackageVersions() {
   try {
     const rootPackage = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
     const apiPackage = JSON.parse(fs.readFileSync(apiPackageJsonPath, "utf8"));
-    const cliPackage = JSON.parse(fs.readFileSync(cliPackageJsonPath, "utf8"));
     const docsPackage = JSON.parse(
       fs.readFileSync(docsPackageJsonPath, "utf8")
     );
@@ -211,7 +204,6 @@ function checkPackageVersions() {
       `Version: ${rootPackage.version}`
     );
     logCheck("API package.json exists", true, `Version: ${apiPackage.version}`);
-    logCheck("CLI package.json exists", true, `Version: ${cliPackage.version}`);
     logCheck(
       "Docs package.json exists",
       true,
@@ -223,7 +215,6 @@ function checkPackageVersions() {
     const versions = [
       { name: "Root", version: rootPackage.version },
       { name: "API", version: apiPackage.version },
-      { name: "CLI", version: cliPackage.version },
       { name: "Docs", version: docsPackage.version },
     ];
 
@@ -253,7 +244,6 @@ function checkChangelogs() {
 
   const changelogs = [
     { name: "API", path: apiChangelogPath, required: false },
-    { name: "CLI", path: cliChangelogPath, required: false },
     { name: "Docs", path: docsChangelogPath, required: false },
   ];
 
@@ -300,7 +290,6 @@ function checkDocsChangelogs() {
 
   const docsChangelogs = [
     { name: "API", path: apiDocsChangelogPath },
-    { name: "CLI", path: cliDocsChangelogPath },
     { name: "Docs", path: docsDocsChangelogPath },
   ];
 
@@ -405,21 +394,14 @@ function checkSidebarConfig() {
 
     // Check if changelog links are in sidebar
     const hasApiChangelog = configContent.includes('"api/changelog"');
-    const hasCliChangelog = configContent.includes('"cli/changelog"');
     const hasDocsChangelog = configContent.includes('"docs/changelog"');
     const hasMainChangelog = configContent.includes('"changelog"');
 
     logCheck("API changelog in sidebar", hasApiChangelog);
-    logCheck("CLI changelog in sidebar", hasCliChangelog);
     logCheck("Docs changelog in sidebar", hasDocsChangelog);
     logCheck("Main changelog in sidebar", hasMainChangelog);
 
-    if (
-      !hasApiChangelog ||
-      !hasCliChangelog ||
-      !hasDocsChangelog ||
-      !hasMainChangelog
-    ) {
+    if (!hasApiChangelog || !hasDocsChangelog || !hasMainChangelog) {
       allChecksPassed = false;
     }
   } catch (error) {

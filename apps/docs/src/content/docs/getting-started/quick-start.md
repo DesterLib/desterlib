@@ -18,27 +18,25 @@ Get DesterLib streaming in 5 minutes! ⚡
 **macOS/Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/unix.sh | bash
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/windows.ps1 | iex
 ```
 
-The installer will automatically install Node.js if needed, then install the CLI.
-
-The wizard will ask you 3 quick questions:
+The setup script will ask you a few quick questions:
 
 - 📚 Where are your media files?
 - 🔌 What port to use? (default: 3001)
-- 🔒 Database password
+- 🔒 Database credentials
 
 That's it! Your server will be running at `http://localhost:3001`
 
 :::tip[What just happened?]
-The CLI downloaded everything needed and started your media server in `~/.desterlib/`
+The setup script cloned the repository and started your media server in `~/.desterlib/` (or a custom location you choose)
 :::
 
 ### 2. Install the Client App

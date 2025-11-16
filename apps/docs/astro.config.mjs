@@ -86,14 +86,6 @@ export default defineConfig({
                 { label: "Platform Setup", slug: "clients/flutter" },
               ],
             },
-            {
-              label: "CLI Tool",
-              collapsed: true,
-              items: [
-                { label: "Overview", slug: "cli/overview" },
-                { label: "Changelog", slug: "cli/changelog" },
-              ],
-            },
           ],
         },
 

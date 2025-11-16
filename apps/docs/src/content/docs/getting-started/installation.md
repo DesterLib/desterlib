@@ -25,31 +25,30 @@ See the [Quick Start Guide](/getting-started/quick-start/) for a 5-minute setup!
 
 ## Server Installation
 
-### Option 1: CLI Setup (Recommended)
+### Option 1: Quick Setup (Recommended)
 
 **Perfect for:** End users who want it working fast
 
 **macOS/Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/unix.sh | bash
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/windows.ps1 | iex
 ```
 
-The installer will automatically check for Node.js and install it if needed, then install the CLI.
+The setup script will:
 
-The interactive wizard will guide you through:
+1. Check Docker installation
+2. Clone the repository
+3. Prompt for configuration (media path, port, database)
+4. Set up and start DesterLib
 
-1. Media library location
-2. Server port (default: 3001)
-3. Database credentials
-
-Your server will be installed in `~/.desterlib/` and started automatically.
+Your server will be installed in `~/.desterlib/` (or a custom location you choose) and started automatically.
 
 **Verify it's working:**
 
@@ -216,10 +215,10 @@ flutter build windows --release
 
 Commands depend on your installation method:
 
-**If installed via CLI:**
+**If installed via setup script:**
 
 ```bash
-cd ~/.desterlib
+cd ~/.desterlib  # or your custom installation directory
 
 docker-compose ps       # View status
 docker-compose logs -f  # View logs
@@ -302,7 +301,7 @@ cat backup.sql | docker exec -i desterlib-postgres psql -U desterlib desterlib
 
 ### Uninstall
 
-**CLI installation:**
+**Setup script installation:**
 
 ```bash
 cd ~/.desterlib && docker-compose down -v

@@ -7,21 +7,21 @@ Production-ready Docker deployment guide for DesterLib.
 
 ## Production Setup
 
-### Using CLI (Easiest)
+### Quick Setup (Easiest)
 
 **macOS/Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/unix.sh | bash
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/packages/cli/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/DesterLib/desterlib/main/scripts/setup/windows.ps1 | iex
 ```
 
-The CLI configures production-ready settings by default:
+The setup script configures production-ready settings by default:
 
 - Sets `NODE_ENV=production`
 - Configures restart policies
