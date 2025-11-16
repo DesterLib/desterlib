@@ -75,6 +75,7 @@ export default defineConfig({
                   label: "Environment Variables",
                   slug: "api/environment-variables",
                 },
+                { label: "Changelog", slug: "api/changelog" },
               ],
             },
             {
@@ -88,7 +89,10 @@ export default defineConfig({
             {
               label: "CLI Tool",
               collapsed: true,
-              items: [{ label: "Overview", slug: "cli/overview" }],
+              items: [
+                { label: "Overview", slug: "cli/overview" },
+                { label: "Changelog", slug: "cli/changelog" },
+              ],
             },
           ],
         },
@@ -122,6 +126,7 @@ export default defineConfig({
           collapsed: true,
           items: [
             { label: "Contributing Guide", slug: "development/contributing" },
+            { label: "Development Workflow", slug: "development/workflow" },
             { label: "Project Structure", slug: "development/structure" },
             {
               label: "Commit Guidelines",
@@ -129,13 +134,14 @@ export default defineConfig({
             },
             { label: "Versioning Guide", slug: "development/versioning" },
             { label: "Quick Reference", slug: "development/quick-reference" },
+            { label: "Documentation Changelog", slug: "docs/changelog" },
           ],
         },
 
         // CHANGELOG
         {
           label: "Changelog",
-          items: [{ label: "Release History", slug: "changelog" }],
+          items: [{ label: "Overview", slug: "changelog" }],
         },
 
         // EXTERNAL LINKS

@@ -7,14 +7,16 @@ Thank you for your interest in contributing to DesterLib! This guide will help y
 
 :::note[Applies to All Projects]
 This guide applies to **all DesterLib projects**:
+
 - **API Server** - Backend and API development
-- **Client Applications** - Mobile, desktop, and TV apps  
+- **Client Applications** - Mobile, desktop, and TV apps
 - **Documentation** - This documentation site
 
 For project-specific setup:
+
 - [API Server Setup](/api/overview)
 - [Client Development](/clients/overview)
-:::
+  :::
 
 ## 🎯 Quick Start
 
@@ -133,13 +135,14 @@ pnpm pr:create
 During alpha development, we use a simplified workflow: **Feature Branches → Main**. Once we reach stable releases, we'll introduce a `dev` branch for staging.
 :::
 
-See the [Versioning Guide](/development/versioning/) for complete workflow.
+See the [Development Workflow](/development/workflow/) for the complete workflow.
 
 ## 🔍 Finding Issues to Work On
 
 ### Good First Issues
 
 Look for issues labeled:
+
 - `good first issue` - Perfect for newcomers
 - `help wanted` - Community help needed
 - `documentation` - Improve docs
@@ -162,6 +165,7 @@ Don't see an issue you want? Create one!
 - ♻️ **Refactoring** - Improve code quality
 
 **Requirements:**
+
 - Follow code style guidelines
 - Add tests if possible
 - Update documentation
@@ -175,6 +179,7 @@ Don't see an issue you want? Create one!
 - 🌍 **Translations** - Help internationalize
 
 **Requirements:**
+
 - Clear and concise writing
 - Accurate information
 - Proper formatting
@@ -187,6 +192,7 @@ Don't see an issue you want? Create one!
 - 🔧 **Fix flaky tests** - Improve reliability
 
 **Requirements:**
+
 - Tests pass locally
 - Follow existing test patterns
 
@@ -197,6 +203,7 @@ Don't see an issue you want? Create one!
 - 🖼️ **Assets** - Icons, images, etc.
 
 **Requirements:**
+
 - Match existing design language
 - Responsive design
 - Accessibility considerations
@@ -284,6 +291,7 @@ See [Versioning Guide](/development/versioning/) for more.
 ### 1. Automated Checks
 
 GitHub Actions will automatically:
+
 - Validate changesets
 - Run linters
 - Check types
@@ -292,6 +300,7 @@ GitHub Actions will automatically:
 ### 2. Code Review
 
 Maintainers will:
+
 - Review your code
 - Provide feedback
 - Request changes (if needed)
@@ -312,6 +321,7 @@ git push origin feat/your-feature-name
 ### 4. Merge
 
 Once approved:
+
 - Maintainer merges to `main`
 - Your contribution is part of DesterLib!
 - Docs automatically deploy to GitHub Pages
@@ -339,6 +349,7 @@ git push origin --delete feat/your-feature-name
 
 ## 📚 Additional Resources
 
+- [Development Workflow](/development/workflow/) - Complete development workflow
 - [Commit Guidelines](/development/commit-guidelines/) - Commit message format
 - [Versioning Guide](/development/versioning/) - Changesets and releases
 - [Quick Reference](/development/quick-reference/) - Common commands
@@ -355,6 +366,7 @@ Need assistance?
 ## 🎉 Recognition
 
 All contributors are recognized in:
+
 - Project README
 - Release notes
 - GitHub contributors page
@@ -366,12 +378,14 @@ Thank you for helping make DesterLib better! ❤️
 We are committed to providing a welcoming and inclusive community. Be respectful, patient, and considerate of others.
 
 **Expected behavior:**
+
 - Be welcoming and inclusive
 - Be respectful of differing viewpoints
 - Accept constructive criticism gracefully
 - Focus on what's best for the community
 
 **Unacceptable behavior:**
+
 - Harassment or discriminatory language
 - Personal attacks or insults
 - Publishing others' private information
@@ -384,4 +398,3 @@ Violations may result in temporary or permanent ban from the project.
 By contributing, you agree that your contributions will be licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
 
 This ensures DesterLib remains free and open source, with all derivatives also remaining open source.
-

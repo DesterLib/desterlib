@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
@@ -37,7 +37,7 @@ jobs:
             echo "Skipping changeset check for version PR"
             exit 0
           fi
-          
+
           # Skip check for chore commits that don't need changesets
           if [[ "${{ github.head_ref }}" == chore/* ]] || \
              [[ "${{ github.head_ref }}" == docs/* ]] || \
@@ -45,9 +45,12 @@ jobs:
             echo "Skipping changeset check for chore/docs/ci PR"
             exit 0
           fi
-          
+
           # Check if changesets exist
           pnpm changeset status --since=origin/${{ github.base_ref }}
+
+      - name: Verify Versioning Setup
+        run: pnpm verify:versioning
 
       - name: Comment on PR
         if: failure()
@@ -58,6 +61,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '⚠️ **No changeset found**\n\nThis PR appears to contain changes that should have a changeset.\n\nPlease run `pnpm changeset` and commit the generated changeset file.\n\nIf this PR doesn\'t need a changeset (e.g., docs, tests, or internal changes), you can ignore this message.'
+              body: '⚠️ **Versioning verification failed**\n\nPlease run `pnpm verify:versioning` locally to check the issues.\n\nCommon issues:\n- Missing changesets: Run `pnpm changeset`\n- Changelog sync issues: Run `pnpm changelog:sync`\n- Sidebar configuration: Check `apps/docs/astro.config.mjs`\n\nSee [Pre-Merge Checklist](.github/PRE_MERGE_CHECKLIST.md) for details.'
             })
-

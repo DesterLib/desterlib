@@ -32,7 +32,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
@@ -43,14 +43,17 @@ jobs:
       - name: Build Packages
         run: pnpm build
 
+      - name: Verify Versioning Setup
+        run: pnpm verify:versioning
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm version
           publish: pnpm release
-          commit: 'chore: version packages'
-          title: 'chore: version packages'
+          commit: "chore: version packages"
+          title: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -64,7 +67,11 @@ jobs:
           tag_name: v${{ steps.changesets.outputs.publishedPackages[0].version }}
           release_name: Release v${{ steps.changesets.outputs.publishedPackages[0].version }}
           body: |
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+            See [Changelog](https://desterlib.github.io/desterlib/changelog) for details.
+
+            Package changelogs:
+            - [API](../blob/main/apps/api/CHANGELOG.md)
+            - [CLI](../blob/main/packages/cli/CHANGELOG.md)
+            - [Docs](../blob/main/apps/docs/CHANGELOG.md)
           draft: false
           prerelease: false
-

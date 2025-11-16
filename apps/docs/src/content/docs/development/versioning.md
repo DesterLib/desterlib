@@ -20,7 +20,7 @@ MAJOR.MINOR.PATCH
 ```
 
 - **MAJOR**: Incompatible API changes
-- **MINOR**: Backward-compatible functionality additions  
+- **MINOR**: Backward-compatible functionality additions
 - **PATCH**: Backward-compatible bug fixes
 
 ## Version Matching Rules
@@ -32,30 +32,29 @@ The system enforces **strict semantic versioning**:
 
 ### Compatibility Examples
 
-| Client | API | Compatible? | Reason |
-|--------|-----|-------------|--------|
-| 0.1.0 | 0.1.0 | ✅ Yes | Exact match |
-| 0.1.0 | 0.1.5 | ✅ Yes | Patch difference OK |
-| 0.1.0 | 0.2.0 | ❌ No | Minor version mismatch |
-| 0.1.0 | 1.0.0 | ❌ No | Major version mismatch |
+| Client | API   | Compatible? | Reason                 |
+| ------ | ----- | ----------- | ---------------------- |
+| 0.1.0  | 0.1.0 | ✅ Yes      | Exact match            |
+| 0.1.0  | 0.1.5 | ✅ Yes      | Patch difference OK    |
+| 0.1.0  | 0.2.0 | ❌ No       | Minor version mismatch |
+| 0.1.0  | 1.0.0 | ❌ No       | Major version mismatch |
 
 ## Updating Versions
 
 ### Quick Process
 
 ```bash
-# 1. Update version in root package.json
-# Edit: "version": "0.2.0"
+# 1. Create a changeset for your changes
+pnpm changeset
 
-# 2. Sync all versions across projects
-pnpm version:sync
-
-# 3. Update CHANGELOG.md with changes
-
-# 4. Commit and tag
+# 2. Commit changes and changeset
 pnpm commit
-git tag v0.2.0
-git push origin dev --tags
+git push origin dev
+
+# 3. After merge, version packages (maintainers only)
+pnpm version
+
+# 4. Version bump generates package CHANGELOG.md files automatically
 ```
 
 ### What Gets Synced
@@ -67,12 +66,16 @@ The `pnpm version:sync` script automatically updates:
 - ✅ `../desterlib-flutter/lib/api/pubspec.yaml` - Generated client version
 - ✅ `../desterlib-flutter/lib/core/config/api_config.dart` - Client version constant
 
-### Manual Updates
+### Changelog Management
 
-You must manually update:
+DesterLib uses [Changesets](https://github.com/changesets/changesets) for automatic changelog generation:
 
-- 📝 `CHANGELOG.md` - Document your changes
-- 📝 Commit message (use conventional commits)
+- 📝 Package changelogs are auto-generated in:
+  - `apps/api/CHANGELOG.md` - API changes
+  - `packages/cli/CHANGELOG.md` - CLI changes
+  - `apps/docs/CHANGELOG.md` - Documentation changes
+- 📝 Aggregated changelog synced to docs site
+- 📝 Use `pnpm changeset` to document your changes
 
 ## How It Works
 
@@ -91,7 +94,7 @@ You must manually update:
 3. **Compatibility Check**
    ```typescript
    // Major and minor must match exactly
-   client.major === api.major && client.minor === api.minor
+   client.major === api.major && client.minor === api.minor;
    ```
 
 ### Client Side
@@ -132,6 +135,7 @@ When versions are incompatible:
 ### Client Behavior
 
 The Flutter client:
+
 1. Detects version mismatch (HTTP 426)
 2. Updates version provider
 3. Shows user-friendly error
@@ -141,12 +145,8 @@ The Flutter client:
 
 ### Usage
 
-Check version consistency:
-```bash
-pnpm version:check
-```
+Check and sync versions:
 
-Sync all versions:
 ```bash
 pnpm version:sync
 ```
@@ -173,6 +173,7 @@ Don't confuse these two concepts:
 - **Semantic Version:** `0.1.0` - Changes with each release, represents application version
 
 In `api_config.dart`:
+
 ```dart
 static const String apiRouteVersion = 'v1';     // API endpoint version
 static const String clientVersion = '0.1.0';    // Semantic version
@@ -198,11 +199,11 @@ To test the version mismatch flow:
 
 ## Best Practices
 
-1. **Keep versions in sync** - Use `pnpm version:sync` after updating root version
-2. **Document changes** - Always update CHANGELOG.md
-3. **Use conventional commits** - Makes changelog generation easier
-4. **Test thoroughly** - Test both compatible and incompatible scenarios
-5. **Clear communication** - Inform users about breaking changes
+1. **Create changesets** - Always run `pnpm changeset` for user-facing changes
+2. **Use conventional commits** - Helps with changelog generation
+3. **Test thoroughly** - Test both compatible and incompatible scenarios
+4. **Clear communication** - Inform users about breaking changes
+5. **Review generated changelogs** - Verify changesets generate correct entries
 
 ## Troubleshooting
 
