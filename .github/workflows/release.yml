@@ -18,6 +18,9 @@ jobs:
   release:
     name: Release packages & deploy docs
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -96,4 +99,5 @@ jobs:
           path: ./apps/docs/dist
 
       - name: Deploy Docs to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
