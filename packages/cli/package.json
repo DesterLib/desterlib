@@ -1,6 +1,6 @@
 {
   "name": "@desterlib/cli",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "DesterLib setup CLI for easy Docker configuration",
   "type": "module",
   "bin": {
@@ -39,7 +39,7 @@
     "url": "https://github.com/DesterLib/desterlib.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://desterlib.github.io/desterlib/cli/overview",
+  "homepage": "https://docs.dester.in/cli/overview",
   "bugs": {
     "url": "https://github.com/DesterLib/desterlib/issues"
   },
