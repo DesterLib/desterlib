@@ -145,10 +145,50 @@ NODE_VERSION=$(node -v)
 NPM_VERSION=$(npm -v)
 echo -e "${GREEN}✅ Node.js $NODE_VERSION and npm $NPM_VERSION detected${NC}"
 
-# Install CLI globally
+# Check if git is available
+if ! command_exists git; then
+    echo -e "${RED}❌ Git is required but not found.${NC}"
+    echo -e "${YELLOW}Please install Git and run this script again.${NC}"
+    echo -e "${CYAN}   https://git-scm.com/downloads${NC}"
+    exit 1
+fi
+
+# Install CLI globally from GitHub
 echo ""
-echo -e "${CYAN}📦 Installing DesterLib CLI...${NC}"
-npm install -g @desterlib/cli@latest
+echo -e "${CYAN}📦 Installing DesterLib CLI from GitHub...${NC}"
+
+# Create temporary directory
+TEMP_DIR=$(mktemp -d)
+trap "rm -rf $TEMP_DIR" EXIT
+
+# Clone repository
+echo -e "${CYAN}Cloning repository...${NC}"
+if ! git clone --depth 1 --branch main https://github.com/DesterLib/desterlib.git "$TEMP_DIR/desterlib"; then
+    echo -e "${RED}❌ Failed to clone repository.${NC}"
+    exit 1
+fi
+
+# Navigate to CLI package and install
+cd "$TEMP_DIR/desterlib/packages/cli"
+
+# Install dependencies and build
+echo -e "${CYAN}Building CLI...${NC}"
+if ! npm install; then
+    echo -e "${RED}❌ Failed to install dependencies.${NC}"
+    exit 1
+fi
+
+if ! npm run build; then
+    echo -e "${RED}❌ Failed to build CLI.${NC}"
+    exit 1
+fi
+
+# Install globally
+echo -e "${CYAN}Installing CLI globally...${NC}"
+if ! npm install -g .; then
+    echo -e "${RED}❌ Failed to install CLI globally.${NC}"
+    exit 1
+fi
 
 # Verify installation
 if command_exists desterlib; then

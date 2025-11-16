@@ -114,10 +114,63 @@ $nodeVersion = node -v
 $npmVersion = npm -v
 Write-ColorOutput Green "✅ Node.js $nodeVersion and npm $npmVersion detected"
 
-# Install CLI globally
+# Check if git is available
+if (-not (Test-CommandExists "git")) {
+    Write-ColorOutput Red "❌ Git is required but not found."
+    Write-ColorOutput Yellow "Please install Git and run this script again."
+    Write-ColorOutput Cyan "   https://git-scm.com/downloads"
+    exit 1
+}
+
+# Install CLI globally from GitHub
 Write-Output ""
-Write-ColorOutput Cyan "📦 Installing DesterLib CLI..."
-npm install -g @desterlib/cli@latest
+Write-ColorOutput Cyan "📦 Installing DesterLib CLI from GitHub..."
+
+# Create temporary directory
+$TempDir = New-TemporaryFile | ForEach-Object { Remove-Item $_; New-Item -ItemType Directory -Path $_ }
+
+try {
+    # Clone repository
+    Write-ColorOutput Cyan "Cloning repository..."
+    $cloneResult = git clone --depth 1 --branch main https://github.com/DesterLib/desterlib.git "$TempDir\desterlib" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-ColorOutput Red "❌ Failed to clone repository."
+        exit 1
+    }
+    
+    # Navigate to CLI package and install
+    Push-Location "$TempDir\desterlib\packages\cli"
+    
+    # Install dependencies and build
+    Write-ColorOutput Cyan "Building CLI..."
+    npm install
+    if ($LASTEXITCODE -ne 0) {
+        Write-ColorOutput Red "❌ Failed to install dependencies."
+        exit 1
+    }
+    
+    npm run build
+    if ($LASTEXITCODE -ne 0) {
+        Write-ColorOutput Red "❌ Failed to build CLI."
+        exit 1
+    }
+    
+    # Install globally
+    Write-ColorOutput Cyan "Installing CLI globally..."
+    npm install -g .
+    if ($LASTEXITCODE -ne 0) {
+        Write-ColorOutput Red "❌ Failed to install CLI globally."
+        exit 1
+    }
+    
+    Pop-Location
+} catch {
+    Write-ColorOutput Red "❌ Error during installation: $_"
+    exit 1
+} finally {
+    # Clean up
+    Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue
+}
 
 # Verify installation
 if (Test-CommandExists "desterlib") {
