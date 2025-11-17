@@ -70,7 +70,10 @@ Write-ColorOutput Cyan "📋 Configuration"
 Write-Output ""
 
 # Media library path
-$MEDIA_PATH = Read-Host "Media library path (where your movies/TV shows are)"
+Write-ColorOutput Cyan "Media library root path:"
+Write-ColorOutput Yellow "  This should be the root directory containing your media libraries"
+Write-ColorOutput Yellow "  Example: C:\Media (which contains Movies\, TV Shows\, etc.)"
+$MEDIA_PATH = Read-Host "Media library root path"
 if (-not $MEDIA_PATH) {
     Write-ColorOutput Red "❌ Media library path is required"
     exit 1
@@ -129,6 +132,9 @@ DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sch
 NODE_ENV=production
 PORT=${PORT}
 FRONTEND_URL=http://localhost:${PORT}
+# Media library path configuration (for path mapping between host and container)
+HOST_MEDIA_PATH=${MEDIA_PATH}
+CONTAINER_MEDIA_PATH=/media
 "@
 $envPath = Join-Path "apps" "api"
 New-Item -ItemType Directory -Force -Path $envPath | Out-Null
@@ -154,6 +160,8 @@ $dockerComposeContent = $dockerComposeContent -replace "POSTGRES_DB: desterlib_p
 $dockerComposeContent = $dockerComposeContent -replace "POSTGRES_USER:-postgres", "POSTGRES_USER:-${DB_USER}"
 $dockerComposeContent = $dockerComposeContent -replace "postgres:postgres@postgres", "${DB_USER}:${DB_PASSWORD}@postgres"
 $dockerComposeContent = $dockerComposeContent -replace "desterlib_prod", $DB_NAME
+# Update HOST_MEDIA_PATH environment variable
+$dockerComposeContent = $dockerComposeContent -replace "HOST_MEDIA_PATH: /Volumes/External/Library/Media", "HOST_MEDIA_PATH: ${MEDIA_PATH}"
 
 $dockerComposeContent | Out-File -FilePath $dockerComposePath -Encoding utf8 -NoNewline
 

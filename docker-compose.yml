@@ -40,13 +40,21 @@ services:
       NODE_ENV: production
       PORT: 3001
       FRONTEND_URL: http://localhost:3001
+      # Media library path configuration
+      # HOST_MEDIA_PATH: The root host path for your media library (used for path mapping)
+      # Should match the host path in the volume mount above (before the colon)
+      HOST_MEDIA_PATH: /Volumes/External/Library/Media
+      CONTAINER_MEDIA_PATH: /media
     ports:
       # Bind to all interfaces (0.0.0.0) to allow mobile app connections
       # Mobile apps will use the host machine's IP address
       - "0.0.0.0:3001:3001"
     volumes:
-      # Mount your media library directory (read-only for security)
+      # Mount your media library root directory (read-only for security)
+      # This is the root location for all your media libraries (e.g., /Volumes/Media)
+      # Subdirectories like /Volumes/Media/Movies, /Volumes/Media/TV Shows, etc. should be scanned via the API
       # The application automatically handles path mapping between host and container
+      # Clients should use host paths (e.g., /Volumes/Media/Movies) when calling the API
       - /Volumes/External/Library/Media:/media:ro
     healthcheck:
       test:

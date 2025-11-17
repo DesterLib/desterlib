@@ -43,7 +43,6 @@ This script will:
 **Available platforms:**
 
 - 📱 **Android** - `Dester-*-Android-arm64-v8a.apk`
-- 📺 **Android TV** - `Dester-*-AndroidTV-arm64.apk`
 - 🍎 **macOS** - `Dester-*-macOS.dmg`
 - 🪟 **Windows** - `Dester-*-Windows-x64.zip`
 - 🐧 **Linux** - `Dester-*-Linux-x64.tar.gz`

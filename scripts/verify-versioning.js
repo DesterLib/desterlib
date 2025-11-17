@@ -353,7 +353,6 @@ function testChangelogSync() {
     // Verify docs changelogs were updated
     const docsChangelogs = [
       { name: "API", path: apiDocsChangelogPath },
-      { name: "CLI", path: cliDocsChangelogPath },
       { name: "Docs", path: docsDocsChangelogPath },
     ];
 

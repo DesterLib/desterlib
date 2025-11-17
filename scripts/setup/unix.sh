@@ -47,7 +47,8 @@ echo ""
 # Get installation directory
 INSTALL_DIR="${HOME}/.desterlib"
 echo -e "${CYAN}Installation directory: ${INSTALL_DIR}${NC}"
-read -p "Press Enter to use default, or type a different path: " custom_dir
+echo -n "Press Enter to use default, or type a different path: "
+read custom_dir
 if [ -n "$custom_dir" ]; then
     INSTALL_DIR="$custom_dir"
 fi
@@ -62,32 +63,41 @@ echo -e "${CYAN}📋 Configuration${NC}"
 echo ""
 
 # Media library path
-read -p "Media library path (where your movies/TV shows are): " MEDIA_PATH
+echo -e "${CYAN}Media library root path:${NC}"
+echo -e "${YELLOW}  This should be the root directory containing your media libraries${NC}"
+echo -e "${YELLOW}  Example: /Volumes/Media (which contains Movies/, TV Shows/, etc.)${NC}"
+echo -n "Media library root path: "
+read MEDIA_PATH
 if [ -z "$MEDIA_PATH" ]; then
     echo -e "${RED}❌ Media library path is required${NC}"
     exit 1
 fi
 if [ ! -d "$MEDIA_PATH" ]; then
     echo -e "${YELLOW}⚠️  Warning: Media path does not exist: $MEDIA_PATH${NC}"
-    read -p "Continue anyway? (y/N): " continue_anyway
+    echo -n "Continue anyway? (y/N): "
+    read continue_anyway
     if [ "$continue_anyway" != "y" ] && [ "$continue_anyway" != "Y" ]; then
         exit 1
     fi
 fi
 
 # Port
-read -p "API port [3001]: " PORT
+echo -n "API port [3001]: "
+read PORT
 PORT=${PORT:-3001}
 
 # Database credentials
-read -p "Database user [postgres]: " DB_USER
+echo -n "Database user [postgres]: "
+read DB_USER
 DB_USER=${DB_USER:-postgres}
 
-read -sp "Database password [postgres]: " DB_PASSWORD
+echo -n "Database password [postgres]: "
+read -s DB_PASSWORD
 DB_PASSWORD=${DB_PASSWORD:-postgres}
 echo ""
 
-read -p "Database name [desterlib_prod]: " DB_NAME
+echo -n "Database name [desterlib_prod]: "
+read DB_NAME
 DB_NAME=${DB_NAME:-desterlib_prod}
 
 echo ""
@@ -112,6 +122,9 @@ DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sch
 NODE_ENV=production
 PORT=${PORT}
 FRONTEND_URL=http://localhost:${PORT}
+# Media library path configuration (for path mapping between host and container)
+HOST_MEDIA_PATH=${MEDIA_PATH}
+CONTAINER_MEDIA_PATH=/media
 EOF
 
 # Update docker-compose.yml with user's configuration
@@ -133,6 +146,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     sed -i '' "s|POSTGRES_USER:-postgres|POSTGRES_USER:-${DB_USER}|" docker-compose.yml
     sed -i '' "s|postgres:postgres@postgres|${DB_USER}:${ESCAPED_DB_PASSWORD}@postgres|" docker-compose.yml
     sed -i '' "s|desterlib_prod|${DB_NAME}|g" docker-compose.yml
+    # Update HOST_MEDIA_PATH environment variable
+    sed -i '' "s|HOST_MEDIA_PATH: /Volumes/External/Library/Media|HOST_MEDIA_PATH: ${ESCAPED_MEDIA_PATH}|" docker-compose.yml
 else
     # Linux sed
     sed -i "s|- /Volumes/External/Library/Media:/media:ro|- ${ESCAPED_MEDIA_PATH}:/media:ro|" docker-compose.yml
@@ -144,6 +159,8 @@ else
     sed -i "s|POSTGRES_USER:-postgres|POSTGRES_USER:-${DB_USER}|" docker-compose.yml
     sed -i "s|postgres:postgres@postgres|${DB_USER}:${ESCAPED_DB_PASSWORD}@postgres|" docker-compose.yml
     sed -i "s|desterlib_prod|${DB_NAME}|g" docker-compose.yml
+    # Update HOST_MEDIA_PATH environment variable
+    sed -i "s|HOST_MEDIA_PATH: /Volumes/External/Library/Media|HOST_MEDIA_PATH: ${ESCAPED_MEDIA_PATH}|" docker-compose.yml
 fi
 
 echo -e "${GREEN}✅ Configuration files created${NC}"
