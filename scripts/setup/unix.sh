@@ -14,34 +14,34 @@ NC='\033[0m' # No Color
 
 # Banner
 echo -e "${CYAN}"
-echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║                                                           ║"
-echo "║           🎬 DesterLib Quick Setup                        ║"
-echo "║                                                           ║"
-echo "╚═══════════════════════════════════════════════════════════╝"
+echo "================================================================
+                                                                
+           DesterLib Quick Setup                        
+                                                                
+================================================================"
 echo -e "${NC}"
 
 # Check Docker
 if ! command -v docker &> /dev/null; then
-    echo -e "${RED}❌ Docker is not installed.${NC}"
+    echo -e "${RED}[X] Docker is not installed.${NC}"
     echo -e "${YELLOW}Please install Docker Desktop:${NC}"
-    echo -e "${CYAN}  • macOS/Windows: https://www.docker.com/products/docker-desktop${NC}"
-    echo -e "${CYAN}  • Linux: https://docs.docker.com/engine/install/${NC}"
+    echo -e "${CYAN}  - macOS/Windows: https://www.docker.com/products/docker-desktop${NC}"
+    echo -e "${CYAN}  - Linux: https://docs.docker.com/engine/install/${NC}"
     exit 1
 fi
 
 if ! docker info &> /dev/null; then
-    echo -e "${RED}❌ Docker is not running.${NC}"
+    echo -e "${RED}[X] Docker is not running.${NC}"
     echo -e "${YELLOW}Please start Docker Desktop and try again.${NC}"
     exit 1
 fi
 
 if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
-    echo -e "${RED}❌ Docker Compose is not installed.${NC}"
+    echo -e "${RED}[X] Docker Compose is not installed.${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}✅ Docker is installed and running${NC}"
+echo -e "${GREEN}[OK] Docker is installed and running${NC}"
 echo ""
 
 # Get installation directory
@@ -59,7 +59,7 @@ cd "$INSTALL_DIR"
 
 # Get configuration
 echo ""
-echo -e "${CYAN}📋 Configuration${NC}"
+echo -e "${CYAN}Configuration${NC}"
 echo ""
 
 # Media library path
@@ -69,11 +69,11 @@ echo -e "${YELLOW}  Example: /Volumes/Media (which contains Movies/, TV Shows/, 
 echo -n "Media library root path: "
 read MEDIA_PATH
 if [ -z "$MEDIA_PATH" ]; then
-    echo -e "${RED}❌ Media library path is required${NC}"
+    echo -e "${RED}[X] Media library path is required${NC}"
     exit 1
 fi
 if [ ! -d "$MEDIA_PATH" ]; then
-    echo -e "${YELLOW}⚠️  Warning: Media path does not exist: $MEDIA_PATH${NC}"
+    echo -e "${YELLOW}[!] Warning: Media path does not exist: $MEDIA_PATH${NC}"
     echo -n "Continue anyway? (y/N): "
     read continue_anyway
     if [ "$continue_anyway" != "y" ] && [ "$continue_anyway" != "Y" ]; then
@@ -101,7 +101,7 @@ read DB_NAME
 DB_NAME=${DB_NAME:-desterlib_prod}
 
 echo ""
-echo -e "${CYAN}📦 Setting up DesterLib...${NC}"
+echo -e "${CYAN}Setting up DesterLib...${NC}"
 
 # Clone repository if not already there
 if [ ! -d ".git" ]; then
@@ -163,11 +163,11 @@ else
     sed -i "s|HOST_MEDIA_PATH: /Volumes/External/Library/Media|HOST_MEDIA_PATH: ${ESCAPED_MEDIA_PATH}|" docker-compose.yml
 fi
 
-echo -e "${GREEN}✅ Configuration files created${NC}"
+echo -e "${GREEN}[OK] Configuration files created${NC}"
 echo ""
 
 # Build and start
-echo -e "${CYAN}🐳 Building and starting Docker containers...${NC}"
+echo -e "${CYAN}Building and starting Docker containers...${NC}"
 echo "This may take a few minutes on first run..."
 echo ""
 
@@ -181,14 +181,14 @@ fi
 $DOCKER_COMPOSE up -d --build
 
 echo ""
-echo -e "${GREEN}✅ DesterLib is starting up!${NC}"
+echo -e "${GREEN}[OK] DesterLib is starting up!${NC}"
 echo ""
-echo -e "${CYAN}📚 Your DesterLib server:${NC}"
-echo -e "  • API: ${GREEN}http://localhost:${PORT}${NC}"
-echo -e "  • API Docs: ${GREEN}http://localhost:${PORT}/api/docs${NC}"
-echo -e "  • Health: ${GREEN}http://localhost:${PORT}/health${NC}"
+echo -e "${CYAN}Your DesterLib server:${NC}"
+echo -e "  - API: ${GREEN}http://localhost:${PORT}${NC}"
+echo -e "  - API Docs: ${GREEN}http://localhost:${PORT}/api/docs${NC}"
+echo -e "  - Health: ${GREEN}http://localhost:${PORT}/health${NC}"
 echo ""
-echo -e "${CYAN}📁 Installation directory: ${INSTALL_DIR}${NC}"
+echo -e "${CYAN}Installation directory: ${INSTALL_DIR}${NC}"
 echo ""
 echo -e "${CYAN}Useful commands:${NC}"
 echo -e "  ${GREEN}cd ${INSTALL_DIR}${NC}"
