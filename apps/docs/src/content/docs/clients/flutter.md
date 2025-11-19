@@ -246,7 +246,7 @@ flutter analyze --fatal-infos
 **Can't connect to server:**
 
 - Check server URL is correct
-- Ensure API is running (`docker-compose up`)
+- Ensure API is running (`docker compose up`)
 - Check firewall settings
 - Try using IP address instead of localhost
 

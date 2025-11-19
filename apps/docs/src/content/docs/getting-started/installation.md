@@ -67,7 +67,8 @@ git clone https://github.com/DesterLib/desterlib.git
 cd desterlib
 
 # 2. Start with Docker Compose
-docker-compose up -d
+docker compose up -d
+# Note: If you have older Docker, use: docker-compose up -d
 
 # 3. Access at http://localhost:3001
 ```
@@ -84,7 +85,7 @@ PORT=3001
 
 ### Pre-built Apps
 
-📥 **[Download from Releases](https://github.com/DesterLib/Dester-Flutter/releases/latest)**
+📥 **[Download from Releases](https://github.com/DesterLib/desterlib-flutter/releases/latest)**
 
 :::caution[Alpha Software]
 DesterLib is in alpha. Expect bugs and frequent updates!
@@ -92,14 +93,13 @@ DesterLib is in alpha. Expect bugs and frequent updates!
 
 **Available platforms:**
 
-| Platform             | File                             |
-| -------------------- | -------------------------------- |
-| Android Phone/Tablet | `Dester-*-Android-arm64-v8a.apk` |
-| Android TV           | `Dester-*-AndroidTV-arm64.apk`   |
-| macOS                | `Dester-*-macOS.dmg`             |
-| Windows              | `Dester-*-Windows-x64.zip`       |
-| Linux                | `Dester-*-Linux-x64.tar.gz`      |
-| iOS                  | Build from source (see below)    |
+| Platform             | File                    |
+| -------------------- | ----------------------- |
+| Android Phone/Tablet | `Dester-*-Android.apk`  |
+| macOS                | `Dester-*-macOS.zip`    |
+| Windows              | `Dester-*-Windows.zip`  |
+| Linux                | `Dester-*-Linux.tar.gz` |
+| iOS                  | `Dester-*-iOS.ipa`      |
 
 **After installing:**
 
@@ -117,8 +117,8 @@ For iOS or if you prefer building yourself:
 1. **Clone the Flutter app repository:**
 
    ```bash
-   git clone https://github.com/DesterLib/Dester-Flutter.git
-   cd Dester-Flutter
+   git clone https://github.com/DesterLib/desterlib-flutter.git
+   cd desterlib-flutter
    ```
 
 2. **Install Flutter dependencies:**
@@ -178,8 +178,8 @@ For iOS or if you prefer building yourself:
 **macOS:**
 
 ```bash
-git clone https://github.com/DesterLib/Dester-Flutter.git
-cd Dester-Flutter
+git clone https://github.com/DesterLib/desterlib-flutter.git
+cd desterlib-flutter
 flutter pub get
 flutter build macos --release
 
@@ -203,8 +203,8 @@ flutter build linux --release
 **Windows:**
 
 ```bash
-git clone https://github.com/DesterLib/Dester-Flutter.git
-cd Dester-Flutter
+git clone https://github.com/DesterLib/desterlib-flutter.git
+cd desterlib-flutter
 flutter pub get
 flutter build windows --release
 
@@ -220,12 +220,16 @@ Commands depend on your installation method:
 ```bash
 cd ~/.desterlib  # or your custom installation directory
 
-docker-compose ps       # View status
-docker-compose logs -f  # View logs
-docker-compose restart  # Restart
-docker-compose down     # Stop
-docker-compose pull && docker-compose up -d  # Update
+docker compose ps       # View status
+docker compose logs -f  # View logs
+docker compose restart  # Restart
+docker compose down     # Stop
+docker compose pull && docker compose up -d  # Update
 ```
+
+:::note[Docker Compose Command]
+Modern Docker uses `docker compose` (space). Older installations may use `docker-compose` (hyphen). Both work the same way.
+:::
 
 **If installed via Git:**
 
@@ -233,10 +237,10 @@ docker-compose pull && docker-compose up -d  # Update
 cd desterlib
 
 docker ps               # View status
-docker-compose logs -f  # View logs
-docker-compose restart  # Restart
-docker-compose down     # Stop
-git pull && docker-compose up -d --build  # Update
+docker compose logs -f  # View logs
+docker compose restart  # Restart
+docker compose down     # Stop
+git pull && docker compose up -d --build  # Update
 ```
 
 ## Development Setup
@@ -250,7 +254,7 @@ cd desterlib
 pnpm install
 
 # 2. Start test database
-docker-compose -f docker-compose.test.yml up -d
+docker compose -f docker-compose.test.yml up -d
 
 # 3. Configure .env in apps/api/
 DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test
@@ -304,14 +308,14 @@ cat backup.sql | docker exec -i desterlib-postgres psql -U desterlib desterlib
 **Setup script installation:**
 
 ```bash
-cd ~/.desterlib && docker-compose down -v
+cd ~/.desterlib && docker compose down -v
 rm -rf ~/.desterlib
 ```
 
 **Git installation:**
 
 ```bash
-cd desterlib && docker-compose down -v
+cd desterlib && docker compose down -v
 cd .. && rm -rf desterlib
 ```
 
@@ -331,15 +335,15 @@ netstat -ano | findstr :3001   # Windows
 
 ```bash
 cd ~/.desterlib  # or your install directory
-docker-compose logs -f
+docker compose logs -f
 ```
 
 **Full reset:**
 
 ```bash
 cd ~/.desterlib
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 ```
 
 ### Can't Connect from Client
@@ -361,7 +365,7 @@ docker-compose up -d
 1. Scan library → Settings → Library Management → Scan Library
 2. Check media mounted → Verify path in `~/.desterlib/docker-compose.yml`
 3. File naming → Use `Movie Name (2023).mp4` format
-4. Check logs → `docker-compose logs -f api` for errors
+4. Check logs → `docker compose logs -f api` for errors
 5. Verify TMDB key → Set in app Settings if not already configured
 
 ### Build Issues (Development)

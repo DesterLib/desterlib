@@ -46,7 +46,7 @@ The API will be available at `http://localhost:3001`
 
 ```bash
 # Using Docker
-docker-compose up -d
+docker compose up -d
 
 # Or build and start manually
 cd apps/api

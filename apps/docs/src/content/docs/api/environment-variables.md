@@ -244,8 +244,8 @@ RATE_LIMIT_MAX=200           # Allow more requests
 Start the server and check logs:
 
 ```bash
-docker-compose up -d
-docker-compose logs api | head -20
+docker compose up -d
+docker compose logs api | head -20
 ```
 
 You should see:
@@ -302,7 +302,7 @@ RATE_LIMIT_WINDOW_MS=1800000  # 30 minutes
 RATE_LIMIT_MAX=200            # 200 requests
 ```
 
-Then restart: `docker-compose restart api`
+Then restart: `docker compose restart api`
 
 ## Security Recommendations
 
@@ -328,5 +328,4 @@ Use this for `POSTGRES_PASSWORD` in your database connection.
 
 - [Installation Guide](/getting-started/installation/) - Initial setup
 - [API Overview](/api/overview/) - API server documentation
-- [Managing Server](/guides/managing-server/) - Server management
 - [CLI Tool](/cli/overview/) - CLI documentation

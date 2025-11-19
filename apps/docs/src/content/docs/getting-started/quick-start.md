@@ -43,11 +43,13 @@ The setup script cloned the repository and started your media server in `~/.dest
 
 **Download for your device:**
 
-📥 [Get the Latest Release](https://github.com/DesterLib/Dester-Flutter/releases/latest)
+📥 [Get the Latest Release](https://github.com/DesterLib/desterlib-flutter/releases/latest)
 
-- Android: `Dester-*-Android-arm64-v8a.apk`
-- macOS: `Dester-*-macOS.dmg`
-- Windows/Linux: Check the releases page
+- Android: `Dester-*-Android.apk`
+- macOS: `Dester-*-macOS.zip`
+- Windows: `Dester-*-Windows.zip`
+- Linux: `Dester-*-Linux.tar.gz`
+- iOS: `Dester-*-iOS.ipa`
 
 **Then:**
 

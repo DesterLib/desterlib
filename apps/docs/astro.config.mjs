@@ -89,19 +89,6 @@ export default defineConfig({
           ],
         },
 
-        // GUIDES
-        {
-          label: "Guides",
-          collapsed: true,
-          items: [
-            { label: "TMDB Setup", slug: "guides/tmdb-setup" },
-            { label: "Managing Server", slug: "guides/managing-server" },
-            { label: "Updating DesterLib", slug: "guides/updating" },
-            { label: "Backup & Restore", slug: "guides/backup-restore" },
-            { label: "Remote Access", slug: "guides/remote-access" },
-          ],
-        },
-
         // DEPLOYMENT
         {
           label: "Deployment",

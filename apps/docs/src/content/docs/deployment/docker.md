@@ -40,8 +40,12 @@ NODE_ENV=production
 PORT=3001
 
 # Start in production mode
-docker-compose up -d
+docker compose up -d
 ```
+
+:::note[Docker Compose Command]
+Modern Docker uses `docker compose` (space). Older installations may use `docker-compose` (hyphen). Both work the same way.
+:::
 
 ## Production Best Practices
 
@@ -349,8 +353,8 @@ Currently, updates require brief downtime:
 
 ```bash
 cd ~/.desterlib
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 ```
 
 Downtime: ~10-30 seconds during container restart.
@@ -361,7 +365,7 @@ Recommend updating during low-usage times:
 
 ```bash
 # Schedule with cron at 3 AM
-0 3 * * 0 cd ~/.desterlib && docker-compose pull && docker-compose up -d
+0 3 * * 0 cd ~/.desterlib && docker compose pull && docker compose up -d
 ```
 
 ## Troubleshooting
@@ -371,7 +375,7 @@ Recommend updating during low-usage times:
 **Check logs:**
 
 ```bash
-docker-compose logs --tail=100 api
+docker compose logs --tail=100 api
 ```
 
 **Common causes:**
@@ -393,7 +397,7 @@ docker stats
 
 1. Add memory limits (see Resource Limits above)
 2. Check for memory leaks in logs
-3. Restart containers: `docker-compose restart`
+3. Restart containers: `docker compose restart`
 
 ### Database Performance
 
@@ -418,6 +422,3 @@ docker stats
 ## Related Documentation
 
 - [Installation Guide](/getting-started/installation/) - Initial setup
-- [Managing Server](/guides/managing-server/) - Day-to-day management
-- [Remote Access](/guides/remote-access/) - External access options
-- [Backup & Restore](/guides/backup-restore/) - Data protection

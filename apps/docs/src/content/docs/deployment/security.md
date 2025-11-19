@@ -103,8 +103,8 @@ networks:
 Keep Docker images updated:
 
 ```bash
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 ```
 
 ## File Permissions
@@ -227,10 +227,10 @@ Watch for suspicious activity:
 
 ```bash
 # Monitor API access
-docker-compose logs -f api | grep -E "POST|PUT|DELETE"
+docker compose logs -f api | grep -E "POST|PUT|DELETE"
 
 # Monitor errors
-docker-compose logs -f api | grep -i error
+docker compose logs -f api | grep -i error
 ```
 
 ### Rate Limit Alerts
@@ -238,7 +238,7 @@ docker-compose logs -f api | grep -i error
 Monitor rate limiting:
 
 ```bash
-docker-compose logs api | grep "Too many requests"
+docker compose logs api | grep "Too many requests"
 ```
 
 If you see many, someone may be abusing your API.
@@ -296,7 +296,7 @@ Use network-level security:
 1. **Immediately:**
 
    ```bash
-   docker-compose down
+   docker compose down
    ```
 
 2. **Change all passwords:**
@@ -306,16 +306,16 @@ Use network-level security:
 3. **Review logs:**
 
    ```bash
-   docker-compose logs api > incident-logs.txt
+   docker compose logs api > incident-logs.txt
    ```
 
 4. **Restore from backup:**
-   - See [Backup Guide](/guides/backup-restore/)
+   - See installation guide for backup procedures
 
 5. **Update everything:**
    ```bash
-   docker-compose pull
-   docker-compose up -d
+   docker compose pull
+   docker compose up -d
    ```
 
 ## Security Checklist
@@ -344,6 +344,4 @@ We'll respond within 48 hours.
 ## Related Documentation
 
 - [Docker Deployment](/deployment/docker/) - Production deployment
-- [Remote Access](/guides/remote-access/) - Secure remote access
 - [Environment Variables](/api/environment-variables/) - Configuration
-- [Backup & Restore](/guides/backup-restore/) - Data protection
