@@ -20,7 +20,9 @@ model Media {
   type                MediaType
   description         String?
   posterUrl           String?
+  plainPosterUrl      String?   // Poster without language-specific text
   backdropUrl         String?
+  logoUrl             String?   // Logo image in English
   meshGradientColors  String[]  // Hex colors for mesh gradient (4 colors for corners)
   releaseDate         DateTime?
   rating              Float?
