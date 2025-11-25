@@ -74,9 +74,17 @@ const router: Router = express.Router();
  *                           posterUrl:
  *                             type: string
  *                             nullable: true
+ *                           plainPosterUrl:
+ *                             type: string
+ *                             nullable: true
+ *                             description: Poster without language-specific text
  *                           backdropUrl:
  *                             type: string
  *                             nullable: true
+ *                           logoUrl:
+ *                             type: string
+ *                             nullable: true
+ *                             description: Logo image in English
  *                           meshGradientColors:
  *                             type: array
  *                             items:
@@ -270,7 +278,7 @@ router.get("/", moviesControllers.getMovies);
 router.get(
   "/:id",
   validateParams(getMovieByIdSchema),
-  moviesControllers.getMovieById,
+  moviesControllers.getMovieById
 );
 
 export default router;

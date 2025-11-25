@@ -62,9 +62,17 @@ const router: Router = express.Router();
  *                           posterUrl:
  *                             type: string
  *                             nullable: true
+ *                           plainPosterUrl:
+ *                             type: string
+ *                             nullable: true
+ *                             description: Poster without language-specific text
  *                           backdropUrl:
  *                             type: string
  *                             nullable: true
+ *                           logoUrl:
+ *                             type: string
+ *                             nullable: true
+ *                             description: Logo image in English
  *                           meshGradientColors:
  *                             type: array
  *                             items:
@@ -309,7 +317,7 @@ router.get("/", tvshowsControllers.getTVShows);
 router.get(
   "/:id",
   validateParams(getTVShowByIdSchema),
-  tvshowsControllers.getTVShowById,
+  tvshowsControllers.getTVShowById
 );
 
 export default router;
