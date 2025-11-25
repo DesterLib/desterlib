@@ -199,8 +199,12 @@ export const scanControllers = {
         `Scan queued. ${scanQueue.length} scan(s) ahead in queue. Progress will be sent via WebSocket when started.`,
       );
     } else {
-      activeScan = scanTask();
-      processQueue(); // Start processing queue
+      // Start scan immediately - don't call processQueue() here as it will return early
+      // processQueue() will be called automatically when this scan completes (in the .finally() block)
+      activeScan = scanTask().finally(() => {
+        activeScan = null;
+        processQueue(); // Process next in queue after this one completes
+      });
 
       return sendSuccess(
         res,

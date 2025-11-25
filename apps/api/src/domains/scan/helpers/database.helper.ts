@@ -36,6 +36,10 @@ export async function upsertMedia(
   metadata: TmdbMetadata,
   tmdbId: string,
   mediaType: "movie" | "tv",
+  additionalImages?: {
+    plainPosterUrl?: string | null;
+    logoUrl?: string | null;
+  }
 ) {
   // Check if media already exists
   const existingExternalId = await prisma.externalId.findUnique({
@@ -53,12 +57,17 @@ export async function upsertMedia(
   // Debug logging for poster URL
   const posterUrl = getTmdbImageUrl(metadata.poster_path);
   const backdropUrl = getTmdbImageUrl(metadata.backdrop_path);
+  const plainPosterUrl = additionalImages?.plainPosterUrl || null;
+  const logoUrl = additionalImages?.logoUrl || null;
 
   logger.debug(
-    `[${metadata.title || metadata.name}] poster_path: ${metadata.poster_path} → posterUrl: ${posterUrl}`,
+    `[${metadata.title || metadata.name}] poster_path: ${metadata.poster_path} → posterUrl: ${posterUrl}`
   );
   logger.debug(
-    `[${metadata.title || metadata.name}] backdrop_path: ${metadata.backdrop_path} → backdropUrl: ${backdropUrl}`,
+    `[${metadata.title || metadata.name}] backdrop_path: ${metadata.backdrop_path} → backdropUrl: ${backdropUrl}`
+  );
+  logger.debug(
+    `[${metadata.title || metadata.name}] plainPosterUrl: ${plainPosterUrl}, logoUrl: ${logoUrl}`
   );
 
   let media;
@@ -71,7 +80,9 @@ export async function upsertMedia(
         title: metadata.title || metadata.name || "Unknown",
         description: metadata.overview,
         posterUrl,
+        plainPosterUrl,
         backdropUrl,
+        logoUrl,
         releaseDate: metadata.release_date
           ? new Date(metadata.release_date)
           : metadata.first_air_date
@@ -88,7 +99,9 @@ export async function upsertMedia(
         type: mediaType === "tv" ? MediaType.TV_SHOW : MediaType.MOVIE,
         description: metadata.overview,
         posterUrl,
+        plainPosterUrl,
         backdropUrl,
+        logoUrl,
         releaseDate: metadata.release_date
           ? new Date(metadata.release_date)
           : metadata.first_air_date
@@ -119,7 +132,7 @@ export async function saveExternalIds(
   extractedIds: {
     imdbId?: string;
     tvdbId?: string;
-  },
+  }
 ) {
   // Create/update IMDB external ID if exists
   if (extractedIds.imdbId) {
@@ -168,7 +181,7 @@ export async function saveExternalIds(
 export async function saveGenres(
   mediaId: string,
   genres: Array<{ id: number; name: string }> | undefined,
-  mediaTitle: string,
+  mediaTitle: string
 ) {
   // Debug logging for genres
   if (!genres || genres.length === 0) {
@@ -177,12 +190,12 @@ export async function saveGenres(
   }
 
   logger.debug(
-    `[${mediaTitle}] Received ${genres.length} genres from TMDB: ${genres.map((g) => g.name).join(", ")}`,
+    `[${mediaTitle}] Received ${genres.length} genres from TMDB: ${genres.map((g) => g.name).join(", ")}`
   );
 
   const result = await assignGenresToMedia(mediaId, genres);
   logger.info(
-    `✓ Genres for ${mediaTitle}: ${result.linked} linked${result.duplicatesAvoided > 0 ? `, ${result.duplicatesAvoided} duplicates avoided` : ""}`,
+    `✓ Genres for ${mediaTitle}: ${result.linked} linked${result.duplicatesAvoided > 0 ? `, ${result.duplicatesAvoided} duplicates avoided` : ""}`
   );
 }
 
@@ -193,7 +206,7 @@ export async function saveMovie(
   mediaId: string,
   mediaEntry: MediaEntry,
   extendedMetadata: ExtendedMetadata,
-  filePathForStorage: string,
+  filePathForStorage: string
 ) {
   await prisma.movie.upsert({
     where: { mediaId: mediaId },
@@ -214,7 +227,7 @@ export async function saveMovie(
 
   // Handle director if exists in metadata
   const director = extendedMetadata.credits?.crew?.find(
-    (c: { id: number; name: string; job: string }) => c.job === "Director",
+    (c: { id: number; name: string; job: string }) => c.job === "Director"
   );
   if (director) {
     // Create or get person
@@ -253,7 +266,7 @@ export async function saveTVShow(
   mediaId: string,
   mediaEntry: MediaEntry,
   episodeCache: Map<string, TmdbSeasonMetadata>,
-  filePathForStorage: string,
+  filePathForStorage: string
 ) {
   // Create TV show record
   const tvShow = await prisma.tVShow.upsert({
@@ -308,7 +321,7 @@ export async function saveTVShow(
       const cachedSeason = episodeCache.get(seasonCacheKey);
       if (cachedSeason?.episodes) {
         const episode = cachedSeason.episodes.find(
-          (ep: TmdbEpisodeMetadata) => ep.episode_number === episodeNumber,
+          (ep: TmdbEpisodeMetadata) => ep.episode_number === episodeNumber
         );
         if (episode) {
           episodeTitle = episode.name || episodeTitle;
@@ -316,7 +329,7 @@ export async function saveTVShow(
           episodeAirDate = episode.air_date ? new Date(episode.air_date) : null;
           episodeStillPath = getTmdbImageUrl(episode.still_path);
           logger.debug(
-            `✓ Using cached episode metadata for S${seasonNumber}E${episodeNumber}`,
+            `✓ Using cached episode metadata for S${seasonNumber}E${episodeNumber}`
           );
         }
       }
@@ -361,6 +374,18 @@ export async function saveTVShow(
  * Link media to library
  */
 export async function linkMediaToLibrary(mediaId: string, libraryId: string) {
+  // Verify library exists before linking
+  const library = await prisma.library.findUnique({
+    where: { id: libraryId },
+    select: { id: true },
+  });
+
+  if (!library) {
+    throw new Error(
+      `Cannot link media to library: Library with ID ${libraryId} does not exist`
+    );
+  }
+
   await prisma.mediaLibrary.upsert({
     where: {
       mediaId_libraryId: {
@@ -383,10 +408,9 @@ export async function linkMediaToLibrary(mediaId: string, libraryId: string) {
 export async function saveMediaToDatabase(
   mediaEntry: MediaEntry,
   mediaType: "movie" | "tv",
-  tmdbApiKey: string,
   episodeCache: Map<string, TmdbSeasonMetadata>,
   libraryId: string,
-  originalPath?: string,
+  originalPath?: string
 ): Promise<void> {
   try {
     // Only process if we have metadata and a TMDB ID
@@ -401,13 +425,16 @@ export async function saveMediaToDatabase(
     // Map container path back to host path for database storage
     const filePathForStorage = mapContainerToHostPath(
       mediaEntry.path,
-      originalPath,
+      originalPath
     );
 
     const extendedMetadata = metadata as ExtendedMetadata;
 
     // 1. Create or update media record
-    const media = await upsertMedia(metadata, tmdbId, mediaType);
+    const media = await upsertMedia(metadata, tmdbId, mediaType, {
+      plainPosterUrl: mediaEntry.plainPosterUrl,
+      logoUrl: mediaEntry.logoUrl,
+    });
 
     // 2. Save external IDs (IMDB, TVDB)
     await saveExternalIds(media.id, {
@@ -424,7 +451,7 @@ export async function saveMediaToDatabase(
         media.id,
         mediaEntry,
         extendedMetadata,
-        filePathForStorage,
+        filePathForStorage
       );
       logger.info(`✓ Saved ${media.title}`);
     } else {
@@ -432,7 +459,7 @@ export async function saveMediaToDatabase(
         media.id,
         mediaEntry,
         episodeCache,
-        filePathForStorage,
+        filePathForStorage
       );
       if (result) {
         const {
@@ -442,15 +469,15 @@ export async function saveMediaToDatabase(
           fileTitleExtracted,
         } = result;
         logger.info(
-          `✓ Saved ${media.title} - S${seasonNumber}E${episodeNumber}: ${episodeTitle}${fileTitleExtracted ? ` (file: ${fileTitleExtracted})` : ""}`,
+          `✓ Saved ${media.title} - S${seasonNumber}E${episodeNumber}: ${episodeTitle}${fileTitleExtracted ? ` (file: ${fileTitleExtracted})` : ""}`
         );
       } else if (mediaEntry.extractedIds.season) {
         logger.info(
-          `✓ Saved ${media.title} - Season ${mediaEntry.extractedIds.season}`,
+          `✓ Saved ${media.title} - Season ${mediaEntry.extractedIds.season}`
         );
       } else {
         logger.info(
-          `✓ Saved ${media.title} (TV Show - no season/episode info)`,
+          `✓ Saved ${media.title} (TV Show - no season/episode info)`
         );
       }
     }
@@ -459,7 +486,7 @@ export async function saveMediaToDatabase(
     await linkMediaToLibrary(media.id, libraryId);
   } catch (error) {
     logger.error(
-      `Error saving media to database for ${mediaEntry.path}: ${error instanceof Error ? error.message : error}`,
+      `Error saving media to database for ${mediaEntry.path}: ${error instanceof Error ? error.message : error}`
     );
     throw error;
   }

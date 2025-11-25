@@ -24,7 +24,7 @@ export async function collectMediaEntries(
     mediaType: "movie" | "tv";
     fileExtensions: string[];
     onProgress?: (count: number) => void;
-  },
+  }
 ): Promise<MediaEntry[]> {
   const {
     maxDepth = Infinity,
@@ -44,13 +44,13 @@ export async function collectMediaEntries(
   const tvShowFolders = new Map<string, Set<number>>(); // showFolder -> Set<seasons>
 
   logger.debug(
-    `File scanner initialized with ${fileExtensions.length} extensions: ${fileExtensions.join(", ")}`,
+    `File scanner initialized with ${fileExtensions.length} extensions: ${fileExtensions.join(", ")}`
   );
   logger.debug(`Media type: ${mediaType}, Max depth: ${maxDepth}`);
 
   async function collectEntries(
     currentPath: string,
-    depth: number = 0,
+    depth: number = 0
   ): Promise<void> {
     if (depth > maxDepth) return;
 
@@ -128,23 +128,25 @@ export async function collectMediaEntries(
           const isMediaFile =
             !entry.isDirectory() &&
             fileExtensions.some((ext) =>
-              entry.name.toLowerCase().endsWith(ext.toLowerCase()),
+              entry.name.toLowerCase().endsWith(ext.toLowerCase())
             );
 
           // Debug log for first few files to see why they're not matching
           if (!entry.isDirectory() && mediaEntries.length < 3) {
             logger.debug(
-              `Checking file: ${entry.name}, hasIds: ${hasIds}, isMediaFile: ${isMediaFile}, extensions: ${fileExtensions.join(",")}`,
+              `Checking file: ${entry.name}, hasIds: ${hasIds}, isMediaFile: ${isMediaFile}, extensions: ${fileExtensions.join(",")}`
             );
           }
 
-          if (hasIds || isMediaFile) {
+          // Only validate actual media files, not directories
+          // Directories will be traversed recursively but shouldn't be validated as media
+          if ((hasIds || isMediaFile) && !entry.isDirectory()) {
             // Validate path structure based on media type
             const validation = validateMediaPath(
               rootPath,
               fullPath,
               mediaType,
-              extractedIds,
+              extractedIds
             );
 
             if (!validation.valid) {
@@ -161,7 +163,7 @@ export async function collectMediaEntries(
               const logLevel =
                 depthViolations + structureViolations <= 5 ? "info" : "debug";
               logger[logLevel](
-                `⏭️  Skipping ${entry.name}: ${validation.reason}`,
+                `⏭️  Skipping ${entry.name}: ${validation.reason}`
               );
 
               // Skip this file
@@ -200,14 +202,14 @@ export async function collectMediaEntries(
               ? ` S${extractedIds.season}${extractedIds.episode ? `E${extractedIds.episode}` : ""}`
               : "";
             logger.debug(
-              `Found: ${entry.name}${extractedIds.tmdbId ? ` [TMDB: ${extractedIds.tmdbId}${seasonEpInfo}]` : extractedIds.title ? ` [Title: ${extractedIds.title}]` : ""}`,
+              `Found: ${entry.name}${extractedIds.tmdbId ? ` [TMDB: ${extractedIds.tmdbId}${seasonEpInfo}]` : extractedIds.title ? ` [Title: ${extractedIds.title}]` : ""}`
             );
           } else {
             // Log why item wasn't picked up (debug level)
             if (!entry.isDirectory() && !hasIds && !isMediaFile) {
               const ext = entry.name.substring(entry.name.lastIndexOf("."));
               logger.debug(
-                `Not a media file: ${entry.name} (ext: ${ext}, expected: ${fileExtensions.join(", ")})`,
+                `Not a media file: ${entry.name} (ext: ${ext}, expected: ${fileExtensions.join(", ")})`
               );
             }
           }
@@ -217,13 +219,13 @@ export async function collectMediaEntries(
           }
         } catch (err) {
           logger.warn(
-            `Cannot access: ${fullPath} - ${err instanceof Error ? err.message : err}`,
+            `Cannot access: ${fullPath} - ${err instanceof Error ? err.message : err}`
           );
         }
       }
     } catch (err) {
       logger.error(
-        `Error scanning ${currentPath}: ${err instanceof Error ? err.message : err}`,
+        `Error scanning ${currentPath}: ${err instanceof Error ? err.message : err}`
       );
     }
   }
@@ -232,7 +234,7 @@ export async function collectMediaEntries(
 
   const notRecognized = totalScanned - totalSkipped - mediaEntries.length;
   logger.info(
-    `Scan statistics: Scanned ${totalScanned} items, Skipped ${totalSkipped} filtered items, Not recognized as media: ${notRecognized}, Found ${mediaEntries.length} media items`,
+    `Scan statistics: Scanned ${totalScanned} items, Skipped ${totalSkipped} filtered items, Not recognized as media: ${notRecognized}, Found ${mediaEntries.length} media items`
   );
 
   // Log validation statistics
@@ -256,19 +258,19 @@ export async function collectMediaEntries(
     });
     logger.info(`   Total seasons across all shows: ${totalSeasons}`);
     logger.info(
-      `   This optimizes metadata fetching - show metadata will be fetched once per show\n`,
+      `   This optimizes metadata fetching - show metadata will be fetched once per show\n`
     );
   }
 
   if (mediaEntries.length === 0 && notRecognized > 0) {
     logger.warn(
-      `⚠️  ${notRecognized} items were found but not recognized as media files. Enable debug logging to see details.`,
+      `⚠️  ${notRecognized} items were found but not recognized as media files. Enable debug logging to see details.`
     );
     logger.warn(`   Expected video extensions: ${fileExtensions.join(", ")}`);
 
     if (sampleFiles.length > 0) {
       logger.warn(
-        `   Sample files found in directory (first ${sampleFiles.length}):`,
+        `   Sample files found in directory (first ${sampleFiles.length}):`
       );
       sampleFiles.forEach((file) => logger.warn(`     - ${file}`));
     }

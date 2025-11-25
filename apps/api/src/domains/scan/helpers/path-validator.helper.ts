@@ -83,7 +83,7 @@ export function isDangerousRootPath(path: string): boolean {
 async function containsMediaFiles(
   dirPath: string,
   currentDepth: number = 0,
-  maxDepth: number = 2,
+  maxDepth: number = 2
 ): Promise<boolean> {
   if (currentDepth > maxDepth) return false;
 
@@ -117,7 +117,7 @@ async function containsMediaFiles(
           const hasMedia = await containsMediaFiles(
             subDirPath,
             currentDepth + 1,
-            maxDepth,
+            maxDepth
           );
           if (hasMedia) {
             return true;
@@ -188,7 +188,7 @@ export async function isMediaRootPath(path: string): Promise<{
           (hasMedia) => ({
             name: entry.name,
             hasMedia,
-          }),
+          })
         );
 
         checkPromises.push(checkPromise);
@@ -244,7 +244,7 @@ export function getRecommendedMaxDepth(mediaType: "movie" | "tv"): number {
 export function isDepthValid(
   depth: number,
   mediaType: "movie" | "tv",
-  maxDepth?: number,
+  maxDepth?: number
 ): boolean {
   const effectiveMaxDepth = maxDepth ?? DEPTH_CONSTRAINTS[mediaType].max;
   return depth <= effectiveMaxDepth;
@@ -261,7 +261,7 @@ export function isDepthValid(
  */
 export function validateMoviePath(
   rootPath: string,
-  filePath: string,
+  filePath: string
 ): { valid: boolean; reason?: string; relativeDepth: number } {
   const relativePath = relative(rootPath, filePath);
   const pathParts = relativePath.split("/").filter(Boolean);
@@ -297,7 +297,7 @@ export function validateTvShowPath(
     season?: number;
     episode?: number;
     title?: string;
-  },
+  }
 ): {
   valid: boolean;
   reason?: string;
@@ -320,14 +320,13 @@ export function validateTvShowPath(
   }
 
   // For TV shows, we expect at least one parent folder (the show name)
-  if (relativeDepth < 1) {
-    return {
-      valid: false,
-      reason:
-        "TV show files must be inside a show folder (e.g., /tvshows/ShowName/S1E1.mkv)",
-      relativeDepth,
-    };
-  }
+  // When scanning a show folder directly as rootPath:
+  // - Files directly in show folder (depth 0): valid if they have episode info
+  // - Files in season subfolders (depth 1): valid (e.g., ShowName/Season 01/file.mkv)
+  // - Files nested deeper (depth 2+): valid up to maxDepth
+  // The check for relativeDepth < 1 is too strict when rootPath is already a show folder
+  // Instead, we only check if depth exceeds maxDepth (already checked above)
+  // and if file has episode info (checked below)
 
   // Check if file has episode information
   const hasEpisodeInfo = !!(extractedIds.season && extractedIds.episode);
@@ -342,11 +341,29 @@ export function validateTvShowPath(
   }
 
   // The show folder is typically:
-  // - Parent folder if structure is /tvshows/ShowName/S1E1.mkv (depth 2)
-  // - Grandparent folder if structure is /tvshows/ShowName/Season 1/S1E1.mkv (depth 3)
-  const showFolderIndex =
-    relativeDepth >= 2 ? pathParts.length - 3 : pathParts.length - 2;
-  const showFolder = pathParts[showFolderIndex] || pathParts[0];
+  // - Root path itself when scanning show folder directly (relativeDepth 0 or 1)
+  // - Parent folder if structure is /tvshows/ShowName/S1E1.mkv (relativeDepth 0 when rootPath is show folder)
+  // - Grandparent folder if structure is /tvshows/ShowName/Season 1/S1E1.mkv (relativeDepth 1 when rootPath is show folder)
+  // When rootPath is already a show folder:
+  //   - Files at root (relativeDepth 0): showFolder is rootPath name
+  //   - Files in season subfolder (relativeDepth 1): showFolder is rootPath name (first part of pathParts)
+  let showFolder: string;
+  if (relativeDepth === 0) {
+    // File directly in show folder root - show folder is the rootPath
+    const rootPathParts = rootPath.split("/").filter(Boolean);
+    showFolder =
+      rootPathParts[rootPathParts.length - 1] || pathParts[0] || "unknown";
+  } else if (relativeDepth === 1) {
+    // File in season subfolder - show folder is still the rootPath (season folder is parent)
+    const rootPathParts = rootPath.split("/").filter(Boolean);
+    showFolder =
+      rootPathParts[rootPathParts.length - 1] || pathParts[0] || "unknown";
+  } else {
+    // Nested deeper - use traditional calculation
+    const showFolderIndex =
+      relativeDepth >= 2 ? pathParts.length - 3 : pathParts.length - 2;
+    showFolder = pathParts[showFolderIndex] || pathParts[0] || "unknown";
+  }
 
   return {
     valid: true,
@@ -366,7 +383,7 @@ export function validateMediaPath(
     season?: number;
     episode?: number;
     title?: string;
-  },
+  }
 ): { valid: boolean; reason?: string; metadata?: any } {
   if (mediaType === "movie") {
     return validateMoviePath(rootPath, filePath);
@@ -394,14 +411,14 @@ export function logValidationStats(stats: {
 
   if (stats.structureViolations > 0) {
     logger.warn(
-      `   ⚠️  Structure violations (skipped): ${stats.structureViolations}`,
+      `   ⚠️  Structure violations (skipped): ${stats.structureViolations}`
     );
   }
 
   const skipped = stats.depthViolations + stats.structureViolations;
   if (skipped > 0) {
     logger.info(
-      `   Hint: Ensure your media follows the recommended structure. Enable debug logging for details.`,
+      `   Hint: Ensure your media follows the recommended structure. Enable debug logging for details.`
     );
   }
 }

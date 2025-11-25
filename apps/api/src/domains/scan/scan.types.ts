@@ -29,4 +29,6 @@ export interface TmdbMetadata {
 export interface MediaEntry extends FileEntry {
   extractedIds: ExtractedIds;
   metadata?: TmdbMetadata;
+  plainPosterUrl?: string | null;
+  logoUrl?: string | null;
 }

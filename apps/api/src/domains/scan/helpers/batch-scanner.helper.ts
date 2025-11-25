@@ -4,7 +4,7 @@
  */
 
 import { readdir } from "fs/promises";
-import { join } from "path";
+import { join, extname } from "path";
 import { logger } from "@/lib/utils";
 import { MediaType, ScanJobStatus } from "@/lib/database";
 import prisma from "@/lib/database/prisma";
@@ -17,6 +17,7 @@ import {
   createRateLimiter,
   withTimeoutAndRetry,
 } from "./index";
+import { getDefaultVideoExtensions } from "./file-filter.helper";
 import { wsManager } from "@/lib/websocket";
 import type { TmdbMetadata } from "../scan.types";
 import type { TmdbSeasonMetadata } from "@/lib/providers/tmdb/tmdb.types";
@@ -25,18 +26,21 @@ import type { TmdbSeasonMetadata } from "@/lib/providers/tmdb/tmdb.types";
  * Discover top-level folders to batch process
  * For TV shows: Returns show folders
  * For movies: Returns movie folders or files depending on structure
+ * If movies are directly in root (no subdirectories), returns ["."] to scan root
  */
 export async function discoverFoldersToScan(
   rootPath: string,
-  mediaType: "movie" | "tv",
+  mediaType: "movie" | "tv"
 ): Promise<string[]> {
   return withTimeoutAndRetry(
     async () => {
       logger.info(
-        `🔍 Listing directory: ${rootPath} (this may take a while on slow mounts)...`,
+        `🔍 Listing directory: ${rootPath} (this may take a while on slow mounts)...`
       );
       const entries = await readdir(rootPath, { withFileTypes: true });
       const folders: string[] = [];
+      const videoExtensions = getDefaultVideoExtensions();
+      let hasVideoFilesInRoot = false;
 
       for (const entry of entries) {
         // Skip hidden files and system files
@@ -46,11 +50,30 @@ export async function discoverFoldersToScan(
 
         if (entry.isDirectory()) {
           folders.push(entry.name);
+        } else if (mediaType === "movie" && entry.isFile()) {
+          // Check if this is a video file
+          const ext = extname(entry.name).toLowerCase();
+          if (videoExtensions.includes(ext)) {
+            hasVideoFilesInRoot = true;
+          }
         }
       }
 
+      // For movies: If there are video files directly in root but no subdirectories,
+      // return "." to indicate we should scan the root directory itself
+      if (
+        mediaType === "movie" &&
+        hasVideoFilesInRoot &&
+        folders.length === 0
+      ) {
+        logger.info(
+          `📂 Found video files directly in root, will scan root directory`
+        );
+        return ["."]; // "." indicates root directory
+      }
+
       logger.info(
-        `📂 Discovered ${folders.length} ${mediaType === "tv" ? "show" : "movie"} folders to scan`,
+        `📂 Discovered ${folders.length} ${mediaType === "tv" ? "show" : "movie"} folders to scan`
       );
       return folders;
     },
@@ -58,7 +81,7 @@ export async function discoverFoldersToScan(
       timeoutMs: 600000, // 10 minutes timeout for very slow FTP mounts (initial folder discovery can be slow)
       maxRetries: 2, // Only retry twice (each retry could take 10 min)
       operationName: `Discover folders in ${rootPath}`,
-    },
+    }
   );
 }
 
@@ -69,7 +92,7 @@ export async function createScanJob(
   libraryId: string,
   scanPath: string,
   mediaType: MediaType,
-  folders: string[],
+  folders: string[]
 ): Promise<string> {
   // Determine batch size based on media type
   const batchSize = mediaType === MediaType.TV_SHOW ? 5 : 25;
@@ -93,7 +116,7 @@ export async function createScanJob(
   });
 
   logger.info(
-    `📝 Created scan job ${scanJob.id} for ${folders.length} folders (${totalBatches} batches of ${batchSize})`,
+    `📝 Created scan job ${scanJob.id} for ${folders.length} folders (${totalBatches} batches of ${batchSize})`
   );
   return scanJob.id;
 }
@@ -102,7 +125,7 @@ export async function createScanJob(
  * Get the next batch of folders to process
  */
 export async function getNextBatch(
-  scanJobId: string,
+  scanJobId: string
 ): Promise<string[] | null> {
   const scanJob = await prisma.scanJob.findUnique({
     where: { id: scanJobId },
@@ -133,7 +156,7 @@ export async function markBatchProcessed(
   scanJobId: string,
   processedFolderNames: string[],
   failedFolderNames: string[] = [],
-  itemsSaved: number = 0,
+  itemsSaved: number = 0
 ): Promise<void> {
   const scanJob = await prisma.scanJob.findUnique({
     where: { id: scanJobId },
@@ -149,7 +172,7 @@ export async function markBatchProcessed(
 
   // Remove processed folders from pending
   const newPendingFolders = pendingFolders.filter(
-    (f) => !processedFolderNames.includes(f) && !failedFolderNames.includes(f),
+    (f) => !processedFolderNames.includes(f) && !failedFolderNames.includes(f)
   );
 
   // Add to processed/failed lists
@@ -181,7 +204,7 @@ export async function markBatchProcessed(
   });
 
   logger.info(
-    `✅ Batch ${newCurrentBatch}/${scanJob.totalBatches} processed: ${processedFolderNames.length} success, ${failedFolderNames.length} failed (${totalProcessed}/${scanJob.totalFolders} folders, ${newTotalItemsSaved} items saved)`,
+    `✅ Batch ${newCurrentBatch}/${scanJob.totalBatches} processed: ${processedFolderNames.length} success, ${failedFolderNames.length} failed (${totalProcessed}/${scanJob.totalFolders} folders, ${newTotalItemsSaved} items saved)`
   );
 }
 
@@ -200,7 +223,7 @@ export async function processFolderBatch(
     fileExtensions: string[];
     rescan?: boolean;
     originalPath?: string;
-  },
+  }
 ): Promise<{
   processedFolders: string[];
   failedFolders: string[];
@@ -236,10 +259,13 @@ export async function processFolderBatch(
     : 0;
 
   for (const folderName of folderNames) {
-    const folderPath = join(rootPath, folderName);
+    // Handle "." as root directory indicator
+    const folderPath =
+      folderName === "." ? rootPath : join(rootPath, folderName);
+    const displayName = folderName === "." ? "root directory" : folderName;
 
     try {
-      logger.info(`\n📁 Processing: ${folderName}`);
+      logger.info(`\n📁 Processing: ${displayName}`);
 
       // Calculate overall progress (not just batch progress)
       const overallCurrent =
@@ -251,7 +277,7 @@ export async function processFolderBatch(
         progress: overallProgress,
         current: overallCurrent,
         total: totalFolders,
-        message: `Scanning: ${folderName}`,
+        message: `Scanning: ${displayName}`,
         libraryId,
         scanJobId,
       });
@@ -267,56 +293,97 @@ export async function processFolderBatch(
         {
           timeoutMs: 300000, // 5 minutes timeout per folder for very slow mounts
           maxRetries: 2, // Retry twice if it fails
-          operationName: `Scan folder: ${folderName}`,
-        },
+          operationName: `Scan folder: ${displayName}`,
+        }
       );
 
       if (mediaEntries.length === 0) {
-        logger.warn(`⚠️  No media found in ${folderName}, skipping`);
+        logger.warn(`⚠️  No media found in ${displayName}, skipping`);
         processedFolders.push(folderName);
         continue;
       }
 
-      logger.info(`Found ${mediaEntries.length} media items in ${folderName}`);
+      logger.info(`Found ${mediaEntries.length} media items in ${displayName}`);
+
+      // Log extracted IDs for debugging
+      mediaEntries.forEach((entry) => {
+        if (!entry.isDirectory && entry.extractedIds) {
+          logger.info(
+            `Entry: ${entry.name}, TMDB ID: ${entry.extractedIds.tmdbId || "none"}, Title: ${entry.extractedIds.title || "none"}`
+          );
+        }
+      });
 
       // Step 2: Fetch existing metadata if not rescanning
+      logger.info(
+        `Step 2: Checking for existing metadata (rescan=${rescan})...`
+      );
       let existingMetadataMap = new Map<string, TmdbMetadata>();
+      let existingImagesMap = new Map<
+        string,
+        { plainPosterUrl: string | null; logoUrl: string | null }
+      >();
       if (!rescan) {
         const tmdbIdsToCheck = mediaEntries
           .filter((e) => e.extractedIds.tmdbId)
           .map((e) => e.extractedIds.tmdbId!);
 
-        existingMetadataMap = await fetchExistingMetadata(
-          tmdbIdsToCheck,
-          libraryId,
+        logger.info(
+          `Found ${tmdbIdsToCheck.length} TMDB IDs to check: ${tmdbIdsToCheck.join(", ")}`
         );
-        existingMetadataMap.forEach((metadata, tmdbId) => {
-          metadataCache.set(tmdbId, metadata);
-        });
+
+        if (tmdbIdsToCheck.length > 0) {
+          logger.info(`Calling fetchExistingMetadata...`);
+          const existingData = await fetchExistingMetadata(
+            tmdbIdsToCheck,
+            libraryId
+          );
+          logger.info(
+            `fetchExistingMetadata returned ${existingData.metadataMap.size} existing entries`
+          );
+          existingMetadataMap = existingData.metadataMap;
+          existingImagesMap = existingData.imagesMap;
+
+          existingMetadataMap.forEach((metadata, tmdbId) => {
+            metadataCache.set(tmdbId, metadata);
+          });
+        } else {
+          logger.info(`No TMDB IDs found, skipping existing metadata check`);
+        }
+      } else {
+        logger.info(`Skipping existing metadata check (rescan=true)`);
       }
 
       // Step 3: Fetch metadata from TMDB
+      logger.info(`Step 3: Starting to fetch metadata from TMDB...`);
       const metadataProgress = Math.floor(
-        ((currentOffset + processedFolders.length) / totalFolders) * 100,
+        ((currentOffset + processedFolders.length) / totalFolders) * 100
       );
       wsManager.sendScanProgress({
         phase: "fetching-metadata",
         progress: metadataProgress,
         current: currentOffset + processedFolders.length,
         total: totalFolders,
-        message: `Fetching metadata: ${folderName}`,
+        message: `Fetching metadata: ${displayName}`,
         libraryId,
         scanJobId,
       });
 
-      await fetchMetadataForEntries(mediaEntries, {
+      logger.info(
+        `Calling fetchMetadataForEntries with ${mediaEntries.length} entries`
+      );
+      const metadataStats = await fetchMetadataForEntries(mediaEntries, {
         mediaType,
         tmdbApiKey,
         rateLimiter,
         metadataCache,
         existingMetadataMap,
+        existingImagesMap,
         libraryId,
       });
+      logger.info(
+        `fetchMetadataForEntries completed: ${metadataStats.metadataFromCache} from cache, ${metadataStats.metadataFromTMDB} from TMDB`
+      );
 
       // Step 4: Fetch season metadata for TV shows
       if (mediaType === "tv") {
@@ -330,14 +397,14 @@ export async function processFolderBatch(
 
       // Step 5: Save to database
       const savingProgress = Math.floor(
-        ((currentOffset + processedFolders.length) / totalFolders) * 100,
+        ((currentOffset + processedFolders.length) / totalFolders) * 100
       );
       wsManager.sendScanProgress({
         phase: "saving",
         progress: savingProgress,
         current: currentOffset + processedFolders.length,
         total: totalFolders,
-        message: `Saving: ${folderName}`,
+        message: `Saving: ${displayName}`,
         libraryId,
         scanJobId,
       });
@@ -349,15 +416,14 @@ export async function processFolderBatch(
             await saveMediaToDatabase(
               mediaEntry,
               mediaType,
-              tmdbApiKey,
               episodeMetadataCache,
               libraryId,
-              originalPath,
+              originalPath
             );
             savedCount++;
           } catch (error) {
             logger.error(
-              `Failed to save ${mediaEntry.name}: ${error instanceof Error ? error.message : error}`,
+              `Failed to save ${mediaEntry.name}: ${error instanceof Error ? error.message : error}`
             );
           }
         }
@@ -367,13 +433,13 @@ export async function processFolderBatch(
       processedFolders.push(folderName);
 
       logger.info(
-        `✅ ${folderName}: Saved ${savedCount}/${mediaEntries.length} items`,
+        `✅ ${displayName}: Saved ${savedCount}/${mediaEntries.length} items`
       );
 
       // Send batch item completion
       const completionCurrent = currentOffset + processedFolders.length;
       const completionProgress = Math.floor(
-        (completionCurrent / totalFolders) * 100,
+        (completionCurrent / totalFolders) * 100
       );
 
       wsManager.sendScanProgress({
@@ -381,7 +447,7 @@ export async function processFolderBatch(
         progress: completionProgress,
         current: completionCurrent,
         total: totalFolders,
-        message: `Completed: ${folderName} (${savedCount} items)`,
+        message: `Completed: ${displayName} (${savedCount} items)`,
         libraryId,
         scanJobId,
         batchItemComplete: {
@@ -392,12 +458,12 @@ export async function processFolderBatch(
       });
     } catch (error) {
       logger.error(
-        `❌ Failed to process ${folderName}: ${error instanceof Error ? error.message : error}`,
+        `❌ Failed to process ${displayName}: ${error instanceof Error ? error.message : error}`
       );
       failedFolders.push(folderName);
 
       wsManager.sendScanError({
-        error: `Failed to process ${folderName}: ${error instanceof Error ? error.message : String(error)}`,
+        error: `Failed to process ${displayName}: ${error instanceof Error ? error.message : String(error)}`,
         scanJobId,
       });
     }
