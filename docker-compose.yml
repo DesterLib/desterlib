@@ -21,6 +21,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        REPO_URL: https://github.com/DesterLib/desterlib.git
+        REPO_BRANCH: main
     container_name: desterlib-api
     restart: unless-stopped
     depends_on:

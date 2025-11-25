@@ -1,26 +1,25 @@
 FROM node:20-alpine
 
-# Install pnpm and build dependencies for native modules
-RUN apk add --no-cache python3 make g++ postgresql-client wget && \
+# Install git, pnpm and build dependencies for native modules
+RUN apk add --no-cache git python3 make g++ postgresql-client wget && \
     npm install -g pnpm
+
+# Build arguments for repository cloning
+ARG REPO_URL=https://github.com/DesterLib/desterlib.git
+ARG REPO_BRANCH=main
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files for better Docker layer caching
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY turbo.json ./
-
-# Copy package.json files for each workspace
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
-COPY apps/api/package.json ./apps/api/
+# Clone the repository
+RUN echo "Cloning DesterLib repository from ${REPO_URL} (branch: ${REPO_BRANCH})..." && \
+    git clone --depth 1 --branch ${REPO_BRANCH} ${REPO_URL} . || \
+    (echo "Failed to clone with branch, trying without branch specification..." && \
+     git clone --depth 1 ${REPO_URL} . && \
+     git checkout ${REPO_BRANCH} 2>/dev/null || echo "Using default branch")
 
 # Install dependencies (with fallback for optional deps)
 RUN pnpm install --no-frozen-lockfile
-
-# Copy the rest of the source code
-COPY . .
 
 # Generate Prisma client and prepare database
 WORKDIR /app/apps/api
