@@ -1,12 +1,15 @@
 import { logger } from "../../lib/utils";
 import prisma from "../../lib/database/prisma";
 
+import type { ScanOptions } from "../../domains/scan/scan.types";
+
 export interface UserSettings {
   tmdbApiKey?: string;
   port: number;
   jwtSecret: string;
   enableRouteGuards: boolean;
   firstRun: boolean;
+  scanSettings?: ScanOptions;
 }
 
 export interface PublicSettings {
@@ -14,6 +17,7 @@ export interface PublicSettings {
   port: number;
   enableRouteGuards: boolean;
   firstRun: boolean;
+  scanSettings?: ScanOptions;
 }
 
 /**
@@ -25,6 +29,7 @@ const SETTING_KEYS = {
   JWT_SECRET: "core.server.jwtSecret",
   ENABLE_ROUTE_GUARDS: "core.server.enableRouteGuards",
   FIRST_RUN: "core.system.firstRun",
+  SCAN_SETTINGS: "core.scan.settings",
 } as const;
 
 /**
@@ -81,17 +86,44 @@ const coreSettings = [
     description: "Initial setup needed",
     isPublic: true,
   },
+  {
+    key: SETTING_KEYS.SCAN_SETTINGS,
+    category: "LIBRARY" as const,
+    module: "scan",
+    type: "JSON" as const,
+    value: JSON.stringify({
+      rescan: false,
+      batchScan: false,
+      followSymlinks: true,
+      mediaTypeDepth: {
+        movie: 2,
+        tv: 4,
+      },
+    }),
+    displayName: "Scan Settings",
+    description: "Default scan configuration options",
+    isPublic: true,
+  },
 ];
 
 /**
  * Parse value based on type
  */
-function parseValue(value: string, type: string): string | number | boolean {
+function parseValue(
+  value: string,
+  type: string
+): string | number | boolean | object {
   switch (type) {
     case "NUMBER":
       return parseFloat(value);
     case "BOOLEAN":
       return value.toLowerCase() === "true";
+    case "JSON":
+      try {
+        return JSON.parse(value || "{}");
+      } catch {
+        return {};
+      }
     default:
       return value;
   }
@@ -100,7 +132,10 @@ function parseValue(value: string, type: string): string | number | boolean {
 /**
  * Serialize value to string
  */
-function serializeValue(value: string | number | boolean): string {
+function serializeValue(value: string | number | boolean | object): string {
+  if (typeof value === "object" && value !== null) {
+    return JSON.stringify(value);
+  }
   return String(value);
 }
 
@@ -122,7 +157,7 @@ async function ensureCoreSettings(): Promise<void> {
  */
 async function getSetting<T = string>(
   key: string,
-  defaultValue?: T,
+  defaultValue?: T
 ): Promise<T> {
   const setting = await prisma.setting.findUnique({ where: { key } });
   if (!setting) return defaultValue as T;
@@ -134,12 +169,25 @@ async function getSetting<T = string>(
  */
 async function setSetting(
   key: string,
-  value: string | number | boolean,
+  value: string | number | boolean | object
 ): Promise<void> {
   const stringValue = serializeValue(value);
-  await prisma.setting.update({
+  await prisma.setting.upsert({
     where: { key },
-    data: { value: stringValue },
+    update: { value: stringValue },
+    create: {
+      key,
+      value: stringValue,
+      category: "CUSTOM",
+      type:
+        typeof value === "object"
+          ? "JSON"
+          : typeof value === "number"
+            ? "NUMBER"
+            : typeof value === "boolean"
+              ? "BOOLEAN"
+              : "STRING",
+    },
   });
 }
 
@@ -161,13 +209,17 @@ export async function getSettings(): Promise<UserSettings> {
     port: await getSetting<number>(SETTING_KEYS.PORT, 3001),
     jwtSecret: await getSetting<string>(
       SETTING_KEYS.JWT_SECRET,
-      "change-me-in-production",
+      "change-me-in-production"
     ),
     enableRouteGuards: await getSetting<boolean>(
       SETTING_KEYS.ENABLE_ROUTE_GUARDS,
-      false,
+      false
     ),
     firstRun: await getSetting<boolean>(SETTING_KEYS.FIRST_RUN, true),
+    scanSettings: (await getSetting<ScanOptions>(
+      SETTING_KEYS.SCAN_SETTINGS,
+      {}
+    )) as ScanOptions | undefined,
   };
 }
 
@@ -182,6 +234,21 @@ export async function getPublicSettings(): Promise<PublicSettings> {
 }
 
 /**
+ * Get default scan settings
+ */
+export function getDefaultScanSettings(): ScanOptions {
+  return {
+    rescan: false,
+    batchScan: false,
+    followSymlinks: true,
+    mediaTypeDepth: {
+      movie: 2,
+      tv: 4,
+    },
+  };
+}
+
+/**
  * Get default settings
  */
 export function getDefaultSettings(): UserSettings {
@@ -190,14 +257,43 @@ export function getDefaultSettings(): UserSettings {
     jwtSecret: "change-me-in-production",
     enableRouteGuards: false,
     firstRun: true,
+    scanSettings: getDefaultScanSettings(),
   };
+}
+
+/**
+ * Reset all settings to defaults
+ */
+export async function resetAllSettings(): Promise<void> {
+  try {
+    const defaults = getDefaultSettings();
+    await updateSettings(defaults);
+    logger.info("All settings reset to defaults");
+  } catch (error) {
+    logger.error("Failed to reset all settings:", error);
+    throw error;
+  }
+}
+
+/**
+ * Reset scan settings to defaults
+ */
+export async function resetScanSettings(): Promise<void> {
+  try {
+    const defaultScanSettings = getDefaultScanSettings();
+    await updateSettings({ scanSettings: defaultScanSettings });
+    logger.info("Scan settings reset to defaults");
+  } catch (error) {
+    logger.error("Failed to reset scan settings:", error);
+    throw error;
+  }
 }
 
 /**
  * Update settings
  */
 export async function updateSettings(
-  updates: Partial<UserSettings>,
+  updates: Partial<UserSettings>
 ): Promise<void> {
   try {
     if (updates.tmdbApiKey !== undefined) {
@@ -212,11 +308,14 @@ export async function updateSettings(
     if (updates.enableRouteGuards !== undefined) {
       await setSetting(
         SETTING_KEYS.ENABLE_ROUTE_GUARDS,
-        updates.enableRouteGuards,
+        updates.enableRouteGuards
       );
     }
     if (updates.firstRun !== undefined) {
       await setSetting(SETTING_KEYS.FIRST_RUN, updates.firstRun);
+    }
+    if (updates.scanSettings !== undefined) {
+      await setSetting(SETTING_KEYS.SCAN_SETTINGS, updates.scanSettings);
     }
     logger.info("Settings updated");
   } catch (error) {
@@ -261,7 +360,10 @@ export const settingsManager = {
   getSettings,
   getPublicSettings,
   getDefaultSettings,
+  getDefaultScanSettings,
   updateSettings,
+  resetAllSettings,
+  resetScanSettings,
   getTmdbApiKey,
   setTmdbApiKey,
   isFirstRun,

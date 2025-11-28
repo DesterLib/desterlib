@@ -30,6 +30,77 @@ const router: Router = Router();
  *           type: boolean
  *           description: Indicates if this is the first run of the application
  *           example: true
+ *         scanSettings:
+ *           type: object
+ *           description: Default scan configuration options
+ *           properties:
+ *             mediaType:
+ *               type: string
+ *               enum: [movie, tv]
+ *               description: Type of media to scan (movie or tv)
+ *             maxDepth:
+ *               type: number
+ *               minimum: 0
+ *               maximum: 10
+ *               description: Maximum directory depth to scan
+ *             mediaTypeDepth:
+ *               type: object
+ *               properties:
+ *                 movie:
+ *                   type: number
+ *                   minimum: 0
+ *                   maximum: 10
+ *                 tv:
+ *                   type: number
+ *                   minimum: 0
+ *                   maximum: 10
+ *             fileExtensions:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               maxItems: 20
+ *               description: File extensions to include in the scan
+ *             filenamePattern:
+ *               type: string
+ *               description: Regex pattern to match filenames
+ *             excludePattern:
+ *               type: string
+ *               description: Regex pattern to exclude files/directories
+ *             includePattern:
+ *               type: string
+ *               description: Regex pattern to include files/directories
+ *             directoryPattern:
+ *               type: string
+ *               description: Regex pattern to match directory names
+ *             excludeDirectories:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               maxItems: 50
+ *               description: List of directory names to exclude
+ *             includeDirectories:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               maxItems: 50
+ *               description: List of directory names to include
+ *             rescan:
+ *               type: boolean
+ *               description: Re-fetch metadata even if it already exists
+ *             batchScan:
+ *               type: boolean
+ *               description: Enable batch scanning mode for large libraries
+ *             minFileSize:
+ *               type: number
+ *               minimum: 0
+ *               description: Minimum file size in bytes
+ *             maxFileSize:
+ *               type: number
+ *               minimum: 0
+ *               description: Maximum file size in bytes
+ *             followSymlinks:
+ *               type: boolean
+ *               description: Whether to follow symbolic links during scanning
  *
  *     UpdateSettingsRequest:
  *       type: object
@@ -48,6 +119,63 @@ const router: Router = Router();
  *         firstRun:
  *           type: boolean
  *           description: Whether this is the first run (usually managed via /first-run-complete)
+ *         scanSettings:
+ *           type: object
+ *           description: Default scan configuration options
+ *           properties:
+ *             mediaType:
+ *               type: string
+ *               enum: [movie, tv]
+ *             maxDepth:
+ *               type: number
+ *               minimum: 0
+ *               maximum: 10
+ *             mediaTypeDepth:
+ *               type: object
+ *               properties:
+ *                 movie:
+ *                   type: number
+ *                   minimum: 0
+ *                   maximum: 10
+ *                 tv:
+ *                   type: number
+ *                   minimum: 0
+ *                   maximum: 10
+ *             fileExtensions:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               maxItems: 20
+ *             filenamePattern:
+ *               type: string
+ *             excludePattern:
+ *               type: string
+ *             includePattern:
+ *               type: string
+ *             directoryPattern:
+ *               type: string
+ *             excludeDirectories:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               maxItems: 50
+ *             includeDirectories:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               maxItems: 50
+ *             rescan:
+ *               type: boolean
+ *             batchScan:
+ *               type: boolean
+ *             minFileSize:
+ *               type: number
+ *               minimum: 0
+ *             maxFileSize:
+ *               type: number
+ *               minimum: 0
+ *             followSymlinks:
+ *               type: boolean
  */
 
 /**
@@ -116,6 +244,14 @@ router.get("/", validate(getSettingsSchema, "query"), settingsControllers.get);
  *               value:
  *                 tmdbApiKey: "your-tmdb-key"
  *                 enableRouteGuards: true
+ *             updateScanSettings:
+ *               summary: Update scan settings
+ *               value:
+ *                 scanSettings:
+ *                   mediaType: "tv"
+ *                   maxDepth: 4
+ *                   fileExtensions: [".mkv", ".mp4"]
+ *                   followSymlinks: true
  *     responses:
  *       200:
  *         description: Settings updated successfully
@@ -168,7 +304,7 @@ router.get("/", validate(getSettingsSchema, "query"), settingsControllers.get);
 router.put(
   "/",
   validate(updateSettingsSchema, "body"),
-  settingsControllers.update,
+  settingsControllers.update
 );
 
 /**
@@ -212,5 +348,61 @@ router.put(
  *                   example: "Failed to complete first run setup"
  */
 router.post("/first-run-complete", settingsControllers.completeFirstRun);
+
+/**
+ * @swagger
+ * /api/v1/settings/reset:
+ *   post:
+ *     summary: Reset all settings to defaults
+ *     description: Reset all application settings to their default values
+ *     tags: [Settings]
+ *     responses:
+ *       200:
+ *         description: All settings reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "All settings reset to defaults"
+ *                 data:
+ *                   $ref: '#/components/schemas/PublicSettings'
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/reset", settingsControllers.resetAll);
+
+/**
+ * @swagger
+ * /api/v1/settings/reset-scan:
+ *   post:
+ *     summary: Reset scan settings to defaults
+ *     description: Reset only the scan settings to their default values
+ *     tags: [Settings]
+ *     responses:
+ *       200:
+ *         description: Scan settings reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Scan settings reset to defaults"
+ *                 data:
+ *                   $ref: '#/components/schemas/PublicSettings'
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/reset-scan", settingsControllers.resetScanSettings);
 
 export default router;
