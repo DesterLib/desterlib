@@ -76,7 +76,7 @@ const router: Router = express.Router();
  *                               type:
  *                                 type: string
  *                                 enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
- *                                 example: MOVIE
+ *                                 example: "MOVIE"
  *                               description:
  *                                 type: string
  *                                 nullable: true
@@ -133,7 +133,7 @@ const router: Router = express.Router();
  *                               type:
  *                                 type: string
  *                                 enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
- *                                 example: TV_SHOW
+ *                                 example: "TV_SHOW"
  *                               description:
  *                                 type: string
  *                                 nullable: true
@@ -199,7 +199,7 @@ const router: Router = express.Router();
 router.get(
   "/",
   validateQuery(searchMediaSchema),
-  searchControllers.searchMedia,
+  searchControllers.searchMedia
 );
 
 export default router;

@@ -10,6 +10,10 @@ import {
 import { logger } from "./lib/utils";
 import { wsManager } from "./lib/websocket";
 import { settingsManager } from "./core/config/settings";
+import {
+  initializeMetadataProviders,
+  metadataProviderRegistry,
+} from "./lib/providers";
 
 const app = express();
 const httpServer = createServer(app);
@@ -31,6 +35,11 @@ const startServer = async () => {
     logger.info("Starting DesterLib server...");
     await settingsManager.initialize();
 
+    // Initialize metadata provider plugins
+    logger.info("Initializing metadata providers...");
+    await initializeMetadataProviders();
+    logger.info("✅ Metadata providers initialized");
+
     const isFirstRun = await settingsManager.isFirstRun();
     const tmdbApiKey = await settingsManager.getTmdbApiKey();
 
@@ -51,7 +60,7 @@ const startServer = async () => {
       logger.info(`🚀 Server running on port ${config.port}`);
       logger.info(`📊 Health check: http://localhost:${config.port}/health`);
       logger.info(
-        `📚 API Documentation: http://localhost:${config.port}/api/docs`,
+        `📚 API Documentation: http://localhost:${config.port}/api/docs`
       );
       logger.info(`🔌 WebSocket endpoint: ws://localhost:${config.port}/ws`);
       logger.info(`🔧 Environment: ${config.nodeEnv}`);
@@ -67,7 +76,7 @@ const startServer = async () => {
 
       // Auto-resume interrupted scan jobs from previous session
       logger.info(
-        "🔍 Checking for interrupted scan jobs from previous session...",
+        "🔍 Checking for interrupted scan jobs from previous session..."
       );
       const interruptedJobs = await prisma.scanJob.findMany({
         where: {
@@ -84,7 +93,7 @@ const startServer = async () => {
 
       if (interruptedJobs.length > 0) {
         logger.info(
-          `⏸️  Found ${interruptedJobs.length} interrupted scan job(s) - auto-resuming...`,
+          `⏸️  Found ${interruptedJobs.length} interrupted scan job(s) - auto-resuming...`
         );
 
         // Import scanServices dynamically to avoid circular deps
@@ -94,14 +103,14 @@ const startServer = async () => {
 
         for (const job of interruptedJobs) {
           logger.info(
-            `🔄 Resuming: ${job.library.name} (${job.processedCount}/${job.totalFolders} folders, Batch ${job.currentBatch}/${job.totalBatches})`,
+            `🔄 Resuming: ${job.library.name} (${job.processedCount}/${job.totalFolders} folders, Batch ${job.currentBatch}/${job.totalBatches})`
           );
 
-          // Get TMDB API key
-          const tmdbApiKey = await settingsManager.getTmdbApiKey();
-          if (!tmdbApiKey) {
+          // Get configured metadata provider
+          const metadataProvider = metadataProviderRegistry.getDefault();
+          if (!metadataProvider || !metadataProvider.isConfigured()) {
             logger.warn(
-              `   ⚠️  Skipping ${job.library.name} - TMDB API key not configured`,
+              `   ⚠️  Skipping ${job.library.name} - No metadata provider configured`
             );
             continue;
           }
@@ -115,22 +124,22 @@ const startServer = async () => {
           // Resume in background (small delay to ensure DB update propagates)
           setTimeout(() => {
             scanServices
-              .resumeScanJob(job.id, tmdbApiKey)
+              .resumeScanJob(job.id, metadataProvider)
               .then((result) => {
                 logger.info(
-                  `✅ Auto-resumed scan completed: ${result.libraryName} (${result.totalItemsSaved} additional items)`,
+                  `✅ Auto-resumed scan completed: ${result.libraryName} (${result.totalItemsSaved} additional items)`
                 );
               })
               .catch((error: unknown) => {
                 logger.error(
-                  `❌ Auto-resume failed for ${job.library.name}: ${error instanceof Error ? error.message : error}`,
+                  `❌ Auto-resume failed for ${job.library.name}: ${error instanceof Error ? error.message : error}`
                 );
               });
           }, 100);
         }
 
         logger.info(
-          `✅ Started auto-resume for ${interruptedJobs.length} scan job(s)`,
+          `✅ Started auto-resume for ${interruptedJobs.length} scan job(s)`
         );
       } else {
         logger.info("✅ No interrupted scans found");

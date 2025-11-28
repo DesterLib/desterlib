@@ -55,7 +55,7 @@ const router: Router = express.Router();
  *                           type:
  *                             type: string
  *                             enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
- *                             example: TV_SHOW
+ *                             example: "TV_SHOW"
  *                           description:
  *                             type: string
  *                             nullable: true
@@ -168,7 +168,7 @@ router.get("/", tvshowsControllers.getTVShows);
  *                         type:
  *                           type: string
  *                           enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
- *                           example: TV_SHOW
+ *                           example: "TV_SHOW"
  *                         description:
  *                           type: string
  *                           nullable: true

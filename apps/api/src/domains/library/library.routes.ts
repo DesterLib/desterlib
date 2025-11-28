@@ -137,7 +137,7 @@ const router: Router = express.Router();
  *           type: string
  *           enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
  *         description: Filter by library media type
- *         example: MOVIE
+ *         example: "MOVIE"
  *     responses:
  *       200:
  *         description: List of libraries with metadata
@@ -157,7 +157,7 @@ const router: Router = express.Router();
 router.get(
   "/",
   validateQuery(getLibrariesSchema),
-  libraryControllers.getLibraries,
+  libraryControllers.getLibraries
 );
 
 /**
@@ -208,7 +208,7 @@ router.get(
  *                 type: string
  *                 enum: [MOVIE, TV_SHOW, MUSIC, COMIC]
  *                 description: Updated library media type
- *                 example: TV_SHOW
+ *                 example: "TV_SHOW"
  *     responses:
  *       200:
  *         description: Library successfully updated
@@ -269,7 +269,7 @@ router.put("/", validateBody(updateLibrarySchema), libraryControllers.update);
 router.delete(
   "/",
   validateBody(deleteLibrarySchema),
-  libraryControllers.delete,
+  libraryControllers.delete
 );
 
 export default router;

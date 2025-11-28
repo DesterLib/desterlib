@@ -1,2 +1,2 @@
 export { default as prisma } from "./prisma";
-export { MediaType, ScanJobStatus } from "@prisma/client";
+export { MediaType, ScanJobStatus, ExternalIdSource } from "@prisma/client";
