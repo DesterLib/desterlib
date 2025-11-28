@@ -12,7 +12,7 @@ export interface FileEntry {
   modified: Date;
 }
 
-// TMDB API response structure (simplified)
+// TMDB API response structure (simplified) - kept for backward compatibility
 export interface TmdbMetadata {
   id: number;
   title?: string;
@@ -31,4 +31,42 @@ export interface MediaEntry extends FileEntry {
   metadata?: TmdbMetadata;
   plainPosterUrl?: string | null;
   logoUrl?: string | null;
+}
+
+export interface ScanOptions {
+  // Media type configuration
+  mediaType?: "movie" | "tv";
+
+  // Depth configuration (per media type)
+  mediaTypeDepth?: {
+    movie?: number;
+    tv?: number;
+  };
+
+  // File filtering
+  filenamePattern?: string; // Regex pattern
+
+  // Directory filtering
+  directoryPattern?: string; // Regex pattern
+
+  // Scan behavior
+  rescan?: boolean;
+
+  // Scanning mode
+  batchScan?: boolean;
+
+  // Advanced options
+  followSymlinks?: boolean;
+}
+
+export interface ScanResult {
+  libraryId: string;
+  libraryName: string;
+  totalFiles: number;
+  totalSaved: number;
+  cacheStats: {
+    metadataFromCache: number;
+    metadataFromProvider: number;
+    totalMetadataFetched: number;
+  };
 }

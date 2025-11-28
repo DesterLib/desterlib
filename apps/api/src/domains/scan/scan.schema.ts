@@ -7,6 +7,37 @@ import { isDangerousRootPath } from "./helpers/path-validator.helper";
 const sanitizedStringSchema = z.string().max(1000, "String is too long");
 
 /**
+ * Regex pattern validation schema
+ */
+const regexPatternSchema = z
+  .string()
+  .max(500, "Regex pattern is too long")
+  .refine(
+    (pattern) => {
+      try {
+        new RegExp(pattern);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    {
+      message: "Invalid regex pattern",
+    }
+  )
+  .optional();
+
+/**
+ * Media type depth configuration schema
+ */
+const mediaTypeDepthSchema = z
+  .object({
+    movie: z.number().int().min(0).max(10).optional(),
+    tv: z.number().int().min(0).max(10).optional(),
+  })
+  .optional();
+
+/**
  * File path validation schema for scanning local directories
  */
 export const scanPathSchema = z.object({
@@ -26,7 +57,7 @@ export const scanPathSchema = z.object({
       },
       {
         message: "Invalid or unsafe file path",
-      },
+      }
     )
     .refine(
       (path) => {
@@ -36,29 +67,52 @@ export const scanPathSchema = z.object({
       {
         message:
           "Cannot scan system root directories or entire drives. Please specify a media folder (e.g., /Users/username/Movies or C:\\Media\\Movies)",
-      },
+      }
     ),
   options: z
     .object({
-      maxDepth: z
-        .number()
-        .int()
-        .min(0)
-        .max(10)
+      // Media type configuration
+      mediaType: z
+        .enum(["movie", "tv"])
+        .default("movie")
+        .describe("Type of media to scan (movie or tv)"),
+
+      // Depth configuration (per media type)
+      mediaTypeDepth: mediaTypeDepthSchema.describe(
+        "Per-media-type depth configuration. Allows different depths for movies vs TV shows."
+      ),
+
+      // File filtering
+      filenamePattern: regexPatternSchema.describe(
+        "Regex pattern to match filenames. Only files matching this pattern will be scanned. Example: '^.*S\\d{2}E\\d{2}.*$' for episode files."
+      ),
+
+      // Directory filtering
+      directoryPattern: regexPatternSchema.describe(
+        "Regex pattern to match directory names. Only directories matching this pattern will be scanned. Useful for specific folder structures."
+      ),
+
+      // Scan behavior
+      rescan: z
+        .boolean()
         .optional()
         .describe(
-          "Maximum directory depth to scan. Defaults to 2 for movies, 4 for TV shows",
+          "If true, re-fetches metadata even if it already exists. If false, skips items with existing metadata."
         ),
-      mediaType: z.enum(["movie", "tv"]).default("movie"),
-      fileExtensions: z.array(sanitizedStringSchema).max(20).optional(),
-      libraryName: z.string().min(1).max(100).optional(),
-      rescan: z.boolean().optional(),
+
+      // Scanning mode
       batchScan: z
         .boolean()
         .optional()
         .describe(
-          "Enable batch scanning mode for large libraries. Automatically enabled for TV shows. Batches: 5 shows or 25 movies per batch.",
+          "Enable batch scanning mode for large libraries. Automatically enabled for TV shows. Batches: 5 shows or 25 movies per batch."
         ),
+
+      // Advanced options
+      followSymlinks: z
+        .boolean()
+        .optional()
+        .describe("Whether to follow symbolic links during scanning."),
     })
     .optional(),
 });

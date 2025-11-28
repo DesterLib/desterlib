@@ -34,19 +34,28 @@ type ExtendedMetadata = TmdbMetadata & {
  */
 export async function upsertMedia(
   metadata: TmdbMetadata,
-  tmdbId: string,
+  providerId: string,
   mediaType: "movie" | "tv",
   additionalImages?: {
     plainPosterUrl?: string | null;
     logoUrl?: string | null;
-  }
+  },
+  providerName: string = "tmdb"
 ) {
+  // Map provider name to ExternalIdSource enum
+  const sourceMap: Record<string, string> = {
+    tmdb: "TMDB",
+    tvdb: "TVDB",
+    imdb: "IMDB",
+  };
+  const source = sourceMap[providerName.toLowerCase()] || "TMDB";
+
   // Check if media already exists
   const existingExternalId = await prisma.externalId.findUnique({
     where: {
       source_externalId: {
-        source: "TMDB",
-        externalId: tmdbId,
+        source: source as any,
+        externalId: providerId,
       },
     },
     include: {
@@ -111,11 +120,11 @@ export async function upsertMedia(
       },
     });
 
-    // Create external ID for TMDB
+    // Create external ID for provider
     await prisma.externalId.create({
       data: {
-        source: "TMDB",
-        externalId: tmdbId,
+        source: source as any,
+        externalId: providerId,
         mediaId: media.id,
       },
     });
@@ -410,17 +419,18 @@ export async function saveMediaToDatabase(
   mediaType: "movie" | "tv",
   episodeCache: Map<string, TmdbSeasonMetadata>,
   libraryId: string,
-  originalPath?: string
+  originalPath?: string,
+  providerName: string = "tmdb"
 ): Promise<void> {
   try {
-    // Only process if we have metadata and a TMDB ID
+    // Only process if we have metadata and a provider ID
     if (!mediaEntry.metadata || !mediaEntry.extractedIds.tmdbId) {
-      logger.debug(`Skipping ${mediaEntry.path} - no metadata or TMDB ID`);
+      logger.debug(`Skipping ${mediaEntry.path} - no metadata or provider ID`);
       return;
     }
 
     const metadata = mediaEntry.metadata;
-    const tmdbId = mediaEntry.extractedIds.tmdbId.toString();
+    const providerId = mediaEntry.extractedIds.tmdbId.toString();
 
     // Map container path back to host path for database storage
     const filePathForStorage = mapContainerToHostPath(
@@ -431,10 +441,16 @@ export async function saveMediaToDatabase(
     const extendedMetadata = metadata as ExtendedMetadata;
 
     // 1. Create or update media record
-    const media = await upsertMedia(metadata, tmdbId, mediaType, {
-      plainPosterUrl: mediaEntry.plainPosterUrl,
-      logoUrl: mediaEntry.logoUrl,
-    });
+    const media = await upsertMedia(
+      metadata,
+      providerId,
+      mediaType,
+      {
+        plainPosterUrl: mediaEntry.plainPosterUrl,
+        logoUrl: mediaEntry.logoUrl,
+      },
+      providerName
+    );
 
     // 2. Save external IDs (IMDB, TVDB)
     await saveExternalIds(media.id, {

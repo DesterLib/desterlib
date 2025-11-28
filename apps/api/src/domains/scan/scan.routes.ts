@@ -9,13 +9,15 @@ const router: Router = express.Router();
  * @swagger
  * /api/v1/scan/path:
  *   post:
- *     summary: Scan a local file path and fetch TMDB metadata
+ *     summary: Scan a local file path and fetch metadata
  *     description: |
- *       Scans a local directory path and returns discovered media files with TMDB metadata.
- *       - Automatically fetches metadata from TMDB using the API key from environment variables
+ *       Scans a local directory path and returns discovered media files with metadata from configured providers (e.g., TMDB).
+ *       - Automatically fetches metadata using the configured metadata provider
  *       - Extracts IDs from filenames and folder names (supports {tmdb-XXX}, {imdb-ttXXX}, {tvdb-XXX} formats)
  *       - Stores media information in the database with proper relationships
  *       - Supports both movies and TV shows
+ *       - Uses database scan settings as defaults, which can be overridden by request parameters
+ *       - Customizable with regex patterns for filenames and directories
  *     tags: [Scan]
  *     requestBody:
  *       required: true
@@ -29,44 +31,77 @@ const router: Router = express.Router();
  *               path:
  *                 type: string
  *                 description: Local file system path to scan
- *                 example: /Volumes/External/Library/Media/Shows/Anime
- *                 default: /Volumes/External/Library/Media/Shows/Anime
+ *                 example: "/Volumes/External/Library/Media/Shows/Anime"
  *               options:
  *                 type: object
+ *                 description: |
+ *                   Scan configuration options. All options are optional and will default to values stored in database settings.
+ *                   Any options provided here will override the corresponding database settings for this scan only.
  *                 properties:
- *                   maxDepth:
- *                     type: number
- *                     description: Maximum directory depth to scan (0-10)
- *                     minimum: 0
- *                     maximum: 10
- *                     default: Infinity
- *                     example: 3
  *                   mediaType:
  *                     type: string
  *                     enum: [movie, tv]
- *                     description: Media type for TMDB API calls (movie or tv). Required for proper metadata fetching.
- *                     example: tv
- *                   fileExtensions:
- *                     type: array
- *                     items:
- *                       type: string
- *                     description: File extensions to include in the scan
- *                     default: [".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v"]
- *                     example: [".mkv", ".mp4", ".avi"]
- *                   libraryName:
+ *                     default: movie
+ *                     description: |
+ *                       Type of media to scan (movie or tv). Required for proper metadata fetching.
+ *                       Defaults to database settings if not provided, or "movie" if no database setting exists.
+ *                     example: "tv"
+ *                   mediaTypeDepth:
+ *                     type: object
+ *                     description: |
+ *                       Per-media-type depth configuration. Allows different depths for movies vs TV shows.
+ *                       Defaults to database settings if not provided, or {movie: 2, tv: 4} if no database setting exists.
+ *                       You can provide only movie or only tv to override just one type.
+ *                     properties:
+ *                       movie:
+ *                         type: number
+ *                         minimum: 0
+ *                         maximum: 10
+ *                         description: Maximum directory depth for movie scans (0-10)
+ *                         example: 2
+ *                       tv:
+ *                         type: number
+ *                         minimum: 0
+ *                         maximum: 10
+ *                         description: Maximum directory depth for TV show scans (0-10)
+ *                         example: 4
+ *                   filenamePattern:
  *                     type: string
- *                     description: Name for the library. If not provided, uses "Library - {path}"
- *                     minLength: 1
- *                     maxLength: 100
- *                     example: "My Anime Library"
+ *                     description: |
+ *                       Regex pattern to match filenames. Only files matching this pattern will be scanned.
+ *                       Example: '^.*S\\d{2}E\\d{2}.*$' for episode files (S01E01, S02E05, etc.)
+ *                       Defaults to database settings if not provided. If not set in database, all files matching video extensions are scanned.
+ *                     example: "^.*S\\d{2}E\\d{2}.*$"
+ *                   directoryPattern:
+ *                     type: string
+ *                     description: |
+ *                       Regex pattern to match directory names. Only directories matching this pattern will be scanned.
+ *                       Useful for specific folder structures (e.g., "^Season \\d+$" to only scan Season folders).
+ *                       Defaults to database settings if not provided. If not set in database, all directories are scanned.
+ *                     example: "^Season \\d+$"
  *                   rescan:
  *                     type: boolean
- *                     description: If true, re-fetches metadata from TMDB even if it already exists in the database. If false or omitted, skips items that already have metadata.
- *                     default: false
+ *                     description: |
+ *                       If true, re-fetches metadata even if it already exists in the database.
+ *                       If false, skips items that already have metadata.
+ *                       Defaults to database settings if not provided, or false if no database setting exists.
  *                     example: false
+ *                   batchScan:
+ *                     type: boolean
+ *                     description: |
+ *                       Enable batch scanning mode for large libraries. Automatically enabled for TV shows.
+ *                       Batches: 5 shows or 25 movies per batch. Useful for slow storage (FTP, SMB, etc.)
+ *                       Defaults to database settings if not provided, or false if no database setting exists.
+ *                     example: true
+ *                   followSymlinks:
+ *                     type: boolean
+ *                     description: |
+ *                       Whether to follow symbolic links during scanning.
+ *                       Defaults to database settings if not provided, or true if no database setting exists.
+ *                     example: true
  *     responses:
- *       200:
- *         description: Successful scan
+ *       202:
+ *         description: Scan accepted and queued/started. Progress updates sent via WebSocket.
  *         content:
  *           application/json:
  *             schema:
@@ -78,43 +113,25 @@ const router: Router = express.Router();
  *                 data:
  *                   type: object
  *                   properties:
- *                     libraryId:
+ *                     path:
  *                       type: string
- *                       description: The ID of the library that was scanned
- *                       example: "clxxxx1234567890abcdefgh"
- *                     libraryName:
+ *                       example: "/Volumes/External/Library/Media/Shows/Anime"
+ *                     mediaType:
  *                       type: string
- *                       description: The name of the library
- *                       example: "My Anime Library"
- *                     totalFiles:
+ *                       example: "tv"
+ *                     queued:
+ *                       type: boolean
+ *                       description: Whether the scan was queued (true) or started immediately (false)
+ *                       example: false
+ *                     queuePosition:
  *                       type: number
- *                       description: Total number of media files discovered
- *                       example: 15
- *                     totalSaved:
- *                       type: number
- *                       description: Total number saved to database
- *                       example: 14
- *                     cacheStats:
- *                       type: object
- *                       description: Metadata cache statistics
- *                       properties:
- *                         metadataFromCache:
- *                           type: number
- *                           description: Items using existing metadata
- *                           example: 10
- *                         metadataFromTMDB:
- *                           type: number
- *                           description: Items with fresh TMDB metadata
- *                           example: 5
- *                         totalMetadataFetched:
- *                           type: number
- *                           description: Total items with metadata
- *                           example: 15
+ *                       description: Position in queue (only present if queued is true)
+ *                       example: 2
  *                 message:
  *                   type: string
- *                   example: "Scan completed successfully"
+ *                   example: "Scan started successfully. Progress will be sent via WebSocket."
  *       400:
- *         description: Bad request - Invalid path, validation error, or missing TMDB API key
+ *         description: Bad request - Invalid path, validation error, or missing metadata provider configuration
  *         content:
  *           application/json:
  *             schema:
@@ -128,7 +145,7 @@ const router: Router = express.Router();
  *                   example: "Validation failed"
  *                 message:
  *                   type: string
- *                   example: "TMDB API key is required. Please configure it in settings."
+ *                   example: "No metadata provider configured. Please configure a metadata provider (e.g., TMDB) in settings."
  *       500:
  *         description: Internal server error
  *         content:

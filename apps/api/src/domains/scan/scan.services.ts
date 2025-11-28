@@ -1,6 +1,7 @@
 import { logger } from "@/lib/utils";
 import type { TmdbSeasonMetadata } from "@/lib/providers/tmdb/tmdb.types";
 import type { TmdbMetadata } from "./scan.types";
+import type { IMetadataProvider } from "@/lib/providers/metadata-provider.types";
 import prisma from "@/lib/database/prisma";
 import { MediaType } from "@/lib/database";
 import { wsManager } from "@/lib/websocket";
@@ -27,7 +28,7 @@ export const scanServices = {
     rootPath: string,
     options: {
       maxDepth?: number;
-      tmdbApiKey: string;
+      metadataProvider: IMetadataProvider;
       mediaType?: "movie" | "tv";
       fileExtensions?: string[];
       libraryName?: string;
@@ -37,7 +38,7 @@ export const scanServices = {
   ) => {
     const {
       maxDepth,
-      tmdbApiKey,
+      metadataProvider,
       mediaType = "movie",
       fileExtensions,
       libraryName,
@@ -51,8 +52,8 @@ export const scanServices = {
     const defaultMaxDepth = mediaType === "tv" ? 4 : 2;
     const effectiveMaxDepth = maxDepth ?? defaultMaxDepth;
 
-    if (!tmdbApiKey) {
-      throw new Error("TMDB API key is required");
+    if (!metadataProvider || !metadataProvider.isConfigured()) {
+      throw new Error("Metadata provider is required and must be configured");
     }
 
     // Use default extensions if none provided or if empty array
@@ -205,7 +206,7 @@ export const scanServices = {
     // Fetch metadata for all entries
     const metadataStats = await fetchMetadataForEntries(mediaEntries, {
       mediaType,
-      tmdbApiKey,
+      metadataProvider,
       rateLimiter,
       metadataCache,
       existingMetadataMap,
@@ -215,14 +216,14 @@ export const scanServices = {
     });
 
     logger.info(
-      `\n✓ Metadata fetching complete (${metadataStats.metadataFromCache} from cache, ${metadataStats.metadataFromTMDB} from TMDB)\n`
+      `\n✓ Metadata fetching complete (${metadataStats.metadataFromCache} from cache, ${metadataStats.metadataFromProvider} from provider)\n`
     );
 
     // Phase 3: Fetch episode metadata for TV shows
     if (mediaType === "tv") {
       logger.info("📺 Phase 3: Fetching season metadata...");
       await fetchSeasonMetadata(mediaEntries, {
-        tmdbApiKey,
+        metadataProvider,
         rateLimiter,
         episodeMetadataCache,
         libraryId: library.id,
@@ -259,7 +260,8 @@ export const scanServices = {
             mediaType,
             episodeMetadataCache,
             library.id,
-            originalPath
+            originalPath,
+            metadataProvider.name
           );
           savedCount++;
           scanLogger.logSaveSuccess(
@@ -310,7 +312,7 @@ export const scanServices = {
       totalSaved: savedCount,
       cacheStats: {
         metadataFromCache: metadataStats.metadataFromCache,
-        metadataFromTMDB: metadataStats.metadataFromTMDB,
+        metadataFromProvider: metadataStats.metadataFromProvider,
         totalMetadataFetched: metadataStats.totalFetched,
       },
       logFilePath: scanLogger.getLogFilePath(),
@@ -325,7 +327,7 @@ export const scanServices = {
     rootPath: string,
     options: {
       maxDepth?: number;
-      tmdbApiKey: string;
+      metadataProvider: IMetadataProvider;
       mediaType?: "movie" | "tv";
       fileExtensions?: string[];
       libraryName?: string;
@@ -335,7 +337,7 @@ export const scanServices = {
   ) => {
     const {
       maxDepth,
-      tmdbApiKey,
+      metadataProvider,
       mediaType = "movie",
       fileExtensions,
       libraryName,
@@ -347,8 +349,8 @@ export const scanServices = {
     const defaultMaxDepth = mediaType === "tv" ? 4 : 2;
     const effectiveMaxDepth = maxDepth ?? defaultMaxDepth;
 
-    if (!tmdbApiKey) {
-      throw new Error("TMDB API key is required");
+    if (!metadataProvider || !metadataProvider.isConfigured()) {
+      throw new Error("Metadata provider is required and must be configured");
     }
 
     // Use default extensions if none provided or if empty array
@@ -455,7 +457,7 @@ export const scanServices = {
       const result = await processFolderBatch(scanJobId, batch, {
         rootPath,
         mediaType,
-        tmdbApiKey,
+        metadataProvider,
         libraryId: library.id,
         maxDepth: effectiveMaxDepth,
         fileExtensions: finalFileExtensions,
@@ -526,7 +528,10 @@ export const scanServices = {
   /**
    * Resume a failed or paused scan job
    */
-  resumeScanJob: async (scanJobId: string, tmdbApiKey: string) => {
+  resumeScanJob: async (
+    scanJobId: string,
+    metadataProvider: IMetadataProvider
+  ) => {
     // Get the scan job
     const scanJob = await prisma.scanJob.findUnique({
       where: { id: scanJobId },
@@ -600,7 +605,7 @@ export const scanServices = {
       const result = await processFolderBatch(scanJobId, batch, {
         rootPath,
         mediaType,
-        tmdbApiKey,
+        metadataProvider,
         libraryId: scanJob.libraryId,
         maxDepth: effectiveMaxDepth,
         fileExtensions: finalFileExtensions,

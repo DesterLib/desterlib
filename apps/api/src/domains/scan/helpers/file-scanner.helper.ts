@@ -23,6 +23,9 @@ export async function collectMediaEntries(
     maxDepth?: number;
     mediaType: "movie" | "tv";
     fileExtensions: string[];
+    filenamePattern?: RegExp;
+    directoryPattern?: RegExp;
+    followSymlinks?: boolean;
     onProgress?: (count: number) => void;
   }
 ): Promise<MediaEntry[]> {
@@ -70,11 +73,33 @@ export async function collectMediaEntries(
           sampleFiles.push(entry.name);
         }
 
-        // Skip system files and unwanted entries
+        // Skip system files and unwanted entries (built-in filter)
         if (shouldSkipEntry(entry.name, entry.isDirectory())) {
           totalSkipped++;
           logger.debug(`Skipping filtered entry: ${entry.name}`);
           continue;
+        }
+
+        // Apply custom directory filtering
+        if (entry.isDirectory()) {
+          // Check directory pattern
+          if (
+            options.directoryPattern &&
+            !options.directoryPattern.test(entry.name)
+          ) {
+            totalSkipped++;
+            continue;
+          }
+        } else {
+          // Apply custom file filtering
+          // Check filename pattern
+          if (
+            options.filenamePattern &&
+            !options.filenamePattern.test(entry.name)
+          ) {
+            totalSkipped++;
+            continue;
+          }
         }
 
         const fullPath = join(currentPath, entry.name);

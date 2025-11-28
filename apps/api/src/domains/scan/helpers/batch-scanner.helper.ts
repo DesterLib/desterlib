@@ -21,6 +21,7 @@ import { getDefaultVideoExtensions } from "./file-filter.helper";
 import { wsManager } from "@/lib/websocket";
 import type { TmdbMetadata } from "../scan.types";
 import type { TmdbSeasonMetadata } from "@/lib/providers/tmdb/tmdb.types";
+import type { IMetadataProvider } from "@/lib/providers/metadata-provider.types";
 
 /**
  * Discover top-level folders to batch process
@@ -217,7 +218,7 @@ export async function processFolderBatch(
   options: {
     rootPath: string;
     mediaType: "movie" | "tv";
-    tmdbApiKey: string;
+    metadataProvider: IMetadataProvider;
     libraryId: string;
     maxDepth: number;
     fileExtensions: string[];
@@ -232,7 +233,7 @@ export async function processFolderBatch(
   const {
     rootPath,
     mediaType,
-    tmdbApiKey,
+    metadataProvider,
     libraryId,
     maxDepth,
     fileExtensions,
@@ -336,7 +337,8 @@ export async function processFolderBatch(
           logger.info(`Calling fetchExistingMetadata...`);
           const existingData = await fetchExistingMetadata(
             tmdbIdsToCheck,
-            libraryId
+            libraryId,
+            metadataProvider.name
           );
           logger.info(
             `fetchExistingMetadata returned ${existingData.metadataMap.size} existing entries`
@@ -374,7 +376,7 @@ export async function processFolderBatch(
       );
       const metadataStats = await fetchMetadataForEntries(mediaEntries, {
         mediaType,
-        tmdbApiKey,
+        metadataProvider,
         rateLimiter,
         metadataCache,
         existingMetadataMap,
@@ -382,13 +384,13 @@ export async function processFolderBatch(
         libraryId,
       });
       logger.info(
-        `fetchMetadataForEntries completed: ${metadataStats.metadataFromCache} from cache, ${metadataStats.metadataFromTMDB} from TMDB`
+        `fetchMetadataForEntries completed: ${metadataStats.metadataFromCache} from cache, ${metadataStats.metadataFromProvider} from provider`
       );
 
       // Step 4: Fetch season metadata for TV shows
       if (mediaType === "tv") {
         await fetchSeasonMetadata(mediaEntries, {
-          tmdbApiKey,
+          metadataProvider,
           rateLimiter,
           episodeMetadataCache,
           libraryId,
@@ -418,7 +420,8 @@ export async function processFolderBatch(
               mediaType,
               episodeMetadataCache,
               libraryId,
-              originalPath
+              originalPath,
+              metadataProvider.name
             );
             savedCount++;
           } catch (error) {

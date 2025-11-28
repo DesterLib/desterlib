@@ -1,34 +1,71 @@
 /**
- * TMDB metadata fetching utilities
- * Handles fetching and caching metadata from TMDB API
+ * Metadata fetching utilities
+ * Handles fetching and caching metadata from metadata providers
  */
 
 import { logger } from "@/lib/utils";
-import { tmdbServices } from "@/lib/providers/tmdb/tmdb.services";
 import { wsManager } from "@/lib/websocket";
 import type { RateLimiter } from "./rate-limiter.helper";
-import type {
-  TmdbType,
-  TmdbSeasonMetadata,
-} from "@/lib/providers/tmdb/tmdb.types";
+import type { TmdbSeasonMetadata } from "@/lib/providers/tmdb/tmdb.types";
 import type { MediaEntry, TmdbMetadata } from "../scan.types";
+import type {
+  IMetadataProvider,
+  MediaMetadata,
+  SeasonMetadata,
+} from "@/lib/providers/metadata-provider.types";
 import { extractTmdbPath, getTmdbImageUrl } from "./tmdb-image.helper";
 import prisma from "@/lib/database/prisma";
+import { ExternalIdSource } from "@/lib/database";
 
 /**
- * Fetch and extract plain poster and logo URLs from TMDB images endpoint
- * Queries them separately for better efficiency and clarity
+ * Convert MediaMetadata to TmdbMetadata format for backward compatibility
+ */
+function convertToTmdbMetadata(
+  metadata: MediaMetadata,
+  providerId: string
+): TmdbMetadata {
+  // If provider is TMDB and has original data, use it
+  if (providerId === "tmdb" && metadata._tmdb) {
+    return metadata._tmdb as TmdbMetadata;
+  }
+
+  // Otherwise, convert from standard format
+  return {
+    id: parseInt(metadata.id) || 0,
+    title: metadata.title,
+    name: metadata.title,
+    overview: metadata.description,
+    poster_path: metadata.posterUrl
+      ? extractTmdbPath(metadata.posterUrl) || undefined
+      : undefined,
+    backdrop_path: metadata.backdropUrl
+      ? extractTmdbPath(metadata.backdropUrl) || undefined
+      : undefined,
+    release_date: metadata.releaseDate,
+    first_air_date: metadata.releaseDate,
+    vote_average: metadata.rating,
+  };
+}
+
+/**
+ * Fetch and extract plain poster and logo URLs from metadata provider
  */
 async function fetchAdditionalImages(
-  tmdbId: string,
+  providerId: string,
+  id: string,
   mediaType: "movie" | "tv",
-  tmdbApiKey: string,
+  metadataProvider: IMetadataProvider,
   rateLimiter: RateLimiter
 ): Promise<{ plainPosterUrl: string | null; logoUrl: string | null }> {
   try {
     logger.info(
-      `Fetching additional images for TMDB ID ${tmdbId} (${mediaType})`
+      `Fetching additional images for ${providerId} ID ${id} (${mediaType})`
     );
+
+    // Only TMDB provider supports getImages method
+    if (providerId !== "tmdb" || !metadataProvider.getImages) {
+      return { plainPosterUrl: null, logoUrl: null };
+    }
 
     // Helper to add timeout to a promise
     const withTimeout = <T>(
@@ -45,37 +82,23 @@ async function fetchAdditionalImages(
     };
 
     // Fetch plain poster (no language) and English logo separately
-    // Note: We bypass the rate limiter for image fetches since they're called after main metadata
-    // and we want them to complete quickly. The rate limiter might be blocking these requests.
-    const timeoutMs = 15000; // 15 seconds timeout per request (increased from 10)
+    const timeoutMs = 15000; // 15 seconds timeout per request
     const [posterData, logoData] = await Promise.allSettled([
-      // Fetch plain poster without language-specific text
-      // Use include_image_language=null to get images where iso_639_1 is null
       withTimeout(
-        (async () => {
-          logger.info(`Fetching plain poster for TMDB ID ${tmdbId}...`);
-          return await tmdbServices.getImages(tmdbId, mediaType as TmdbType, {
-            apiKey: tmdbApiKey,
-            language: "en-US", // Main language parameter
-            includeImageLanguage: "null", // Get images where iso_639_1 is null (no language)
-          });
-        })(),
+        metadataProvider.getImages(id, mediaType, {
+          language: "en-US",
+          includeImageLanguage: "null",
+        }),
         timeoutMs,
-        `Plain poster fetch timeout for TMDB ID ${tmdbId}`
+        `Plain poster fetch timeout for ${providerId} ID ${id}`
       ),
-      // Fetch English logo
-      // Use include_image_language=en,null to get English logos and those without language
       withTimeout(
-        (async () => {
-          logger.info(`Fetching logo for TMDB ID ${tmdbId}...`);
-          return await tmdbServices.getImages(tmdbId, mediaType as TmdbType, {
-            apiKey: tmdbApiKey,
-            language: "en-US", // Main language parameter
-            includeImageLanguage: "en,null", // Get English logos and those without language tags
-          });
-        })(),
+        metadataProvider.getImages(id, mediaType, {
+          language: "en-US",
+          includeImageLanguage: "en,null",
+        }),
         timeoutMs,
-        `Logo fetch timeout for TMDB ID ${tmdbId}`
+        `Logo fetch timeout for ${providerId} ID ${id}`
       ),
     ]);
 
@@ -86,19 +109,18 @@ async function fetchAdditionalImages(
 
     if (posterData.status === "rejected") {
       logger.warn(
-        `Failed to fetch plain poster for TMDB ID ${tmdbId}: ${posterData.reason}`
+        `Failed to fetch plain poster for ${providerId} ID ${id}: ${posterData.reason}`
       );
     }
     if (logoData.status === "rejected") {
       logger.warn(
-        `Failed to fetch logo for TMDB ID ${tmdbId}: ${logoData.reason}`
+        `Failed to fetch logo for ${providerId} ID ${id}: ${logoData.reason}`
       );
     }
 
     // Extract plain poster (first poster without language)
     let plainPosterUrl: string | null = null;
     if (posterResult?.posters && Array.isArray(posterResult.posters)) {
-      // Find poster with iso_639_1 === null (no language tag)
       const plainPoster = posterResult.posters.find(
         (poster: any) => poster.iso_639_1 === null
       );
@@ -110,15 +132,12 @@ async function fetchAdditionalImages(
     // Extract English logo
     let logoUrl: string | null = null;
     if (logoResult?.logos && Array.isArray(logoResult.logos)) {
-      // Find logo with iso_639_1 === "en" (English)
-      // If no English logo found, fallback to one with iso_639_1 === null
       const englishLogo = logoResult.logos.find(
         (logo: any) => logo.iso_639_1 === "en"
       );
       if (englishLogo?.file_path) {
         logoUrl = getTmdbImageUrl(englishLogo.file_path);
       } else {
-        // Fallback to logo without language tag
         const fallbackLogo = logoResult.logos.find(
           (logo: any) => logo.iso_639_1 === null
         );
@@ -129,24 +148,25 @@ async function fetchAdditionalImages(
     }
 
     logger.info(
-      `Completed fetching additional images for TMDB ID ${tmdbId}: plainPoster=${plainPosterUrl ? "found" : "none"}, logo=${logoUrl ? "found" : "none"}`
+      `Completed fetching additional images for ${providerId} ID ${id}: plainPoster=${plainPosterUrl ? "found" : "none"}, logo=${logoUrl ? "found" : "none"}`
     );
 
     return { plainPosterUrl, logoUrl };
   } catch (error) {
     logger.warn(
-      `Failed to fetch additional images for TMDB ID ${tmdbId}: ${error instanceof Error ? error.message : error}`
+      `Failed to fetch additional images for ${providerId} ID ${id}: ${error instanceof Error ? error.message : error}`
     );
     return { plainPosterUrl: null, logoUrl: null };
   }
 }
 
 /**
- * Fetch existing metadata from database for given TMDB IDs
+ * Fetch existing metadata from database for given provider IDs
  */
 export async function fetchExistingMetadata(
-  tmdbIds: string[],
-  libraryId: string
+  providerIds: string[],
+  libraryId: string,
+  providerName: string = "tmdb"
 ): Promise<{
   metadataMap: Map<string, TmdbMetadata>;
   imagesMap: Map<
@@ -160,19 +180,27 @@ export async function fetchExistingMetadata(
     { plainPosterUrl: string | null; logoUrl: string | null }
   >();
 
-  if (tmdbIds.length === 0) {
+  if (providerIds.length === 0) {
     return { metadataMap: existingMetadataMap, imagesMap: existingImagesMap };
   }
 
+  // Map provider name to ExternalIdSource enum
+  const sourceMap: Record<string, ExternalIdSource> = {
+    tmdb: ExternalIdSource.TMDB,
+    tvdb: ExternalIdSource.TVDB,
+    imdb: ExternalIdSource.IMDB,
+  };
+  const source = sourceMap[providerName.toLowerCase()] || ExternalIdSource.TMDB;
+
   logger.info(
-    `Checking for existing metadata for ${tmdbIds.length} TMDB ID(s) in library ${libraryId}`
+    `Checking for existing metadata for ${providerIds.length} ${providerName.toUpperCase()} ID(s) in library ${libraryId}`
   );
 
   const existingExternalIds = await prisma.externalId.findMany({
     where: {
-      source: "TMDB",
+      source,
       externalId: {
-        in: tmdbIds,
+        in: providerIds,
       },
       media: {
         libraries: {
@@ -182,8 +210,7 @@ export async function fetchExistingMetadata(
         },
       },
     },
-    select: {
-      externalId: true,
+    include: {
       media: {
         select: {
           id: true,
@@ -231,13 +258,13 @@ export async function fetchExistingMetadata(
 }
 
 /**
- * Fetch metadata for media entries from TMDB
+ * Fetch metadata for media entries from metadata provider
  */
 export async function fetchMetadataForEntries(
   mediaEntries: MediaEntry[],
   options: {
     mediaType: "movie" | "tv";
-    tmdbApiKey: string;
+    metadataProvider: IMetadataProvider;
     rateLimiter: RateLimiter;
     metadataCache: Map<string, TmdbMetadata>;
     existingMetadataMap: Map<string, TmdbMetadata>;
@@ -250,12 +277,12 @@ export async function fetchMetadataForEntries(
   }
 ): Promise<{
   metadataFromCache: number;
-  metadataFromTMDB: number;
+  metadataFromProvider: number;
   totalFetched: number;
 }> {
   const {
     mediaType,
-    tmdbApiKey,
+    metadataProvider,
     rateLimiter,
     metadataCache,
     existingMetadataMap,
@@ -264,20 +291,22 @@ export async function fetchMetadataForEntries(
     scanLogger,
   } = options;
 
+  const providerId = metadataProvider.name;
+
   logger.info(
-    `fetchMetadataForEntries called with ${mediaEntries.length} entries (mediaType: ${mediaType})`
+    `fetchMetadataForEntries called with ${mediaEntries.length} entries (mediaType: ${mediaType}, provider: ${providerId})`
   );
 
   const metadataFetchPromises: Promise<void>[] = [];
   let metadataFetched = 0;
   let metadataFromCache = 0;
-  let metadataFromTMDB = 0;
+  let metadataFromProvider = 0;
   const totalMetadataToFetch = mediaEntries.filter(
     (e) => e.extractedIds.tmdbId || e.extractedIds.title
   ).length;
 
   logger.info(
-    `Total metadata to fetch: ${totalMetadataToFetch} (entries with TMDB ID or title)`
+    `Total metadata to fetch: ${totalMetadataToFetch} (entries with ${providerId.toUpperCase()} ID or title)`
   );
 
   // For TV shows, optimize by grouping episodes of the same show
@@ -342,24 +371,29 @@ export async function fetchMetadataForEntries(
           return;
         }
 
-        // Fetch from TMDB
+        // Fetch from metadata provider
         try {
-          const metadata = await tmdbServices.get(tmdbId, "tv" as TmdbType, {
-            apiKey: tmdbApiKey,
-            extraParams: {
-              append_to_response: "credits",
-            },
-          });
+          const mediaMetadata = await metadataProvider.getMetadata(
+            tmdbId,
+            "tv",
+            {
+              language: "en-US",
+            }
+          );
 
-          if (metadata) {
-            const typedMetadata = metadata as TmdbMetadata;
+          if (mediaMetadata) {
+            const typedMetadata = convertToTmdbMetadata(
+              mediaMetadata,
+              providerId
+            );
             metadataCache.set(tmdbId, typedMetadata);
 
             // Fetch additional images (plain poster and logo)
             const { plainPosterUrl, logoUrl } = await fetchAdditionalImages(
+              providerId,
               tmdbId,
               "tv",
-              tmdbApiKey,
+              metadataProvider,
               rateLimiter
             );
 
@@ -370,7 +404,7 @@ export async function fetchMetadataForEntries(
               ep.logoUrl = logoUrl;
             });
             metadataFetched += episodes.length;
-            metadataFromTMDB++;
+            metadataFromProvider++;
 
             logger.info(
               `✓ Fetched show metadata: "${typedMetadata.title || typedMetadata.name}" (applied to ${episodes.length} episode(s))`
@@ -378,7 +412,7 @@ export async function fetchMetadataForEntries(
           }
         } catch (error) {
           logger.error(
-            `✗ Failed to fetch TMDB ID ${tmdbId}: ${error instanceof Error ? error.message : error}`
+            `✗ Failed to fetch ${providerId.toUpperCase()} ID ${tmdbId}: ${error instanceof Error ? error.message : error}`
           );
           metadataFetched += episodes.length;
         }
@@ -394,17 +428,22 @@ export async function fetchMetadataForEntries(
 
       const searchPromise = rateLimiter.add(async () => {
         try {
-          const foundId = await tmdbServices.search(extractedIds.title!, "tv", {
-            apiKey: tmdbApiKey,
-            year: extractedIds.year,
-          });
+          const searchResult = await metadataProvider.search(
+            extractedIds.title!,
+            "tv",
+            {
+              year: extractedIds.year,
+              language: "en-US",
+            }
+          );
 
-          if (foundId) {
+          if (searchResult) {
+            const foundId = searchResult.id;
             logger.info(
-              `✓ Search found TMDB ID ${foundId} for: "${extractedIds.title}"`
+              `✓ Search found ${providerId.toUpperCase()} ID ${foundId} for: "${extractedIds.title}"`
             );
 
-            // Update all episodes with the found TMDB ID
+            // Update all episodes with the found provider ID
             episodes.forEach((ep) => {
               ep.extractedIds.tmdbId = foundId;
             });
@@ -425,26 +464,27 @@ export async function fetchMetadataForEntries(
               metadataFetched += episodes.length;
             } else {
               // Fetch metadata
-              const metadata = await tmdbServices.get(
+              const mediaMetadata = await metadataProvider.getMetadata(
                 foundId,
-                "tv" as TmdbType,
+                "tv",
                 {
-                  apiKey: tmdbApiKey,
-                  extraParams: {
-                    append_to_response: "credits",
-                  },
+                  language: "en-US",
                 }
               );
 
-              if (metadata) {
-                const typedMetadata = metadata as TmdbMetadata;
+              if (mediaMetadata) {
+                const typedMetadata = convertToTmdbMetadata(
+                  mediaMetadata,
+                  providerId
+                );
                 metadataCache.set(foundId, typedMetadata);
 
                 // Fetch additional images (plain poster and logo)
                 const { plainPosterUrl, logoUrl } = await fetchAdditionalImages(
+                  providerId,
                   foundId,
                   "tv",
-                  tmdbApiKey,
+                  metadataProvider,
                   rateLimiter
                 );
 
@@ -454,7 +494,7 @@ export async function fetchMetadataForEntries(
                   ep.logoUrl = logoUrl;
                 });
                 metadataFetched += episodes.length;
-                metadataFromTMDB++;
+                metadataFromProvider++;
 
                 logger.info(
                   `✓ Fetched show metadata: "${typedMetadata.title || typedMetadata.name}" (applied to ${episodes.length} episode(s))`
@@ -529,38 +569,39 @@ export async function fetchMetadataForEntries(
             return;
           }
 
-          // Fetch from TMDB if not cached
+          // Fetch from metadata provider if not cached
           try {
-            const metadata = await tmdbServices.get(
+            const mediaMetadata = await metadataProvider.getMetadata(
               extractedIds.tmdbId!,
-              mediaType as TmdbType,
+              mediaType,
               {
-                apiKey: tmdbApiKey,
-                extraParams: {
-                  append_to_response: "credits",
-                },
+                language: "en-US",
               }
             );
-            if (metadata) {
-              const typedMetadata = metadata as TmdbMetadata;
+            if (mediaMetadata) {
+              const typedMetadata = convertToTmdbMetadata(
+                mediaMetadata,
+                providerId
+              );
 
-              // Debug: Log genres from TMDB
-              const genres = (metadata as any).genres;
+              // Debug: Log genres from provider
+              const genres = mediaMetadata.genres;
               if (genres && genres.length > 0) {
                 logger.debug(
-                  `TMDB returned ${genres.length} genres for "${typedMetadata.title || typedMetadata.name}": ${genres.map((g: any) => g.name).join(", ")}`
+                  `${providerId.toUpperCase()} returned ${genres.length} genres for "${typedMetadata.title || typedMetadata.name}": ${genres.join(", ")}`
                 );
               } else {
                 logger.warn(
-                  `TMDB returned NO genres for "${typedMetadata.title || typedMetadata.name}"`
+                  `${providerId.toUpperCase()} returned NO genres for "${typedMetadata.title || typedMetadata.name}"`
                 );
               }
 
               // Fetch additional images (plain poster and logo)
               const { plainPosterUrl, logoUrl } = await fetchAdditionalImages(
+                providerId,
                 extractedIds.tmdbId!,
                 mediaType,
-                tmdbApiKey,
+                metadataProvider,
                 rateLimiter
               );
 
@@ -569,7 +610,7 @@ export async function fetchMetadataForEntries(
               mediaEntry.plainPosterUrl = plainPosterUrl;
               mediaEntry.logoUrl = logoUrl;
               metadataFetched++;
-              metadataFromTMDB++;
+              metadataFromProvider++;
 
               scanLogger?.logMetadataFromTMDB(
                 mediaEntry.path,
@@ -601,7 +642,7 @@ export async function fetchMetadataForEntries(
             }
           } catch (metadataError) {
             logger.error(
-              `✗ Failed to fetch TMDB ID ${extractedIds.tmdbId} (${mediaEntry.name}): ${metadataError instanceof Error ? metadataError.message : metadataError}`
+              `✗ Failed to fetch ${providerId.toUpperCase()} ID ${extractedIds.tmdbId} (${mediaEntry.name}): ${metadataError instanceof Error ? metadataError.message : metadataError}`
             );
             metadataFetched++;
           }
@@ -612,17 +653,18 @@ export async function fetchMetadataForEntries(
       else if (extractedIds.title && !extractedIds.tmdbId) {
         const searchPromise = rateLimiter.add(async () => {
           try {
-            const foundId = await tmdbServices.search(
+            const searchResult = await metadataProvider.search(
               extractedIds.title!,
               mediaType,
               {
-                apiKey: tmdbApiKey,
                 year: extractedIds.year,
+                language: "en-US",
               }
             );
-            if (foundId) {
+            if (searchResult) {
+              const foundId = searchResult.id;
               logger.info(
-                `✓ Search found TMDB ID ${foundId} for: "${extractedIds.title}"`
+                `✓ Search found ${providerId.toUpperCase()} ID ${foundId} for: "${extractedIds.title}"`
               );
               extractedIds.tmdbId = foundId;
 
@@ -638,37 +680,38 @@ export async function fetchMetadataForEntries(
                 mediaEntry.logoUrl = images.logoUrl;
                 metadataFetched++;
               } else {
-                const metadata = await tmdbServices.get(
+                const mediaMetadata = await metadataProvider.getMetadata(
                   foundId,
-                  mediaType as TmdbType,
+                  mediaType,
                   {
-                    apiKey: tmdbApiKey,
-                    extraParams: {
-                      append_to_response: "credits",
-                    },
+                    language: "en-US",
                   }
                 );
-                if (metadata) {
-                  const typedMetadata = metadata as TmdbMetadata;
+                if (mediaMetadata) {
+                  const typedMetadata = convertToTmdbMetadata(
+                    mediaMetadata,
+                    providerId
+                  );
 
-                  // Debug: Log genres from TMDB
-                  const genres = (metadata as any).genres;
+                  // Debug: Log genres from provider
+                  const genres = mediaMetadata.genres;
                   if (genres && genres.length > 0) {
                     logger.debug(
-                      `TMDB search returned ${genres.length} genres for "${typedMetadata.title || typedMetadata.name}": ${genres.map((g: any) => g.name).join(", ")}`
+                      `${providerId.toUpperCase()} search returned ${genres.length} genres for "${typedMetadata.title || typedMetadata.name}": ${genres.join(", ")}`
                     );
                   } else {
                     logger.warn(
-                      `TMDB search returned NO genres for "${typedMetadata.title || typedMetadata.name}"`
+                      `${providerId.toUpperCase()} search returned NO genres for "${typedMetadata.title || typedMetadata.name}"`
                     );
                   }
 
                   // Fetch additional images (plain poster and logo)
                   const { plainPosterUrl, logoUrl } =
                     await fetchAdditionalImages(
+                      providerId,
                       foundId,
                       mediaType,
-                      tmdbApiKey,
+                      metadataProvider,
                       rateLimiter
                     );
 
@@ -677,13 +720,13 @@ export async function fetchMetadataForEntries(
                   mediaEntry.plainPosterUrl = plainPosterUrl;
                   mediaEntry.logoUrl = logoUrl;
                   metadataFetched++;
-                  metadataFromTMDB++;
+                  metadataFromProvider++;
 
                   scanLogger?.logSearchAttempt(
                     mediaEntry.path,
                     extractedIds.title!,
                     1, // results found
-                    foundId,
+                    parseInt(foundId) || 0,
                     typedMetadata.title || typedMetadata.name || ""
                   );
 
@@ -745,12 +788,12 @@ export async function fetchMetadataForEntries(
   );
   await Promise.allSettled(metadataFetchPromises);
   logger.info(
-    `All metadata fetch promises completed. Stats: ${metadataFromCache} from cache, ${metadataFromTMDB} from TMDB, ${metadataFetched} total fetched`
+    `All metadata fetch promises completed. Stats: ${metadataFromCache} from cache, ${metadataFromProvider} from ${providerId.toUpperCase()}, ${metadataFetched} total fetched`
   );
 
   return {
     metadataFromCache,
-    metadataFromTMDB,
+    metadataFromProvider,
     totalFetched: metadataFetched,
   };
 }
@@ -761,13 +804,14 @@ export async function fetchMetadataForEntries(
 export async function fetchSeasonMetadata(
   mediaEntries: MediaEntry[],
   options: {
-    tmdbApiKey: string;
+    metadataProvider: IMetadataProvider;
     rateLimiter: RateLimiter;
     episodeMetadataCache: Map<string, TmdbSeasonMetadata>;
     libraryId: string;
   }
 ): Promise<void> {
-  const { tmdbApiKey, rateLimiter, episodeMetadataCache, libraryId } = options;
+  const { metadataProvider, rateLimiter, episodeMetadataCache, libraryId } =
+    options;
 
   // Collect unique TV show + season combinations to fetch
   const seasonsToFetch = new Set<string>();
@@ -811,14 +855,42 @@ export async function fetchSeasonMetadata(
 
     const fetchPromise = rateLimiter.add(async () => {
       try {
-        const seasonMetadata = await tmdbServices.getSeason(
+        if (!metadataProvider.getSeasonMetadata) {
+          logger.warn(
+            `Provider ${metadataProvider.name} does not support season metadata fetching`
+          );
+          episodesFetched++;
+          return;
+        }
+
+        const seasonMetadata = await metadataProvider.getSeasonMetadata(
           tvId,
           seasonNumber,
-          { apiKey: tmdbApiKey }
+          {
+            language: "en-US",
+          }
         );
 
         if (seasonMetadata) {
-          episodeMetadataCache.set(seasonKey, seasonMetadata);
+          // Convert SeasonMetadata to TmdbSeasonMetadata format
+          // For TMDB provider, the _tmdb field should contain the original data
+          const tmdbSeasonMetadata = (seasonMetadata as any)._tmdb || {
+            season_number: seasonNumber,
+            episodes: seasonMetadata.episodes?.map((ep) => ({
+              episode_number: ep.episodeNumber,
+              name: ep.name,
+              overview: ep.description,
+              air_date: ep.airDate,
+              still_path: ep.stillUrl
+                ? extractTmdbPath(ep.stillUrl) || undefined
+                : undefined,
+              runtime: ep.runtime,
+            })),
+          };
+          episodeMetadataCache.set(
+            seasonKey,
+            tmdbSeasonMetadata as TmdbSeasonMetadata
+          );
           episodesFetched++;
 
           // Send progress update every 3 items or at 100%
