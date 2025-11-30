@@ -1,21 +1,9 @@
-// Extend Express Request interface with our custom properties
+import { z } from "zod";
+
 declare global {
   namespace Express {
     interface Request {
-      // Validation middleware adds this property
-      validatedData?: unknown;
-      // Auth user property goes here
-    }
-  }
-
-  namespace NodeJS {
-    interface Process {
-      pkg?: {
-        entrypoint: string;
-        defaultEntrypoint: string;
-      };
+      validatedData?: z.infer<z.ZodTypeAny>;
     }
   }
 }
-
-export {};
