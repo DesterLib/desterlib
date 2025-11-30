@@ -55,16 +55,35 @@ The app will now fetch metadata for your media!
 
 ### Via API (Advanced)
 
-You can also set it via the settings API:
+You can configure it via the Settings API. The API key will automatically sync to the metadata provider system:
 
 ```bash
 curl -X PUT http://localhost:3001/api/v1/settings \
   -H "Content-Type: application/json" \
   -d '{
-    "key": "core.tmdb.apiKey",
-    "value": "your_api_key_here"
+    "tmdbApiKey": "your_api_key_here"
   }'
 ```
+
+Alternatively, you can directly manage the TMDB provider:
+
+```bash
+# Create or update TMDB provider
+curl -X POST http://localhost:3001/api/v1/settings/providers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "tmdb",
+    "enabled": true,
+    "priority": 0,
+    "config": {
+      "apiKey": "your_api_key_here",
+      "baseUrl": "https://api.themoviedb.org/3",
+      "rateLimitRps": 4.0
+    }
+  }'
+```
+
+See the [Settings API documentation](/api/overview/#settings-endpoints) for more details.
 
 ## What TMDB Is Used For
 
@@ -98,12 +117,47 @@ TMDB's free API has rate limits:
 - DesterLib automatically handles rate limiting
 - Large libraries may take longer to scan due to this
 
+## Provider System
+
+DesterLib uses a **provider-based architecture** for metadata fetching:
+
+- **TMDB** is one of potentially multiple metadata providers
+- Providers are managed in the database (not environment variables)
+- You can configure multiple providers with priority ordering
+- The system automatically uses the highest priority enabled provider
+
+### Managing Providers
+
+View and manage providers via the API:
+
+```bash
+# List all providers
+curl http://localhost:3001/api/v1/settings/providers
+
+# Get specific provider
+curl http://localhost:3001/api/v1/settings/providers/tmdb
+
+# Update provider configuration
+curl -X PUT http://localhost:3001/api/v1/settings/providers/tmdb \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enabled": true,
+    "priority": 0,
+    "config": {
+      "apiKey": "your_key",
+      "baseUrl": "https://api.themoviedb.org/3",
+      "rateLimitRps": 4.0
+    }
+  }'
+```
+
 ## Privacy
 
 - TMDB API key is stored securely in your database
 - Only your server communicates with TMDB
 - No data is sent to DesterLib developers
 - Your API key never leaves your server
+- Provider configurations are stored in the `metadata_providers` table
 
 ## Troubleshooting
 

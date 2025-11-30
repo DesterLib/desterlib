@@ -140,9 +140,18 @@ Video streaming:
 Application settings:
 
 - Get and update settings
-- Configure TMDB API key
+- Configure TMDB API key (auto-syncs to metadata providers)
+- Manage metadata providers
 - Manage system preferences
 - Enable/disable features
+
+**Provider Management:**
+
+- `GET /api/v1/settings/providers` - List all metadata providers
+- `POST /api/v1/settings/providers` - Create/update provider
+- `GET /api/v1/settings/providers/:name` - Get provider details
+- `PUT /api/v1/settings/providers/:name` - Update provider
+- `DELETE /api/v1/settings/providers/:name` - Delete provider
 
 ### 📋 `/api/v1/logs`
 

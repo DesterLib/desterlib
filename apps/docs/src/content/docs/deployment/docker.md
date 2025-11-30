@@ -26,7 +26,7 @@ The CLI configures production-ready settings by default:
 git clone https://github.com/DesterLib/desterlib.git
 cd desterlib
 
-# Create .env in apps/api/
+# Create .env in project root
 DATABASE_URL=postgresql://desterlib:STRONG_PASSWORD@postgres:5432/desterlib?schema=public
 NODE_ENV=production
 PORT=3001

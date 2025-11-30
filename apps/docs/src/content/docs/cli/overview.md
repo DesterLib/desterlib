@@ -85,10 +85,15 @@ services:
     # API server configuration
 ```
 
-**2. .env** (~10 lines)
+**2. .env** (~15 lines)
 
 ```env
+# Required
 DATABASE_URL=postgresql://...
+METADATA_PATH=./desterlib-data/metadata
+API_LOG_PATH=./desterlib-data/logs
+
+# Optional
 NODE_ENV=production
 PORT=3001
 RATE_LIMIT_WINDOW_MS=900000

@@ -63,7 +63,7 @@ docker-compose up -d
 # 3. Access at http://localhost:3001
 ```
 
-**Optional:** Customize with `.env` file in `apps/api/`:
+**Optional:** Customize with `.env` file in project root:
 
 ```env
 DATABASE_URL=postgresql://postgres:postgres@postgres:5432/desterlib

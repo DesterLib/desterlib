@@ -32,6 +32,94 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test?schema
 
 **Used by:** Prisma ORM for all database operations
 
+### METADATA_PATH
+
+**Path to metadata storage directory**
+
+```env
+METADATA_PATH=/path/to/desterlib-data/metadata
+```
+
+**Purpose:** Directory where metadata images (posters, backdrops) are stored
+
+**Examples:**
+
+```env
+# Absolute path
+METADATA_PATH=/Volumes/External/Projects/Dester/desterlib/desterlib-data/metadata
+
+# Relative to project root (when running from project directory)
+METADATA_PATH=./desterlib-data/metadata
+```
+
+**Note:** This path is shared between the API and metadata-service. Both services must use the same path.
+
+### API_LOG_PATH
+
+**Path to API logs directory**
+
+```env
+API_LOG_PATH=/path/to/desterlib-data/logs
+```
+
+**Purpose:** Directory where API log files are stored (e.g., `combined.log`)
+
+**Examples:**
+
+```env
+# Absolute path
+API_LOG_PATH=/Volumes/External/Projects/Dester/desterlib/desterlib-data/logs
+
+# Relative to project root
+API_LOG_PATH=./desterlib-data/logs
+```
+
+**Note:** The API will create `combined.log` in this directory.
+
+### SCAN_JOB_LOG_PATH (Metadata Service)
+
+**Path to scan job failure logs directory**
+
+```env
+SCAN_JOB_LOG_PATH=/path/to/desterlib-data/logs/scan-jobs
+```
+
+**Purpose:** Directory where metadata-service stores scan job failure logs
+
+**Examples:**
+
+```env
+# Absolute path
+SCAN_JOB_LOG_PATH=/Volumes/External/Projects/Dester/desterlib/desterlib-data/logs/scan-jobs
+
+# Relative to project root
+SCAN_JOB_LOG_PATH=./desterlib-data/logs/scan-jobs
+```
+
+**Note:** This is required by the metadata-service, not the API. The metadata-service will create scan-job-specific log files in this directory.
+
+### SCANNER_LOG_PATH (Scanner Service)
+
+**Path to scanner service logs directory**
+
+```env
+SCANNER_LOG_PATH=/path/to/desterlib-data/logs
+```
+
+**Purpose:** Directory where scanner service log files are stored (e.g., `scanner.log`)
+
+**Examples:**
+
+```env
+# Absolute path
+SCANNER_LOG_PATH=/Volumes/External/Projects/Dester/desterlib/desterlib-data/logs
+
+# Relative to project root
+SCANNER_LOG_PATH=./desterlib-data/logs
+```
+
+**Note:** This is optional. If not set, scanner service logs only to stdout/stderr. If set, logs will be written to both the file and stdout (for Docker container log capture).
+
 ## Optional Variables
 
 ### NODE_ENV
@@ -146,7 +234,30 @@ Stored in database settings, not environment variables.
 
 ### ❌ TMDB_API_KEY
 
-Configured via Settings API in the application, not environment variables.
+Configured via Settings API or Provider Management API in the application, not environment variables. The API key is stored in the database and automatically synced to the metadata provider system.
+
+**Configure via Settings API:**
+
+```bash
+curl -X PUT http://localhost:3001/api/v1/settings \
+  -H "Content-Type: application/json" \
+  -d '{"tmdbApiKey": "your_key"}'
+```
+
+**Or manage directly via Provider API:**
+
+```bash
+curl -X POST http://localhost:3001/api/v1/settings/providers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "tmdb",
+    "enabled": true,
+    "priority": 0,
+    "config": {"apiKey": "your_key"}
+  }'
+```
+
+See [TMDB Setup Guide](/guides/tmdb-setup/) for details.
 
 ### ❌ POSTGRES_HOST / POSTGRES_PORT
 
@@ -156,7 +267,7 @@ The API only uses `DATABASE_URL`. Individual postgres connection vars are not re
 
 ### Method 1: .env File (Recommended)
 
-Create `.env` in the API directory:
+Create `.env` in the project root:
 
 **CLI installation:**
 
@@ -167,13 +278,18 @@ nano ~/.desterlib/.env
 **Git installation:**
 
 ```bash
-nano apps/api/.env
+nano .env
 ```
 
 **Example .env:**
 
 ```env
+# Required
 DATABASE_URL=postgresql://desterlib:password@postgres:5432/desterlib?schema=public
+METADATA_PATH=/path/to/desterlib-data/metadata
+API_LOG_PATH=/path/to/desterlib-data/logs
+
+# Optional
 NODE_ENV=production
 PORT=3001
 RATE_LIMIT_WINDOW_MS=900000
@@ -188,11 +304,17 @@ Set directly in `docker-compose.yml`:
 api:
   image: desterlib/api:latest
   environment:
+    # Required
     DATABASE_URL: postgresql://...
+    METADATA_PATH: /var/lib/desterlib/metadata
+    API_LOG_PATH: /var/lib/desterlib/logs
+    # Optional
     NODE_ENV: production
     PORT: 3001
     RATE_LIMIT_WINDOW_MS: 900000
     RATE_LIMIT_MAX: 100
+  volumes:
+    - ./desterlib-data:/var/lib/desterlib
 ```
 
 ### Method 3: System Environment
@@ -210,7 +332,12 @@ pnpm start
 ### Development Setup
 
 ```env
+# Required
 DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test?schema=public
+METADATA_PATH=./desterlib-data/metadata
+API_LOG_PATH=./desterlib-data/logs
+
+# Optional
 NODE_ENV=development
 PORT=3001
 RATE_LIMIT_WINDOW_MS=60000   # 1 minute for testing
@@ -220,7 +347,12 @@ RATE_LIMIT_MAX=1000          # More lenient for development
 ### Production Setup
 
 ```env
+# Required
 DATABASE_URL=postgresql://desterlib:STRONG_PASSWORD@postgres:5432/desterlib?schema=public
+METADATA_PATH=/var/lib/desterlib/metadata
+API_LOG_PATH=/var/lib/desterlib/logs
+
+# Optional
 NODE_ENV=production
 PORT=3001
 RATE_LIMIT_WINDOW_MS=900000  # 15 minutes
@@ -230,7 +362,12 @@ RATE_LIMIT_MAX=100           # Standard rate limiting
 ### High-Traffic Setup
 
 ```env
+# Required
 DATABASE_URL=postgresql://...
+METADATA_PATH=/var/lib/desterlib/metadata
+API_LOG_PATH=/var/lib/desterlib/logs
+
+# Optional
 NODE_ENV=production
 PORT=3001
 RATE_LIMIT_WINDOW_MS=600000  # 10 minutes (shorter window)

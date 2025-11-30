@@ -98,7 +98,7 @@ cp -r ~/.desterlib ~/desterlib-config-backup-$(date +%Y%m%d)
 # Configuration is in your git repo
 git stash  # Save any local changes
 tar -czf desterlib-config-$(date +%Y%m%d).tar.gz \
-  desterlib/apps/api/.env \
+  desterlib/.env \
   desterlib/docker-compose.yml
 ```
 
@@ -160,7 +160,7 @@ cd ~/.desterlib && docker-compose up -d
 tar -xzf desterlib-config-20241113.tar.gz
 
 # Or restore from git
-git checkout apps/api/.env
+git checkout .env
 git checkout docker-compose.yml
 ```
 
