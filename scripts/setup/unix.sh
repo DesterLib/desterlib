@@ -107,17 +107,12 @@ echo -e "${CYAN}Downloading DesterLib configuration files...${NC}"
 REPO_BASE="https://raw.githubusercontent.com/DesterLib/desterlib/main"
 REPO_BRANCH="main"
 
-# Download essential files from GitHub
-echo "Downloading Dockerfile..."
-if ! curl -fsSL "${REPO_BASE}/Dockerfile" -o "Dockerfile"; then
-    echo -e "${RED}[X] Failed to download Dockerfile${NC}"
-    echo -e "${YELLOW}Please check your internet connection and try again.${NC}"
-    exit 1
-fi
-echo -e "${GREEN}[OK] Dockerfile downloaded${NC}"
+# Create docker directory
+mkdir -p docker
 
+# Download essential files from GitHub
 echo "Downloading docker-compose.yml..."
-if ! curl -fsSL "${REPO_BASE}/docker-compose.yml" -o "docker-compose.yml"; then
+if ! curl -fsSL "${REPO_BASE}/docker/docker-compose.yml" -o "docker/docker-compose.yml"; then
     echo -e "${RED}[X] Failed to download docker-compose.yml${NC}"
     echo -e "${YELLOW}Please check your internet connection and try again.${NC}"
     exit 1
@@ -126,12 +121,18 @@ echo -e "${GREEN}[OK] docker-compose.yml downloaded${NC}"
 
 # Create .env file
 echo "Creating .env file..."
-mkdir -p apps/api
-cat > apps/api/.env << EOF
+cat > .env << EOF
+# Required: Database Configuration
 DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?schema=public
+
+# Required: Metadata and Logs Paths
+METADATA_PATH=./desterlib-data/metadata
+API_LOG_PATH=./desterlib-data/logs
+
+# Server Configuration
 NODE_ENV=production
 PORT=${PORT}
-FRONTEND_URL=http://localhost:${PORT}
+
 # Media library path configuration (for path mapping between host and container)
 HOST_MEDIA_PATH=${MEDIA_PATH}
 CONTAINER_MEDIA_PATH=/media
@@ -147,30 +148,30 @@ ESCAPED_DB_PASSWORD=$(echo "$DB_PASSWORD" | sed 's/[[\.*^$()+?{|]/\\&/g')
 # Use sed to replace values in docker-compose.yml
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS sed
-    sed -i '' "s|- /Volumes/External/Library/Media:/media:ro|- ${ESCAPED_MEDIA_PATH}:/media:ro|" docker-compose.yml
-    sed -i '' "s|\"0.0.0.0:3001:3001\"|\"0.0.0.0:${PORT}:${PORT}\"|" docker-compose.yml
-    sed -i '' "s|PORT: 3001|PORT: ${PORT}|" docker-compose.yml
-    sed -i '' "s|POSTGRES_USER: postgres|POSTGRES_USER: ${DB_USER}|" docker-compose.yml
-    sed -i '' "s|POSTGRES_PASSWORD: postgres|POSTGRES_PASSWORD: ${ESCAPED_DB_PASSWORD}|" docker-compose.yml
-    sed -i '' "s|POSTGRES_DB: desterlib_prod|POSTGRES_DB: ${DB_NAME}|" docker-compose.yml
-    sed -i '' "s|POSTGRES_USER:-postgres|POSTGRES_USER:-${DB_USER}|" docker-compose.yml
-    sed -i '' "s|postgres:postgres@postgres|${DB_USER}:${ESCAPED_DB_PASSWORD}@postgres|" docker-compose.yml
-    sed -i '' "s|desterlib_prod|${DB_NAME}|g" docker-compose.yml
+    sed -i '' "s|- /Volumes/External/Library/Media:/media:ro|- ${ESCAPED_MEDIA_PATH}:/media:ro|" docker/docker-compose.yml
+    sed -i '' "s|\"0.0.0.0:3001:3001\"|\"0.0.0.0:${PORT}:${PORT}\"|" docker/docker-compose.yml
+    sed -i '' "s|PORT: 3001|PORT: ${PORT}|" docker/docker-compose.yml
+    sed -i '' "s|POSTGRES_USER: postgres|POSTGRES_USER: ${DB_USER}|" docker/docker-compose.yml
+    sed -i '' "s|POSTGRES_PASSWORD: postgres|POSTGRES_PASSWORD: ${ESCAPED_DB_PASSWORD}|" docker/docker-compose.yml
+    sed -i '' "s|POSTGRES_DB: desterlib_prod|POSTGRES_DB: ${DB_NAME}|" docker/docker-compose.yml
+    sed -i '' "s|POSTGRES_USER:-postgres|POSTGRES_USER:-${DB_USER}|" docker/docker-compose.yml
+    sed -i '' "s|postgres:postgres@postgres|${DB_USER}:${ESCAPED_DB_PASSWORD}@postgres|" docker/docker-compose.yml
+    sed -i '' "s|desterlib_prod|${DB_NAME}|g" docker/docker-compose.yml
     # Update HOST_MEDIA_PATH environment variable
-    sed -i '' "s|HOST_MEDIA_PATH: /Volumes/External/Library/Media|HOST_MEDIA_PATH: ${ESCAPED_MEDIA_PATH}|" docker-compose.yml
+    sed -i '' "s|HOST_MEDIA_PATH: /Volumes/External/Library/Media|HOST_MEDIA_PATH: ${ESCAPED_MEDIA_PATH}|" docker/docker-compose.yml
 else
     # Linux sed
-    sed -i "s|- /Volumes/External/Library/Media:/media:ro|- ${ESCAPED_MEDIA_PATH}:/media:ro|" docker-compose.yml
-    sed -i "s|\"0.0.0.0:3001:3001\"|\"0.0.0.0:${PORT}:${PORT}\"|" docker-compose.yml
-    sed -i "s|PORT: 3001|PORT: ${PORT}|" docker-compose.yml
-    sed -i "s|POSTGRES_USER: postgres|POSTGRES_USER: ${DB_USER}|" docker-compose.yml
-    sed -i "s|POSTGRES_PASSWORD: postgres|POSTGRES_PASSWORD: ${ESCAPED_DB_PASSWORD}|" docker-compose.yml
-    sed -i "s|POSTGRES_DB: desterlib_prod|POSTGRES_DB: ${DB_NAME}|" docker-compose.yml
-    sed -i "s|POSTGRES_USER:-postgres|POSTGRES_USER:-${DB_USER}|" docker-compose.yml
-    sed -i "s|postgres:postgres@postgres|${DB_USER}:${ESCAPED_DB_PASSWORD}@postgres|" docker-compose.yml
-    sed -i "s|desterlib_prod|${DB_NAME}|g" docker-compose.yml
+    sed -i "s|- /Volumes/External/Library/Media:/media:ro|- ${ESCAPED_MEDIA_PATH}:/media:ro|" docker/docker-compose.yml
+    sed -i "s|\"0.0.0.0:3001:3001\"|\"0.0.0.0:${PORT}:${PORT}\"|" docker/docker-compose.yml
+    sed -i "s|PORT: 3001|PORT: ${PORT}|" docker/docker-compose.yml
+    sed -i "s|POSTGRES_USER: postgres|POSTGRES_USER: ${DB_USER}|" docker/docker-compose.yml
+    sed -i "s|POSTGRES_PASSWORD: postgres|POSTGRES_PASSWORD: ${ESCAPED_DB_PASSWORD}|" docker/docker-compose.yml
+    sed -i "s|POSTGRES_DB: desterlib_prod|POSTGRES_DB: ${DB_NAME}|" docker/docker-compose.yml
+    sed -i "s|POSTGRES_USER:-postgres|POSTGRES_USER:-${DB_USER}|" docker/docker-compose.yml
+    sed -i "s|postgres:postgres@postgres|${DB_USER}:${ESCAPED_DB_PASSWORD}@postgres|" docker/docker-compose.yml
+    sed -i "s|desterlib_prod|${DB_NAME}|g" docker/docker-compose.yml
     # Update HOST_MEDIA_PATH environment variable
-    sed -i "s|HOST_MEDIA_PATH: /Volumes/External/Library/Media|HOST_MEDIA_PATH: ${ESCAPED_MEDIA_PATH}|" docker-compose.yml
+    sed -i "s|HOST_MEDIA_PATH: /Volumes/External/Library/Media|HOST_MEDIA_PATH: ${ESCAPED_MEDIA_PATH}|" docker/docker-compose.yml
 fi
 
 echo -e "${GREEN}[OK] Configuration files created${NC}"
@@ -188,7 +189,7 @@ else
     DOCKER_COMPOSE="docker-compose"
 fi
 
-$DOCKER_COMPOSE up -d --build
+$DOCKER_COMPOSE -f docker/docker-compose.yml up -d --build
 
 echo ""
 echo -e "${GREEN}[OK] DesterLib is starting up!${NC}"

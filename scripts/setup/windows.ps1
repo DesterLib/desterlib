@@ -128,29 +128,15 @@ Write-ColorOutput Cyan "Downloading DesterLib configuration files..."
 $REPO_BASE = "https://raw.githubusercontent.com/DesterLib/desterlib/main"
 $REPO_BRANCH = "main"
 
-# Download essential files from GitHub
-Write-Output "Downloading Dockerfile..."
-try {
-    $dockerfileUrl = "${REPO_BASE}/Dockerfile"
-    $dockerfilePath = Join-Path $INSTALL_DIR "Dockerfile"
-    Invoke-WebRequest -Uri $dockerfileUrl -OutFile $dockerfilePath -UseBasicParsing -ErrorAction Stop
-    
-    # Ensure Dockerfile has Unix line endings (critical for heredoc to work)
-    $dockerfileContent = Get-Content $dockerfilePath -Raw
-    $dockerfileContent = $dockerfileContent -replace "`r`n", "`n" -replace "`r", "`n"
-    [System.IO.File]::WriteAllText($dockerfilePath, $dockerfileContent, [System.Text.UTF8Encoding]::new($false))
-    
-    Write-ColorOutput Green "[OK] Dockerfile downloaded"
-} catch {
-    Write-ColorOutput Red "[X] Failed to download Dockerfile: $_"
-    Write-ColorOutput Yellow "Please check your internet connection and try again."
-    exit 1
-}
+# Create docker directory
+$dockerDir = Join-Path $INSTALL_DIR "docker"
+New-Item -ItemType Directory -Force -Path $dockerDir | Out-Null
 
+# Download essential files from GitHub
 Write-Output "Downloading docker-compose.yml..."
 try {
-    $composeUrl = "${REPO_BASE}/docker-compose.yml"
-    $composePath = Join-Path $INSTALL_DIR "docker-compose.yml"
+    $composeUrl = "${REPO_BASE}/docker/docker-compose.yml"
+    $composePath = Join-Path $dockerDir "docker-compose.yml"
     Invoke-WebRequest -Uri $composeUrl -OutFile $composePath -UseBasicParsing -ErrorAction Stop
     
     # Ensure docker-compose.yml has Unix line endings
@@ -172,24 +158,29 @@ Write-Output "Creating .env file..."
 $MEDIA_PATH_NORMALIZED = $MEDIA_PATH -replace '\\', '/'
 
 $envContent = @"
+# Required: Database Configuration
 DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?schema=public
+
+# Required: Metadata and Logs Paths
+METADATA_PATH=./desterlib-data/metadata
+API_LOG_PATH=./desterlib-data/logs
+
+# Server Configuration
 NODE_ENV=production
 PORT=${PORT}
-FRONTEND_URL=http://localhost:${PORT}
+
 # Media library path configuration (for path mapping between host and container)
 HOST_MEDIA_PATH=${MEDIA_PATH_NORMALIZED}
 CONTAINER_MEDIA_PATH=/media
 "@
-$envPath = Join-Path "apps" "api"
-New-Item -ItemType Directory -Force -Path $envPath | Out-Null
 # Ensure Unix line endings (LF) for .env file
 $envContent = $envContent -replace "`r`n", "`n" -replace "`r", "`n"
-$envContent | Out-File -FilePath (Join-Path $envPath ".env") -Encoding utf8 -NoNewline
+$envContent | Out-File -FilePath ".env" -Encoding utf8 -NoNewline
 
 # Update docker-compose.yml with user's configuration
 Write-Output "Configuring docker-compose.yml..."
 
-$dockerComposePath = "docker-compose.yml"
+$dockerComposePath = "docker/docker-compose.yml"
 $dockerComposeContent = Get-Content $dockerComposePath -Raw
 
 # Escape special regex characters for pattern matching
@@ -250,13 +241,13 @@ Write-Output ""
 $DOCKER_COMPOSE_CMD = "docker-compose"
 $DOCKER_COMPOSE_DISPLAY = "docker-compose"
 $useDockerCompose = $true
-$DOCKER_COMPOSE_ARGS = @("up", "-d", "--build")
+$DOCKER_COMPOSE_ARGS = @("-f", "docker/docker-compose.yml", "up", "-d", "--build")
 try {
     docker compose version 2>&1 | Out-Null
     $DOCKER_COMPOSE_CMD = "docker"
     $DOCKER_COMPOSE_DISPLAY = "docker compose"
     $useDockerCompose = $false
-    $DOCKER_COMPOSE_ARGS = @("compose", "up", "-d", "--build")
+    $DOCKER_COMPOSE_ARGS = @("compose", "-f", "docker/docker-compose.yml", "up", "-d", "--build")
 } catch {
     # docker-compose is the fallback
 }
@@ -287,22 +278,22 @@ if ($buildExitCode -ne 0) {
     
     # Retry build without cache
     if ($useDockerCompose) {
-        $retryArgs = @("build", "--no-cache", "--pull")
+        $retryArgs = @("-f", "docker/docker-compose.yml", "build", "--no-cache", "--pull")
         Write-Output "Retrying build without cache..."
         & $DOCKER_COMPOSE_CMD $retryArgs
         if ($LASTEXITCODE -eq 0) {
             Write-Output ""
             Write-Output "Starting containers..."
-            & $DOCKER_COMPOSE_CMD @("up", "-d")
+            & $DOCKER_COMPOSE_CMD @("-f", "docker/docker-compose.yml", "up", "-d")
         }
     } else {
-        $retryArgs = @("compose", "build", "--no-cache", "--pull")
+        $retryArgs = @("compose", "-f", "docker/docker-compose.yml", "build", "--no-cache", "--pull")
         Write-Output "Retrying build without cache..."
         & $DOCKER_COMPOSE_CMD $retryArgs
         if ($LASTEXITCODE -eq 0) {
             Write-Output ""
             Write-Output "Starting containers..."
-            & $DOCKER_COMPOSE_CMD @("compose", "up", "-d")
+            & $DOCKER_COMPOSE_CMD @("compose", "-f", "docker/docker-compose.yml", "up", "-d")
         }
     }
     
@@ -310,7 +301,7 @@ if ($buildExitCode -ne 0) {
         Write-Output ""
         Write-ColorOutput Red "[X] Docker build failed even after cache cleanup."
         Write-ColorOutput Yellow "Try running manually: docker builder prune -af"
-        Write-ColorOutput Yellow "Then run: $DOCKER_COMPOSE_DISPLAY up -d --build"
+        Write-ColorOutput Yellow "Then run: $DOCKER_COMPOSE_DISPLAY -f docker/docker-compose.yml up -d --build"
         exit 1
     }
     Write-Output ""
