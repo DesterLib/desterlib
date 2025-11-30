@@ -1,0 +1,265 @@
+import { Logger } from "@dester/logger";
+import { Database } from "./database";
+import { MetadataProvider } from "./providers/metadata-provider.interface";
+import { ImageProcessor } from "./image-processor";
+import { ScanJobLogger } from "./scan-job-logger";
+import path from "path";
+import fs from "fs/promises";
+import sharp from "sharp";
+
+export class MetadataService {
+  private database: Database;
+  private provider: MetadataProvider;
+  private logger: Logger;
+  private imageProcessor: ImageProcessor;
+  private scanJobLogger: ScanJobLogger | null;
+
+  constructor(
+    database: Database,
+    provider: MetadataProvider,
+    logger: Logger,
+    storagePath: string = path.join(process.cwd(), "metadata"),
+    scanJobLogger?: ScanJobLogger
+  ) {
+    this.database = database;
+    this.provider = provider;
+    this.logger = logger;
+    this.imageProcessor = new ImageProcessor(logger, storagePath);
+    this.scanJobLogger = scanJobLogger || null;
+  }
+
+  /**
+   * Verify if local image files exist and are valid for the given URLs
+   */
+  private async verifyLocalImagesExist(
+    posterUrl: string | null,
+    backdropUrl: string | null
+  ): Promise<{ posterExists: boolean; backdropExists: boolean }> {
+    // Get base storage path from image processor (accessing private property)
+    const baseStoragePath = (this.imageProcessor as any)
+      .baseStoragePath as string;
+
+    let posterExists = false;
+    let backdropExists = false;
+
+    if (posterUrl?.startsWith("/metadata/")) {
+      const relativePath = posterUrl.replace("/metadata/", "");
+      const fullPath = path.join(baseStoragePath, relativePath);
+      try {
+        const stats = await fs.stat(fullPath);
+        if (stats.size > 0) {
+          // Quick validation: try to read metadata with sharp
+          await sharp(fullPath).metadata();
+          posterExists = true;
+        }
+      } catch {
+        posterExists = false;
+      }
+    }
+
+    if (backdropUrl?.startsWith("/metadata/")) {
+      const relativePath = backdropUrl.replace("/metadata/", "");
+      const fullPath = path.join(baseStoragePath, relativePath);
+      try {
+        const stats = await fs.stat(fullPath);
+        if (stats.size > 0) {
+          // Quick validation: try to read metadata with sharp
+          await sharp(fullPath).metadata();
+          backdropExists = true;
+        }
+      } catch {
+        backdropExists = false;
+      }
+    }
+
+    return { posterExists, backdropExists };
+  }
+
+  async fetchAndSaveMetadata(
+    mediaId: string,
+    title: string,
+    year?: number,
+    libraryId?: string
+  ): Promise<void> {
+    try {
+      // Check if media already has complete metadata
+      const hasComplete = await this.database.hasCompleteMetadata(mediaId);
+      if (hasComplete) {
+        const existingMetadata = await this.database.getMediaMetadata(mediaId);
+        if (existingMetadata) {
+          // Verify local images exist if we're using local paths
+          const { posterExists, backdropExists } =
+            await this.verifyLocalImagesExist(
+              existingMetadata.posterUrl,
+              existingMetadata.backdropUrl
+            );
+
+          // If we have ExternalId (TMDB link) and both images exist, skip fetching
+          if (
+            existingMetadata.hasExternalId &&
+            (existingMetadata.posterUrl?.startsWith("/metadata/")
+              ? posterExists
+              : existingMetadata.posterUrl !== null) &&
+            (existingMetadata.backdropUrl?.startsWith("/metadata/")
+              ? backdropExists
+              : existingMetadata.backdropUrl !== null)
+          ) {
+            this.logger.debug(
+              {
+                mediaId,
+                title,
+                provider: this.provider.getProviderName(),
+              },
+              "Metadata already exists and images are valid, skipping fetch"
+            );
+            // Still update scan job metadata success counter as metadata already exists
+            if (libraryId) {
+              await this.database
+                .incrementScanJobMetadataSuccess(libraryId)
+                .catch((error) => {
+                  this.logger.debug(
+                    { error, libraryId, mediaId },
+                    "Failed to update metadata success count (non-critical)"
+                  );
+                });
+            }
+            return;
+          }
+        }
+      }
+
+      // Search for movie using the provider
+      const metadata = await this.provider.searchMovie(title, year);
+
+      if (!metadata) {
+        this.logger.warn(
+          {
+            mediaId,
+            title,
+            year,
+            provider: this.provider.getProviderName(),
+          },
+          "Movie not found in metadata provider"
+        );
+        // Track metadata failure if libraryId is provided
+        if (libraryId) {
+          // Get scan job ID for logging
+          const scanJobId = await this.database.getActiveScanJobId(libraryId);
+
+          // Log to scan job failure log if available
+          if (scanJobId && this.scanJobLogger) {
+            await this.scanJobLogger
+              .logFailure(scanJobId, {
+                mediaId,
+                title,
+                year,
+                reason: "Movie not found in metadata provider",
+              })
+              .catch((error) => {
+                this.logger.debug(
+                  { error, scanJobId },
+                  "Failed to write to scan job log (non-critical)"
+                );
+              });
+          }
+
+          await this.database
+            .incrementScanJobMetadataFailure(libraryId)
+            .catch((error) => {
+              this.logger.debug(
+                { error, libraryId, mediaId },
+                "Failed to update metadata failure count (non-critical)"
+              );
+            });
+        }
+        return;
+      }
+
+      // Parse release date
+      let releaseDate: Date | null = null;
+      if (metadata.releaseDate) {
+        releaseDate = new Date(metadata.releaseDate);
+      }
+
+      // Generate a unique provider-based ID string for filenames
+      const providerIdStr = `${this.provider.getProviderName()}${metadata.providerId}`;
+
+      // Get media type from database to organize images by type
+      const mediaType = await this.database.getMediaType(mediaId);
+
+      // Process images (download & compress)
+      // ImageProcessor will automatically:
+      // 1. Check if files exist on disk by providerId and mediaType
+      // 2. Verify they're valid images (not corrupted/empty)
+      // 3. Reuse existing images if found, download only if missing
+      // Images are organized by media type: movies/, tv/, music/, comics/
+      // This handles cases where:
+      // - Metadata is missing in DB but images exist on disk (from previous run)
+      // - Images were downloaded but DB save failed
+      // - Images exist and are valid, just need to link them in DB
+      const [localPosterPath, localBackdropPath] = await Promise.all([
+        this.imageProcessor.processImage(
+          metadata.posterUrl,
+          "poster",
+          providerIdStr,
+          mediaType
+        ),
+        this.imageProcessor.processImage(
+          metadata.backdropUrl,
+          "backdrop",
+          providerIdStr,
+          mediaType
+        ),
+      ]);
+
+      // Save metadata to database
+      // Prefer local path if available, fallback to remote URL
+      const finalPosterUrl = localPosterPath
+        ? `/metadata/${localPosterPath}`
+        : metadata.posterUrl;
+      const finalBackdropUrl = localBackdropPath
+        ? `/metadata/${localBackdropPath}`
+        : metadata.backdropUrl;
+
+      await this.database.updateMediaMetadata(mediaId, {
+        tmdbId: parseInt(metadata.providerId, 10), // Keep field name for backward compatibility
+        title: metadata.title,
+        overview: metadata.overview || null,
+        posterUrl: finalPosterUrl,
+        backdropUrl: finalBackdropUrl,
+        releaseDate,
+        rating: metadata.rating || null,
+        genres: metadata.genres,
+      });
+
+      this.logger.info(
+        {
+          mediaId,
+          providerId: metadata.providerId,
+          provider: this.provider.getProviderName(),
+          title: metadata.title,
+        },
+        "Metadata saved successfully"
+      );
+
+      // Update scan job metadata success counter if libraryId is provided
+      // Do this after logging to ensure proper log order
+      if (libraryId) {
+        await this.database
+          .incrementScanJobMetadataSuccess(libraryId)
+          .catch((error) => {
+            this.logger.debug(
+              { error, libraryId, mediaId },
+              "Failed to update metadata success count (non-critical)"
+            );
+          });
+      }
+    } catch (error) {
+      this.logger.error(
+        { error, mediaId, provider: this.provider.getProviderName() },
+        "Failed to fetch and save metadata"
+      );
+      throw error;
+    }
+  }
+}

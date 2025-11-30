@@ -1,0 +1,11 @@
+{
+  "name": "@dester/scanner-service",
+  "version": "0.2.1",
+  "description": "Scanner service (Go) for file system scanning",
+  "private": true,
+  "scripts": {
+    "build": "go build -o scanner .",
+    "start": "./scanner",
+    "dev": "go run ."
+  }
+}
