@@ -1,6 +1,6 @@
 {
   "name": "@dester/metadata-service",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Metadata fetching service for Dester",
   "main": "dist/index.js",
   "private": true,
