@@ -4,6 +4,7 @@
   "globalPassThroughEnv": [
     "NODE_ENV",
     "DATABASE_URL",
+    "REDIS_URL",
     "PORT",
     "FRONTEND_URL",
     "JWT_SECRET",
@@ -15,7 +16,12 @@
     "VITE_API_URL",
     "HOST_MEDIA_PATH",
     "CONTAINER_MEDIA_PATH",
-    "DOCKER_CHECK_PATH"
+    "DOCKER_CHECK_PATH",
+    "SCANNER_SERVICE_URL",
+    "METADATA_SERVICE_URL",
+    "SCANNER_PORT",
+    "SCANNER_WORKER_COUNT",
+    "SCAN_QUEUE_NAME"
   ],
   "tasks": {
     "build": {

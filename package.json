@@ -5,6 +5,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:all": "concurrently -n api,scanner,metadata -c blue,green,yellow \"pnpm --filter api dev\" \"pnpm --filter @dester/scanner-service dev\" \"pnpm --filter metadata-service dev\"",
+    "dev:with-redis": "concurrently -n redis,api,scanner,metadata -c red,blue,green,yellow \"docker-compose up redis\" \"pnpm --filter api dev\" \"pnpm --filter @dester/scanner-service dev\" \"pnpm --filter metadata-service dev\"",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md}\" --ignore-path .gitignore",
@@ -29,6 +31,7 @@
     "@commitlint/cli": "^19.6.0",
     "@commitlint/config-conventional": "^19.6.0",
     "commitizen": "^4.3.1",
+    "concurrently": "^9.1.2",
     "cz-conventional-changelog": "^3.3.0",
     "cz-customizable": "^7.5.1",
     "husky": "^9.1.7",

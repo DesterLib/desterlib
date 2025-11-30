@@ -40,3 +40,6 @@ yarn-error.log*
 *.pem
 SOLO_DEV_WORKFLOW.md
 apps/docs/.astro/
+
+# desterlib
+desterlib-data
