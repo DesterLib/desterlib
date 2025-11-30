@@ -1,0 +1,19 @@
+{
+  "name": "@dester/logger",
+  "version": "0.2.1",
+  "description": "Shared logging utilities",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "pino": "^8.16.2",
+    "pino-pretty": "^10.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "typescript": "^5.5.3"
+  }
+}

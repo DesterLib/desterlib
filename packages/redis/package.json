@@ -1,0 +1,18 @@
+{
+  "name": "@dester/redis",
+  "version": "0.2.1",
+  "description": "Shared Redis client and utilities",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "ioredis": "^5.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "typescript": "^5.5.3"
+  }
+}
