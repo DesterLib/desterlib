@@ -31,7 +31,6 @@
     "@dester/logger": "workspace:*",
     "@dester/redis": "workspace:*",
     "@dester/types": "workspace:*",
-    "@dester/utils": "workspace:*",
     "@prisma/adapter-pg": "^7.0.1",
     "@prisma/client": "^7.0.1",
     "@types/pg": "^8.15.5",
