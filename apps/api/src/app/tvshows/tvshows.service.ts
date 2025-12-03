@@ -2,57 +2,48 @@ import { prisma } from "../../infrastructure/prisma";
 import { logger } from "@dester/logger";
 import { NotFoundError } from "../../infrastructure/utils/errors";
 import { serializeBigInt } from "../../infrastructure/utils/serialization";
-import {
-  enrichMediaWithColors,
-  enrichMediaArrayWithColors,
-} from "../../infrastructure/utils/media-enrichment";
 import type {
   TVShowsListResponse,
   TVShowResponse,
 } from "../../domain/entities/tvshows/tvshow.entity";
 
 export const tvshowsService = {
-  getTVShows: async (): Promise<TVShowsListResponse> => {
+  getTVShows: async (baseUrl: string): Promise<TVShowsListResponse> => {
     logger.info("📺 Fetching TV shows list...");
 
+    // Fetch TV Shows metadata
     const tvshows = await prisma.tVShow.findMany({
       include: {
-        media: true,
+        genres: true, // Include genres
       },
       orderBy: {
-        media: {
-          createdAt: "desc",
-        },
+        createdAt: "desc",
       },
       take: 10, // Limit to 10 most recent
     });
 
-    logger.info(`Found ${tvshows.length} TV shows, enriching with colors...`);
+    logger.info(`Found ${tvshows.length} TV shows`);
 
-    // Enrich with mesh gradient colors on-demand
-    const enrichedMedia = await enrichMediaArrayWithColors(
-      tvshows.map((tv) => tv.media)
-    );
-
-    // Map back to tvshow structure
-    const tvshowsWithColors = tvshows.map((tvshow, index) => ({
-      ...tvshow,
-      media: enrichedMedia[index],
-    }));
-
-    return serializeBigInt(tvshowsWithColors) as TVShowsListResponse;
+    return serializeBigInt(tvshows, baseUrl) as unknown as TVShowsListResponse;
   },
 
-  getTVShowById: async (id: string): Promise<TVShowResponse> => {
+  getTVShowById: async (
+    id: string,
+    baseUrl: string
+  ): Promise<TVShowResponse> => {
     logger.info(`📺 Fetching TV show by ID: ${id}`);
 
     const tvshow = await prisma.tVShow.findUnique({
       where: { id },
       include: {
-        media: true,
+        genres: true, // Include genres
         seasons: {
           include: {
-            episodes: true,
+            episodes: {
+              include: {
+                mediaItems: true, // Files for episodes
+              },
+            },
           },
         },
       },
@@ -62,43 +53,45 @@ export const tvshowsService = {
       throw new NotFoundError("TV Show", id);
     }
 
-    logger.info(
-      `Found TV show: "${tvshow.media.title}", enriching with colors...`
-    );
+    logger.info(`Found TV show: "${tvshow.title}"`);
 
-    // Enrich with mesh gradient colors on-demand
-    const enrichedMedia = await enrichMediaWithColors(tvshow.media);
-    const tvshowWithColors = {
-      ...tvshow,
-      media: enrichedMedia,
-    };
-
-    const serialized = serializeBigInt(tvshowWithColors) as any;
+    const serialized = serializeBigInt(tvshow, baseUrl) as any;
 
     // Transform seasons and episodes to match API schema
     const seasonsWithTransformedData = serialized.seasons.map(
       (season: any) => ({
         id: season.id,
         seasonNumber: season.number,
-        name: `Season ${season.number}`,
-        overview: null,
-        airDate: null,
+        name: season.name || `Season ${season.number}`,
+        overview: season.overview,
+        airDate: season.airDate,
         posterUrl: season.posterUrl,
         tvShowId: season.tvShowId,
-        episodes: season.episodes.map((episode: any) => ({
-          id: episode.id,
-          episodeNumber: episode.number,
-          seasonNumber: season.number,
-          title: episode.title,
-          overview: null,
-          airDate: episode.airDate,
-          runtime: episode.duration,
-          stillUrl: episode.stillPath,
-          filePath: episode.filePath,
-          fileSize: episode.fileSize,
-          seasonId: episode.seasonId,
-          streamUrl: `/api/v1/stream/${episode.id}`,
-        })),
+        episodes: season.episodes.map((episode: any) => {
+          // Get file info from the first media item if available
+          const mediaItem =
+            episode.mediaItems && episode.mediaItems.length > 0
+              ? episode.mediaItems[0]
+              : null;
+
+          return {
+            id: episode.id,
+            episodeNumber: episode.number,
+            seasonNumber: season.number,
+            title: episode.title,
+            overview: episode.description,
+            airDate: episode.airDate,
+            runtime: mediaItem?.duration,
+            stillUrl: episode.stillUrl,
+            // File info from MediaItem
+            filePath: mediaItem?.filePath,
+            fileSize: mediaItem?.fileSize,
+            seasonId: episode.seasonId,
+            streamUrl: mediaItem
+              ? `${baseUrl}/api/v1/stream/${mediaItem.id}`
+              : null,
+          };
+        }),
       })
     );
 

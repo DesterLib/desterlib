@@ -41,20 +41,28 @@ export class ImageProcessor {
    */
   async processImage(
     url: string | null,
-    type: "poster" | "backdrop",
+    type: "poster" | "backdrop" | "null-poster" | "logo",
     providerId: string,
     mediaType: string | null = null
   ): Promise<string | null> {
     if (!url) return null;
 
     try {
-      const fileName = `${providerId}.jpg`;
+      // Logos should be PNG to preserve transparency, others can be JPEG
+      const fileExtension = type === "logo" ? "png" : "jpg";
+      const fileName = `${providerId}.${fileExtension}`;
 
       // Use shared global structure: {mediaType}/{type}s/{filename}
       // Images are shared across all libraries since providerId is globally unique
       // Organized by media type (movies, tv, music, comics)
       // This prevents duplicate downloads and saves disk space
-      const folderName = type === "poster" ? "posters" : "backdrops";
+      const folderMap: Record<string, string> = {
+        poster: "posters",
+        backdrop: "backdrops",
+        "null-poster": "null-posters",
+        logo: "logos",
+      };
+      const folderName = folderMap[type];
       const mediaTypeFolder = this.getMediaTypeFolder(mediaType);
       const subDir = path.join(mediaTypeFolder, folderName);
 
@@ -110,16 +118,23 @@ export class ImageProcessor {
       // Configure compression based on type
       let pipeline = sharp(buffer);
 
-      if (type === "poster") {
+      if (type === "poster" || type === "null-poster") {
         // Standard poster size ~500px width is usually sufficient for UI
         pipeline = pipeline.resize(500, null, { withoutEnlargement: true });
+      } else if (type === "logo") {
+        // Logos should be smaller, ~300px width
+        pipeline = pipeline.resize(300, null, { withoutEnlargement: true });
       } else {
         // Standard backdrop size ~1280px width
         pipeline = pipeline.resize(1280, null, { withoutEnlargement: true });
       }
 
-      // Convert to JPEG with compression
-      await pipeline.jpeg({ quality: 80, mozjpeg: true }).toFile(fullPath);
+      // Save logos as PNG to preserve transparency, others as JPEG
+      if (type === "logo") {
+        await pipeline.png({ compressionLevel: 9 }).toFile(fullPath);
+      } else {
+        await pipeline.jpeg({ quality: 80, mozjpeg: true }).toFile(fullPath);
+      }
 
       this.logger.info(`Saved and compressed ${type}: ${relativePath}`);
       return relativePath;

@@ -19,7 +19,7 @@ export interface MediaEntry {
     episode?: number;
   };
   metadata?: MediaMetadata;
-  plainPosterUrl?: string | null;
+  nullPosterUrl?: string | null;
   logoUrl?: string | null;
 }
 

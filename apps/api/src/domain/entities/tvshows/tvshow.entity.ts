@@ -2,36 +2,40 @@
  * TV Show Domain Entity
  */
 
-import { TVShow, Media, Season, Episode } from "@prisma/client";
+import { TVShow, Season, Episode, MediaItem } from "@prisma/client";
 
 /**
- * TV Show with its associated media information
+ * TV Show (metadata is now on TVShow itself)
  */
-export interface TVShowWithMedia extends TVShow {
-  media: Media;
+export type TVShowWithMedia = TVShow;
+
+/**
+ * Episode with file info
+ */
+export interface EpisodeWithMedia extends Episode {
+  mediaItems: MediaItem[];
 }
 
 /**
  * Season with episodes
  */
 export interface SeasonWithEpisodes extends Season {
-  episodes: Episode[];
+  episodes: EpisodeWithMedia[];
 }
 
 /**
- * TV Show with seasons and media
+ * TV Show with seasons
  */
-export interface TVShowWithSeasonsAndMedia extends TVShow {
-  media: Media;
+export interface TVShowWithSeasons extends TVShow {
   seasons: SeasonWithEpisodes[];
 }
 
 /**
- * TV Show response type (includes seasons and episodes for detail view)
+ * TV Show response type
  */
-export type TVShowResponse = TVShowWithSeasonsAndMedia;
+export type TVShowResponse = TVShowWithSeasons;
 
 /**
  * TV Shows list response type
  */
-export type TVShowsListResponse = TVShowWithMedia[];
+export type TVShowsListResponse = TVShow[];

@@ -12,6 +12,11 @@ interface TMDBMovie {
   poster_path: string | null;
   backdrop_path: string | null;
   genres: Array<{ id: number; name: string }>;
+  images?: {
+    posters: Array<{ file_path: string; iso_639_1: string | null }>;
+    logos: Array<{ file_path: string; iso_639_1: string | null }>;
+    backdrops: Array<{ file_path: string; iso_639_1: string | null }>;
+  };
 }
 
 interface TMDBSearchResult {
@@ -129,6 +134,8 @@ export class TMDBProvider implements MetadataProvider {
         const response = await this.client.get<TMDBMovie>(`/movie/${movieId}`, {
           params: {
             append_to_response: "credits,images",
+            language: "en-US",
+            include_image_language: "en,null",
           },
         });
 
@@ -155,8 +162,34 @@ export class TMDBProvider implements MetadataProvider {
    * Map TMDB movie data to standardized metadata format
    */
   private mapTMDBToMetadata(tmdbMovie: TMDBMovie): MovieMetadata {
-    const posterUrl = this.getImageUrl(tmdbMovie.poster_path);
-    const backdropUrl = this.getImageUrl(tmdbMovie.backdrop_path);
+    // Extract English poster (primary)
+    const enPoster = tmdbMovie.images?.posters.find(
+      (p) => p.iso_639_1 === "en"
+    );
+    const posterUrl = enPoster
+      ? this.getImageUrl(enPoster.file_path)
+      : this.getImageUrl(tmdbMovie.poster_path);
+
+    // Extract null language poster (no text overlay)
+    const nullPoster = tmdbMovie.images?.posters.find(
+      (p) => p.iso_639_1 === null
+    );
+    const nullPosterUrl = nullPoster
+      ? this.getImageUrl(nullPoster.file_path)
+      : null;
+
+    // Extract English backdrop (primary)
+    const enBackdrop = tmdbMovie.images?.backdrops.find(
+      (b) => b.iso_639_1 === "en"
+    );
+    const backdropUrl = enBackdrop
+      ? this.getImageUrl(enBackdrop.file_path)
+      : this.getImageUrl(tmdbMovie.backdrop_path);
+
+    // Find English logo
+    const logo = tmdbMovie.images?.logos.find((l) => l.iso_639_1 === "en");
+    const logoUrl = logo ? this.getImageUrl(logo.file_path) : null;
+
     const genres = tmdbMovie.genres.map((g) => g.name);
 
     return {
@@ -166,7 +199,9 @@ export class TMDBProvider implements MetadataProvider {
       releaseDate: tmdbMovie.release_date || null,
       rating: tmdbMovie.vote_average || null,
       posterUrl,
+      nullPosterUrl,
       backdropUrl,
+      logoUrl,
       genres,
     };
   }

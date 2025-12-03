@@ -45,6 +45,50 @@ const PROVIDER_CONFIGS = {
 } as const;
 
 /**
+ * Get default scan settings
+ * Uses robust regex patterns similar to Sonarr/Radarr/Plex/Jellyfin
+ * Patterns are media-type specific since movies and TV shows have different naming conventions
+ *
+ * NOTE: This function is defined early to be used in coreSettings initialization
+ */
+function getDefaultScanSettings(): ScanOptions {
+  // Common video file extensions (case-insensitive)
+  const videoExtensions =
+    "(mkv|mp4|avi|mov|wmv|flv|webm|m4v|mpg|mpeg|ts|m2ts|vob|iso|divx|xvid|MKV|MP4|AVI|MOV|WMV|FLV|WEBM|M4V|MPG|MPEG|TS|M2TS|VOB|ISO|DIVX|XVID)";
+
+  return {
+    rescan: false,
+    followSymlinks: true,
+    mediaTypeDepth: {
+      movie: 2,
+      tv: 4,
+    },
+    mediaTypePatterns: {
+      movie: {
+        // Movie filename pattern: matches files with video extensions
+        // Examples: "Movie Name (2023).mkv", "Movie.2023.1080p.mkv"
+        filenamePattern: `.*\\.${videoExtensions}$`,
+        // Movie directory pattern: matches movie folders with optional year
+        // Examples: "Movie Name (2023)", "Movie Name", "Movie (2023) [1080p]"
+        directoryPattern: "^[^\\/]+(?:\\s*\\(\\d{4}\\))?(?:\\s*\\[.*\\])?$",
+      },
+      tv: {
+        // TV filename pattern: matches files with season/episode notation
+        // Examples: "Show - S01E01.mkv", "show.s01e01.mkv", "Show - 1x01.mkv"
+        filenamePattern: `.*[Ss]\\d{2}[Ee]\\d{2}.*\\.${videoExtensions}$`,
+        // TV directory pattern: matches show folders and season folders
+        // Examples: "Show Name", "Show Name (2020)", "Season 1", "Season 01"
+        directoryPattern:
+          "^(?:[^\\/]+(?:\\s*\\(\\d{4}\\))?(?:\\s*\\[.*\\])?|Season\\s*\\d+)$",
+      },
+    },
+    // Legacy global patterns for backwards compatibility
+    filenamePattern: `.*\\.${videoExtensions}$`,
+    directoryPattern: "^[^\\/]+(?:\\s*\\(\\d{4}\\))?(?:\\s*\\[.*\\])?$",
+  };
+}
+
+/**
  * Core settings definitions
  */
 const coreSettings = [
@@ -103,17 +147,7 @@ const coreSettings = [
     category: "LIBRARY" as const,
     module: "scan",
     type: "JSON" as const,
-    value: JSON.stringify({
-      rescan: false,
-      followSymlinks: true,
-      mediaTypeDepth: {
-        movie: 2,
-        tv: 4,
-      },
-      filenamePattern:
-        ".*\\.(mkv|mp4|avi|mov|wmv|flv|webm|m4v|mpg|mpeg|ts|m2ts|vob|iso|divx|xvid|M2TS|VOB|ISO|MKV|MP4|AVI|MOV|WMV|FLV|WEBM|M4V|MPG|MPEG|TS)$",
-      directoryPattern: "^[^\\/]+(?:\\s*\\(\\d{4}\\))?(?:\\s*\\[.*\\])?$",
-    }),
+    value: JSON.stringify(getDefaultScanSettings()),
     displayName: "Scan Settings",
     description: "Default scan configuration options",
     isPublic: true,
@@ -207,9 +241,50 @@ async function setSetting(
 
 /**
  * Initialize settings
+ * Ensures core settings exist and validates scan settings have all required defaults
  */
 export async function initializeSettings(): Promise<void> {
   await ensureCoreSettings();
+
+  // Validate scan settings - if any required field is missing, merge with defaults
+  const scanSettings = await getSetting<ScanOptions>(
+    SETTING_KEYS.SCAN_SETTINGS
+  );
+  const defaults = getDefaultScanSettings();
+
+  // Check if scan settings need initialization/update (check for new mediaTypePatterns structure)
+  const needsUpdate =
+    !scanSettings ||
+    scanSettings.mediaTypeDepth === undefined ||
+    scanSettings.mediaTypePatterns === undefined;
+
+  if (needsUpdate) {
+    // Merge existing settings with defaults, including the new mediaTypePatterns structure
+    const updatedScanSettings: ScanOptions = {
+      ...defaults,
+      ...scanSettings,
+      mediaTypeDepth: {
+        ...defaults.mediaTypeDepth,
+        ...scanSettings?.mediaTypeDepth,
+      },
+      mediaTypePatterns: {
+        movie: {
+          ...defaults.mediaTypePatterns?.movie,
+          ...scanSettings?.mediaTypePatterns?.movie,
+        },
+        tv: {
+          ...defaults.mediaTypePatterns?.tv,
+          ...scanSettings?.mediaTypePatterns?.tv,
+        },
+      },
+    };
+
+    await setSetting(SETTING_KEYS.SCAN_SETTINGS, updatedScanSettings);
+    logger.info(
+      "Scan settings initialized with defaults and media-type patterns"
+    );
+  }
+
   logger.info("Settings initialized");
 }
 
@@ -217,6 +292,12 @@ export async function initializeSettings(): Promise<void> {
  * Get all settings
  */
 export async function getSettings(): Promise<UserSettings> {
+  // Get stored scan settings, if empty/null use defaults
+  const storedScanSettings = await getSetting<ScanOptions>(
+    SETTING_KEYS.SCAN_SETTINGS,
+    getDefaultScanSettings()
+  );
+
   return {
     tmdbApiKey:
       (await getSetting<string>(SETTING_KEYS.TMDB_API_KEY)) || undefined,
@@ -230,43 +311,64 @@ export async function getSettings(): Promise<UserSettings> {
       false
     ),
     firstRun: await getSetting<boolean>(SETTING_KEYS.FIRST_RUN, true),
-    scanSettings: (await getSetting<ScanOptions>(
-      SETTING_KEYS.SCAN_SETTINGS,
-      {}
-    )) as ScanOptions | undefined,
+    scanSettings: storedScanSettings as ScanOptions | undefined,
   };
 }
 
 /**
  * Get public settings (excludes secrets)
+ * Merges stored settings with defaults to ensure all fields have values
  */
 export async function getPublicSettings(): Promise<PublicSettings> {
   const allSettings = await getSettings();
-  const { jwtSecret: _, ...publicSettings } = allSettings;
-  return publicSettings;
-}
+  const defaults = getDefaultScanSettings();
 
-/**
- * Get default scan settings
- * Uses robust regex patterns similar to Sonarr/Radarr/Plex/Jellyfin
- */
-export function getDefaultScanSettings(): ScanOptions {
-  return {
-    rescan: false,
-    followSymlinks: true,
-    mediaTypeDepth: {
-      movie: 2,
-      tv: 4,
-    },
-    // Robust filename pattern matching common video file extensions
-    // Matches: .mkv, .mp4, .avi, .mov, .wmv, .flv, .webm, .m4v, .mpg, .mpeg, .ts, .m2ts, .vob, .iso, .divx, .xvid
-    // Also matches common naming patterns like "Movie Name (2023).mkv" or "Show - S01E01.mkv"
+  // Merge scan settings with defaults (user settings override defaults)
+  // Handle null/undefined values explicitly - only override if value is actually set
+  const mergedScanSettings: ScanOptions = {
+    rescan: allSettings.scanSettings?.rescan ?? defaults.rescan,
+    followSymlinks:
+      allSettings.scanSettings?.followSymlinks ?? defaults.followSymlinks,
+    // Legacy global patterns (for backwards compatibility)
     filenamePattern:
-      ".*\\.(mkv|mp4|avi|mov|wmv|flv|webm|m4v|mpg|mpeg|ts|m2ts|vob|iso|divx|xvid|M2TS|VOB|ISO|MKV|MP4|AVI|MOV|WMV|FLV|WEBM|M4V|MPG|MPEG|TS)$",
-    // Robust directory pattern matching common media organization structures
-    // Matches directories that look like media folders (with or without year, quality tags, etc.)
-    // Examples: "Movie Name (2023)", "TV Show Name", "Show Name (2023)", etc.
-    directoryPattern: "^[^\\/]+(?:\\s*\\(\\d{4}\\))?(?:\\s*\\[.*\\])?$",
+      allSettings.scanSettings?.filenamePattern ?? defaults.filenamePattern,
+    directoryPattern:
+      allSettings.scanSettings?.directoryPattern ?? defaults.directoryPattern,
+    // Media type depth
+    mediaTypeDepth: {
+      movie:
+        allSettings.scanSettings?.mediaTypeDepth?.movie ??
+        defaults.mediaTypeDepth?.movie,
+      tv:
+        allSettings.scanSettings?.mediaTypeDepth?.tv ??
+        defaults.mediaTypeDepth?.tv,
+    },
+    // Media type patterns (new structure)
+    mediaTypePatterns: {
+      movie: {
+        filenamePattern:
+          allSettings.scanSettings?.mediaTypePatterns?.movie?.filenamePattern ??
+          defaults.mediaTypePatterns?.movie?.filenamePattern,
+        directoryPattern:
+          allSettings.scanSettings?.mediaTypePatterns?.movie
+            ?.directoryPattern ??
+          defaults.mediaTypePatterns?.movie?.directoryPattern,
+      },
+      tv: {
+        filenamePattern:
+          allSettings.scanSettings?.mediaTypePatterns?.tv?.filenamePattern ??
+          defaults.mediaTypePatterns?.tv?.filenamePattern,
+        directoryPattern:
+          allSettings.scanSettings?.mediaTypePatterns?.tv?.directoryPattern ??
+          defaults.mediaTypePatterns?.tv?.directoryPattern,
+      },
+    },
+  };
+
+  const { jwtSecret: _, ...publicSettings } = allSettings;
+  return {
+    ...publicSettings,
+    scanSettings: mergedScanSettings,
   };
 }
 
@@ -420,14 +522,14 @@ export async function completeFirstRun(): Promise<void> {
 }
 
 /**
- * Settings manager
+ * Settings manager - centralized access to all settings operations
  */
 export const settingsManager = {
   initialize: initializeSettings,
   getSettings,
   getPublicSettings,
   getDefaultSettings,
-  getDefaultScanSettings,
+  getDefaultScanSettings, // Export the function for external use
   updateSettings,
   resetAllSettings,
   resetScanSettings,
@@ -436,3 +538,6 @@ export const settingsManager = {
   isFirstRun,
   completeFirstRun,
 };
+
+// Export getDefaultScanSettings as a named export for direct use
+export { getDefaultScanSettings };

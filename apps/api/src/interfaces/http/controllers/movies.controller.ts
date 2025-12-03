@@ -41,12 +41,22 @@ function sendSuccess<T>(
   return res.status(statusCode).json(response);
 }
 
+/**
+ * Get base URL from request
+ */
+function getBaseUrl(req: Request): string {
+  const protocol = req.protocol;
+  const host = req.get("host") || "localhost:3001";
+  return `${protocol}://${host}`;
+}
+
 export const moviesControllers = {
   /**
    * Get all movies
    */
   getMovies: asyncHandler(async (req: Request, res: Response) => {
-    const movies = await moviesService.getMovies();
+    const baseUrl = getBaseUrl(req);
+    const movies = await moviesService.getMovies(baseUrl);
     return sendSuccess(res, movies);
   }),
 
@@ -55,7 +65,8 @@ export const moviesControllers = {
    */
   getMovieById: asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.validatedData as GetMovieByIdRequest;
-    const movie = await moviesService.getMovieById(id);
+    const baseUrl = getBaseUrl(req);
+    const movie = await moviesService.getMovieById(id, baseUrl);
     return sendSuccess(res, movie);
   }),
 };

@@ -178,6 +178,7 @@ func (s *ScannerService) scanDirectory(rootPath, libraryId, mediaType string, ma
 			if s.redis != nil {
 				job := &MetadataJob{
 					MediaID:    movie.ID,
+					MediaType:  mediaType, // Pass mediaType to MetadataJob
 					Title:      movie.Title,
 					Year:       movie.Year,
 					FolderPath: movie.FolderPath,
@@ -435,4 +436,3 @@ func parseInt(s string) *int {
 	}
 	return nil
 }
-

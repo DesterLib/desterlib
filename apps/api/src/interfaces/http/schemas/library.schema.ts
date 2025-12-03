@@ -15,8 +15,23 @@ export const updateLibrarySchema = z.object({
   id: z.string().min(1, "Library ID is required"),
   name: z.string().min(1, "Library name is required").optional(),
   description: z.string().optional(),
-  posterUrl: z.string().url().optional().or(z.literal("")),
-  backdropUrl: z.string().url().optional().or(z.literal("")),
+  // Images are now stored locally as paths starting with '/metadata/'
+  posterUrl: z
+    .string()
+    .refine(
+      (val) => !val || val === "" || val.startsWith("/metadata/"),
+      "posterUrl must be a local path starting with '/metadata/' or empty"
+    )
+    .optional()
+    .or(z.literal("")),
+  backdropUrl: z
+    .string()
+    .refine(
+      (val) => !val || val === "" || val.startsWith("/metadata/"),
+      "backdropUrl must be a local path starting with '/metadata/' or empty"
+    )
+    .optional()
+    .or(z.literal("")),
   libraryPath: z.string().optional(),
   libraryType: z.nativeEnum(MediaType).optional(),
 });

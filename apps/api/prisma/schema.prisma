@@ -13,92 +13,129 @@ enum MediaType {
   COMIC
 }
 
-model Media {
-  id                  String    @id @default(cuid())
-  title               String
-  type                MediaType
-  description         String?
-  posterUrl           String?
-  plainPosterUrl      String?   // Poster without language-specific text
-  backdropUrl         String?
-  logoUrl             String?   // Logo image in English
-  meshGradientColors  String[]  // Hex colors for mesh gradient (4 colors for corners)
-  releaseDate         DateTime?
-  rating              Float?
-  
-  // File info (optional, for simple file-based media or as a fallback)
-  filePath            String?
-  fileSize            BigInt?
-  fileModifiedAt      DateTime?
-
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  // Relations - subtypes point to Media, not the other way around
-  movies Movie[]
-  tvShow TVShow?
-  music  Music?
-  comic  Comic?
-
-  people      MediaPerson[]
-  genres      MediaGenre[]
-  externalIds ExternalId[]
-  libraries MediaLibrary[]
-
-  @@index([type])
-  @@index([releaseDate])
-  @@index([rating])
-  @@index([title])
-}
-
 // ────────────────────────────
-// MOVIES
+// MEDIA ITEMS (FILES)
 // ────────────────────────────
 
-model Movie {
+// Represents a physical file on disk (Video, Audio, Comic archive)
+model MediaItem {
   id             String    @id @default(cuid())
-  duration       Int? // in minutes
-  trailerUrl     String?
-  filePath       String?   @unique // File path on disk
-  fileSize       BigInt? // File size in bytes
+  filePath       String    @unique // File path on disk
+  fileSize       BigInt?   // File size in bytes
   fileModifiedAt DateTime? // Last modified time of file
+  duration       Int?      // in minutes (or seconds?)
   
+  // Technical details
+  container      String?   // mkv, mp4
+  videoCodec     String?   // h264
+  audioCodec     String?   // aac
+  width          Int?
+  height         Int?
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  // Required relationship to Media
-  mediaId        String
-  media          Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  // Parent Content Relations
+  movieId        String?
+  movie          Movie?    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  episodeId      String?
+  episode        Episode?  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  
+  musicId        String?
+  music          Music?    @relation(fields: [musicId], references: [id], onDelete: Cascade)
+  
+  comicId        String?
+  comic          Comic?    @relation(fields: [comicId], references: [id], onDelete: Cascade)
 
   @@index([filePath])
-  @@index([mediaId])
+  @@index([movieId])
+  @@index([episodeId])
+  @@index([musicId])
+  @@index([comicId])
 }
 
 // ────────────────────────────
-// TV SHOWS
+// MOVIES (METADATA)
+// ────────────────────────────
+
+model Movie {
+  id                  String    @id @default(cuid())
+  title               String
+  originalTitle       String?
+  overview            String?
+  tagline             String?
+  posterUrl           String?
+  nullPosterUrl       String?
+  backdropUrl         String?
+  logoUrl             String?
+  
+  releaseDate         DateTime?
+  rating              Float?
+  contentRating       String?   // PG-13, R, etc.
+  trailerUrl          String?
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  mediaItems          MediaItem[] // Files
+  genres              Genre[]     // Implicit M-N relation
+  credits             Credit[]    // Cast & Crew
+  
+  libraries           Library[]   // Implicit M-N relation
+  externalIds         ExternalId[]
+
+  @@index([title])
+  @@index([releaseDate])
+}
+
+// ────────────────────────────
+// TV SHOWS (METADATA)
 // ────────────────────────────
 
 model TVShow {
-  id      String   @id @default(cuid())
-  seasons Season[]
-  creator String?
-  network String?
+  id                  String    @id @default(cuid())
+  title               String
+  originalTitle       String?
+  overview            String?
+  posterUrl           String?
+  nullPosterUrl       String?
+  backdropUrl         String?
+  logoUrl             String?
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  firstAirDate        DateTime?
+  rating              Float?
+  contentRating       String?
+  status              String?   // Returning Series, Ended
+  network             String?
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  // Required relationship to Media
-  mediaId String   @unique
-  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  // Relations
+  seasons             Season[]
+  genres              Genre[]
+  credits             Credit[]
+  
+  libraries           Library[]
+  externalIds         ExternalId[]
+
+  @@index([title])
 }
 
 model Season {
   id        String    @id @default(cuid())
   number    Int
-  posterUrl String?   // Season poster image URL
-  episodes  Episode[]
+  name      String?   // "Season 1"
+  overview  String?
+  posterUrl String?
+  airDate   DateTime?
+  
   tvShowId  String
   tvShow    TVShow    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  
+  episodes  Episode[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -110,78 +147,82 @@ model Season {
 model Episode {
   id             String    @id @default(cuid())
   title          String
-  fileTitle      String? // Title extracted from filename
+  description    String?
   number         Int
-  duration       Int?
+  seasonNumber   Int?      // Denormalized for easy access
+  
   airDate        DateTime?
-  stillPath      String?   // Episode still/screenshot image URL
-  filePath       String?   @unique // File path on disk
-  fileSize       BigInt? // File size in bytes
-  fileModifiedAt DateTime? // Last modified time of file
+  stillUrl       String?   // Episode image
+  
   seasonId       String
   season         Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  
+  mediaItems     MediaItem[] // Files (usually one, but could be versions)
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
   @@unique([seasonId, number])
   @@index([seasonId])
-  @@index([filePath])
 }
 
 // ────────────────────────────
-// MUSIC
+// MUSIC (METADATA)
 // ────────────────────────────
 
 model Music {
   id             String    @id @default(cuid())
+  title          String    // Track title
   artist         String
   album          String?
-  genre          String?
-  duration       Int?
-  filePath       String?   @unique // File path on disk
-  fileSize       BigInt? // File size in bytes
-  fileModifiedAt DateTime? // Last modified time of file
+  albumArtist    String?
+  genre          String?   // Simple string or link to Genre? Sticking to string for Music often simpler, but let's use Genre relation if we want consistency.
+  year           Int?
+  trackNumber    Int?
+  discNumber     Int?
+  
+  posterUrl      String?   // Album art
   
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  // Required relationship to Media
-  mediaId        String    @unique
-  media          Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaItems     MediaItem[] // Files
 
   @@index([artist])
-  @@index([genre])
-  @@index([filePath])
+  @@index([album])
+  @@index([title])
 }
 
 // ────────────────────────────
-// COMICS
+// COMICS (METADATA)
 // ────────────────────────────
 
 model Comic {
   id             String    @id @default(cuid())
+  title          String    // Series + Issue
+  series         String?
   issue          Int?
   volume         String?
   publisher      String?
   pages          Int?
-  filePath       String?   @unique // File path on disk
-  fileSize       BigInt? // File size in bytes
-  fileModifiedAt DateTime? // Last modified time of file
+  description    String?
+  
+  posterUrl      String?   // Cover
+  
+  year           Int?
+  month          Int?
   
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  // Required relationship to Media
-  mediaId        String    @unique
-  media          Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaItems     MediaItem[] // Files
 
+  @@index([series])
   @@index([publisher])
-  @@index([filePath])
 }
 
 // ────────────────────────────
-// PERSON
+// PERSON & CREDITS
 // ────────────────────────────
 
 enum RoleType {
@@ -192,43 +233,49 @@ enum RoleType {
   ARTIST
   COMPOSER
   AUTHOR
+  CREATOR
+  GUEST_STAR
 }
 
 model Person {
   id         String    @id @default(cuid())
-  name       String
+  name       String    @unique
   bio        String?
   birthDate  DateTime?
+  deathDate  DateTime?
   profileUrl String?
+  
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  // Media relationships
-  media MediaPerson[]
+  credits    Credit[]
 
   @@index([name])
 }
 
-// ────────────────────────────
-// JOIN TABLE (MEDIA ↔ PERSON)
-// ────────────────────────────
-
-model MediaPerson {
+// Join table for Person <-> Content
+model Credit {
   id        String   @id @default(cuid())
   role      RoleType
-  mediaId   String
-  personId  String
   character String? // e.g., "Bruce Wayne"
+  order     Int?    // Billing order
   
+  personId  String
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  // Relations (Only one should be set)
+  movieId   String?
+  movie     Movie?   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  
+  tvShowId  String?
+  tvShow    TVShow?  @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  media  Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
-
-  @@unique([mediaId, personId, role])
-  @@index([mediaId])
   @@index([personId])
+  @@index([movieId])
+  @@index([tvShowId])
 }
 
 // ────────────────────────────
@@ -237,36 +284,17 @@ model MediaPerson {
 
 model Genre {
   id          String   @id @default(cuid())
-  name        String   @unique // Canonical normalized name (e.g., "Science Fiction")
-  slug        String   @unique // URL-friendly slug (e.g., "science-fiction")
-  description String?
+  name        String   @unique // Canonical normalized name
+  slug        String   @unique // URL-friendly slug
+  
+  // Implicit Many-to-Many relations
+  movies      Movie[]
+  tvShows     TVShow[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  media MediaGenre[]
-
   @@index([slug])
-  @@index([name])
-}
-
-// ────────────────────────────
-// JOIN TABLE (MEDIA ↔ GENRE)
-// ────────────────────────────
-
-model MediaGenre {
-  id      String @id @default(cuid())
-  mediaId String
-  genreId String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
-
-  @@unique([mediaId, genreId])
-  @@index([mediaId])
-  @@index([genreId])
 }
 
 // ────────────────────────────
@@ -288,43 +316,22 @@ model Library {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
 
-  parentId String?
-  parent   Library?  @relation("LibraryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children Library[] @relation("LibraryHierarchy")
+  parentId    String?
+  parent      Library?  @relation("LibraryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Library[] @relation("LibraryHierarchy")
 
-  media      MediaLibrary[]
-  scanJobs   ScanJob[]
+  // Content relations (Implicit M-N)
+  movies      Movie[]
+  tvShows     TVShow[]
+  
+  scanJobs    ScanJob[]
 
   @@index([slug])
   @@index([parentId])
-  @@index([isLibrary])
-  @@index([libraryPath])
 }
 
 // ────────────────────────────
-// JOIN TABLE (MEDIA ↔ LIBRARY)
-// ────────────────────────────
-
-model MediaLibrary {
-  id           String @id @default(cuid())
-  mediaId      String
-  libraryId String
-  order        Int? // For ordering media within a library
-
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  media      Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  library Library @relation(fields: [libraryId], references: [id], onDelete: Cascade)
-
-  @@unique([mediaId, libraryId])
-  @@index([mediaId])
-  @@index([libraryId])
-  @@index([order])
-}
-
-// ────────────────────────────
-// EXTERNAL IDS (TMDB, IMDB, etc.)
+// EXTERNAL IDS
 // ────────────────────────────
 
 enum ExternalIdSource {
@@ -343,16 +350,20 @@ model ExternalId {
   id         String           @id @default(cuid())
   source     ExternalIdSource
   externalId String
-  mediaId    String
+  
+  movieId    String?
+  movie      Movie?           @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  
+  tvShowId   String?
+  tvShow     TVShow?          @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
-  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-
   @@unique([source, externalId])
-  @@unique([source, mediaId])
-  @@index([mediaId])
   @@index([externalId])
+  @@index([movieId])
+  @@index([tvShowId])
 }
 
 // ────────────────────────────
@@ -372,7 +383,7 @@ enum MetadataJobStatus {
   IN_PROGRESS
   COMPLETED
   FAILED
-  NOT_STARTED // Metadata provider not configured when scan completed
+  NOT_STARTED
 }
 
 model ScanJob {
@@ -380,16 +391,16 @@ model ScanJob {
   libraryId           String
   scanPath            String
   mediaType           MediaType
-  status              ScanJobStatus @default(PENDING) // Status of file scanning
-  metadataStatus      MetadataJobStatus @default(NOT_STARTED) // Status of metadata fetching
-  scannedCount        Int           @default(0) // Number of files scanned
-  metadataSuccessCount Int          @default(0) // Number of successful metadata fetches
-  metadataFailedCount  Int          @default(0) // Number of failed metadata fetches
+  status              ScanJobStatus @default(PENDING)
+  metadataStatus      MetadataJobStatus @default(NOT_STARTED)
+  scannedCount        Int           @default(0)
+  metadataSuccessCount Int          @default(0)
+  metadataFailedCount  Int          @default(0)
   
   startedAt           DateTime?
   completedAt        DateTime?
-  metadataStartedAt   DateTime? // When metadata processing started
-  metadataCompletedAt DateTime? // When metadata processing completed
+  metadataStartedAt   DateTime?
+  metadataCompletedAt DateTime?
   
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
@@ -398,21 +409,18 @@ model ScanJob {
   
   @@index([libraryId])
   @@index([status])
-  @@index([metadataStatus])
-  @@index([scanPath])
 }
 
 // ────────────────────────────
 // METADATA PROVIDERS
 // ────────────────────────────
 
-/// Metadata provider configurations (TMDB, OMDB, etc.)
 model MetadataProvider {
-  id        String   @id // UUID as string
-  name      String   @unique // e.g., "tmdb", "omdb"
+  id        String   @id
+  name      String   @unique
   enabled   Boolean  @default(true)
-  priority  Int      @default(0) // Lower number = higher priority
-  config    Json     @default("{}") // Provider-specific configuration
+  priority  Int      @default(0)
+  config    Json     @default("{}")
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -424,29 +432,26 @@ model MetadataProvider {
 // SETTINGS
 // ────────────────────────────
 
-/// Setting categories for organizing configuration
 enum SettingCategory {
-  CORE        // Core system settings
-  INTEGRATION // External integrations (TMDB, Plex, etc.)
-  LIBRARY     // Library management
-  TRANSCODING // Media transcoding
-  NETWORK     // Network and streaming
-  NOTIFICATION // Notifications
-  UI          // User interface
-  PLUGIN      // Plugin-specific
-  CUSTOM      // User-defined
+  CORE
+  INTEGRATION
+  LIBRARY
+  TRANSCODING
+  NETWORK
+  NOTIFICATION
+  UI
+  PLUGIN
+  CUSTOM
 }
 
-/// Setting data types for validation
 enum SettingType {
   STRING
   NUMBER
   BOOLEAN
   JSON
-  SECRET  // Encrypted/sensitive values
+  SECRET
 }
 
-/// Modular settings table - future-proof for plugins and extensions
 model Setting {
   id          String          @id @default(cuid())
   key         String          @unique

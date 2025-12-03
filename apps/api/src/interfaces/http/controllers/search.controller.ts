@@ -41,13 +41,23 @@ function sendSuccess<T>(
   return res.status(statusCode).json(response);
 }
 
+/**
+ * Get base URL from request
+ */
+function getBaseUrl(req: Request): string {
+  const protocol = req.protocol;
+  const host = req.get("host") || "localhost:3001";
+  return `${protocol}://${host}`;
+}
+
 export const searchControllers = {
   /**
    * Search for media by title
    */
   searchMedia: asyncHandler(async (req: Request, res: Response) => {
     const { query } = req.validatedData as SearchMediaQuery;
-    const results = await searchService.searchMedia(query);
+    const baseUrl = getBaseUrl(req);
+    const results = await searchService.searchMedia(query, baseUrl);
     return sendSuccess(res, results);
   }),
 };

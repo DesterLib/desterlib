@@ -4,7 +4,6 @@ import { Logger } from "@dester/logger";
 export interface Media {
   id: string;
   title: string;
-  type: string;
   description: string | null;
   posterUrl: string | null;
   backdropUrl: string | null;
@@ -14,10 +13,10 @@ export interface Media {
 
 export interface MetadataProviderConfig {
   id: string;
-  name: string; // e.g., "tmdb", "omdb"
+  name: string;
   enabled: boolean;
-  priority: number; // Lower number = higher priority
-  config: Record<string, any>; // Provider-specific configuration (JSON)
+  priority: number;
+  config: Record<string, any>;
   created_at: Date;
   updated_at: Date;
 }
@@ -45,6 +44,7 @@ export class Database {
     }
   }
 
+  // ... (Provider table methods kept as is) ...
   /**
    * Initialize metadata_providers table if it doesn't exist
    */
@@ -131,29 +131,18 @@ export class Database {
     return result.rows[0];
   }
 
-  async getMedia(id: string): Promise<Media | null> {
-    const result = await this.pool.query<Media>(
-      `SELECT id, title, type, description, "posterUrl", "backdropUrl", "releaseDate", rating
-       FROM "Media"
-       WHERE id = $1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return result.rows[0];
-  }
-
+  // Updated to support dynamic table based on mediaType
   async updateMediaMetadata(
     mediaId: string,
+    mediaType: string,
     metadata: {
       tmdbId: number;
       title: string;
       overview: string | null;
       posterUrl: string | null;
+      nullPosterUrl: string | null;
       backdropUrl: string | null;
+      logoUrl: string | null;
       releaseDate: Date | null;
       rating: number | null;
       genres: string[];
@@ -161,42 +150,44 @@ export class Database {
   ) {
     const client: PoolClient = await this.pool.connect();
 
+    // Determine table name based on type
+    const tableName = mediaType === "TV_SHOW" ? "TVShow" : "Movie";
+    // For TVShow, releaseDate is firstAirDate
+    const dateField = mediaType === "TV_SHOW" ? "firstAirDate" : "releaseDate";
+
     try {
       await client.query("BEGIN");
 
       // Check if Media record exists first
       const mediaCheck = await client.query(
-        `SELECT id FROM "Media" WHERE id = $1`,
+        `SELECT id FROM "${tableName}" WHERE id = $1`,
         [mediaId]
       );
 
       if (mediaCheck.rows.length === 0) {
-        // Media record doesn't exist - this can happen if:
-        // 1. The Media was deleted after the job was queued
-        // 2. The scanner created a job but the Media record was never created
-        // 3. Race condition where job is processed before Media is committed
         this.logger.warn(
-          { mediaId },
+          { mediaId, tableName },
           "Media record not found, skipping metadata update. This may be a stale job."
         );
         await client.query("ROLLBACK");
-        // Throw a specific error so the job processor can track it as a failure
         const error = new Error(`Media record not found: ${mediaId}`);
         (error as any).code = "MEDIA_NOT_FOUND";
         throw error;
       }
 
-      // Update Media
+      // Update Metadata
       await client.query(
-        `UPDATE "Media" SET
+        `UPDATE "${tableName}" SET
           title = $1,
-          description = $2,
+          overview = $2,
           "posterUrl" = $3,
           "backdropUrl" = $4,
-          "releaseDate" = $5,
+          "${dateField}" = $5,
           rating = $6,
+          "nullPosterUrl" = $7,
+          "logoUrl" = $8,
           "updatedAt" = NOW()
-         WHERE id = $7`,
+         WHERE id = $9`,
         [
           metadata.title,
           metadata.overview,
@@ -204,68 +195,34 @@ export class Database {
           metadata.backdropUrl,
           metadata.releaseDate,
           metadata.rating,
+          metadata.nullPosterUrl,
+          metadata.logoUrl,
           mediaId,
         ]
       );
 
       // Add ExternalId (TMDB)
-      // Handle conflicts on both unique constraints:
-      // 1. (source, mediaId) - If this media already has an ExternalId, update it
-      // 2. (source, externalId) - If this TMDB ID is already used by another media, skip it
-      //
-      // Strategy: First try to update if (source, mediaId) exists, otherwise insert.
-      // If (source, externalId) conflict occurs, it means another media has this TMDB ID,
-      // so we skip creating the ExternalId (the metadata is still saved to Media table).
       try {
+        // FK field name depends on table: movieId or tvShowId
+        const idField = mediaType === "TV_SHOW" ? "tvShowId" : "movieId";
+
         await client.query(
-          `INSERT INTO "ExternalId" (id, source, "externalId", "mediaId", "createdAt", "updatedAt")
+          `INSERT INTO "ExternalId" (id, source, "externalId", "${idField}", "createdAt", "updatedAt")
            VALUES (gen_random_uuid()::text, 'TMDB', $1, $2, NOW(), NOW())
-           ON CONFLICT (source, "mediaId") 
+           ON CONFLICT (source, "externalId") 
            DO UPDATE SET
-             "externalId" = EXCLUDED."externalId",
              "updatedAt" = NOW()`,
           [metadata.tmdbId.toString(), mediaId]
         );
       } catch (insertError: any) {
-        // Handle (source, externalId) conflict - TMDB ID already belongs to another media
-        if (
-          insertError?.code === "23505" &&
-          insertError?.constraint === "ExternalId_source_externalId_key"
-        ) {
-          // TMDB ID is already associated with a different media - skip ExternalId creation
-          // The metadata has already been saved to the Media table, so this is acceptable
-          this.logger.debug(
-            {
-              mediaId,
-              tmdbId: metadata.tmdbId,
-              constraint: "ExternalId_source_externalId_key",
-            },
-            "TMDB ID already exists for another media, skipping ExternalId creation"
-          );
-        } else if (
-          insertError?.code === "23503" &&
-          insertError?.constraint === "ExternalId_mediaId_fkey"
-        ) {
-          // Foreign key constraint - Media record was deleted between check and insert
-          // This is a race condition, but we've already updated the Media table above
-          // So this shouldn't happen, but handle it gracefully
-          this.logger.warn(
-            {
-              mediaId,
-              tmdbId: metadata.tmdbId,
-              constraint: "ExternalId_mediaId_fkey",
-            },
-            "Media record was deleted during metadata update, skipping ExternalId creation"
-          );
-        } else {
-          // Re-throw other errors
+        // Log but assume ok if conflict handling worked
+        if (insertError?.code !== "23505") {
+          // Handle unique constraint violation if needed, but ON CONFLICT should handle it
+          // Actually my query updates updatedAt on conflict of unique key.
+          // If conflict is on something else, rethrow.
           throw insertError;
         }
       }
-
-      // Note: Genre handling would typically go here (creating Genre records and linking via MediaGenre)
-      // For now, we'll skip detailed genre implementation to match scope, or add simple text storage if needed.
-      // The current scope is to replace the old table structure.
 
       await client.query("COMMIT");
     } catch (error) {
@@ -276,11 +233,11 @@ export class Database {
     }
   }
 
-  /**
-   * Check if media already has complete metadata
-   * Returns true if media has title, description, and at least one image URL
-   */
-  async hasCompleteMetadata(mediaId: string): Promise<boolean> {
+  async hasCompleteMetadata(
+    mediaId: string,
+    mediaType: string
+  ): Promise<boolean> {
+    const tableName = mediaType === "TV_SHOW" ? "TVShow" : "Movie";
     try {
       const result = await this.pool.query<{
         hasMetadata: boolean;
@@ -288,12 +245,12 @@ export class Database {
         `SELECT 
           CASE 
             WHEN title IS NOT NULL 
-            AND description IS NOT NULL 
+            AND overview IS NOT NULL 
             AND ("posterUrl" IS NOT NULL OR "backdropUrl" IS NOT NULL)
             THEN true
             ELSE false
           END as "hasMetadata"
-        FROM "Media"
+        FROM "${tableName}"
         WHERE id = $1`,
         [mediaId]
       );
@@ -304,33 +261,33 @@ export class Database {
         { error, mediaId },
         "Failed to check if media has complete metadata"
       );
-      return false; // If check fails, assume metadata is missing (safer to fetch)
+      return false;
     }
   }
 
-  /**
-   * Get existing metadata for media (to check if we should skip fetching)
-   */
-  async getMediaMetadata(mediaId: string): Promise<{
+  async getMediaMetadata(
+    mediaId: string,
+    mediaType: string
+  ): Promise<{
     posterUrl: string | null;
     backdropUrl: string | null;
     hasExternalId: boolean;
-    mediaType: string | null;
   } | null> {
+    const tableName = mediaType === "TV_SHOW" ? "TVShow" : "Movie";
+    const idField = mediaType === "TV_SHOW" ? "tvShowId" : "movieId";
+
     try {
       const result = await this.pool.query<{
         posterUrl: string | null;
         backdropUrl: string | null;
         hasExternalId: boolean;
-        mediaType: string | null;
       }>(
         `SELECT 
           m."posterUrl",
           m."backdropUrl",
-          m.type as "mediaType",
           CASE WHEN e.id IS NOT NULL THEN true ELSE false END as "hasExternalId"
-        FROM "Media" m
-        LEFT JOIN "ExternalId" e ON e."mediaId" = m.id AND e.source = 'TMDB'
+        FROM "${tableName}" m
+        LEFT JOIN "ExternalId" e ON e."${idField}" = m.id AND e.source = 'TMDB'
         WHERE m.id = $1`,
         [mediaId]
       );
@@ -345,26 +302,9 @@ export class Database {
     }
   }
 
-  /**
-   * Get media type from database
-   */
-  async getMediaType(mediaId: string): Promise<string | null> {
-    try {
-      const result = await this.pool.query<{ type: string }>(
-        `SELECT type FROM "Media" WHERE id = $1`,
-        [mediaId]
-      );
+  // ScanJob methods remain mostly same as they use ScanJob table which hasn't changed
+  // ...
 
-      return result.rows[0]?.type || null;
-    } catch (error) {
-      this.logger.warn({ error, mediaId }, "Failed to get media type");
-      return null;
-    }
-  }
-
-  /**
-   * Update metadata status for scan job
-   */
   async updateMetadataStatus(
     libraryId: string,
     status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "NOT_STARTED"
@@ -403,13 +343,6 @@ export class Database {
     }
   }
 
-  /**
-   * Check if all metadata jobs are complete and update status if needed
-   * Returns true if completion was detected, false otherwise
-   *
-   * Note: scannedCount now only counts valid media files that were successfully saved,
-   * so it accurately represents the number of files that should get metadata jobs.
-   */
   async checkAndMarkMetadataComplete(libraryId: string): Promise<boolean> {
     try {
       const result = await this.pool.query<{
@@ -440,11 +373,7 @@ export class Database {
         (job.metadataSuccessCount || 0) + (job.metadataFailedCount || 0);
       const totalScanned = job.scannedCount || 0;
 
-      // Check if all jobs are complete
-      // scannedCount now only counts valid media files that were successfully saved,
-      // so it accurately represents files that should get metadata jobs
       if (totalScanned > 0 && totalProcessed >= totalScanned) {
-        // Mark as completed
         await this.pool.query(
           `UPDATE "ScanJob" 
            SET "metadataStatus" = 'COMPLETED'::"MetadataJobStatus",
@@ -458,10 +387,7 @@ export class Database {
           {
             libraryId,
             scanJobId: job.id,
-            scanPath: job.scanPath,
             scannedCount: totalScanned,
-            metadataSuccessCount: job.metadataSuccessCount,
-            metadataFailedCount: job.metadataFailedCount,
             totalProcessed,
           },
           "✅ Library metadata fetching completed successfully"
@@ -480,14 +406,8 @@ export class Database {
     }
   }
 
-  /**
-   * Increment metadata success count for active scan job
-   * Also updates COMPLETED jobs since metadata processing happens asynchronously
-   * Automatically marks as COMPLETED when all jobs are finished
-   */
   async incrementScanJobMetadataSuccess(libraryId: string): Promise<void> {
     try {
-      // First, increment the success count
       await this.pool.query(
         `UPDATE "ScanJob" 
          SET "metadataSuccessCount" = "metadataSuccessCount" + 1,
@@ -508,8 +428,6 @@ export class Database {
          )`,
         [libraryId]
       );
-
-      // Completion check is done separately after logging in index.ts
     } catch (error) {
       this.logger.debug(
         { error, libraryId },
@@ -518,10 +436,6 @@ export class Database {
     }
   }
 
-  /**
-   * Get the active scan job ID for a library
-   * Returns the most recent scan job that is PENDING, IN_PROGRESS, or COMPLETED
-   */
   async getActiveScanJobId(libraryId: string): Promise<string | null> {
     try {
       const result = await this.pool.query<{ id: string }>(
@@ -543,13 +457,8 @@ export class Database {
     }
   }
 
-  /**
-   * Increment metadata failure count for active scan job
-   * Automatically marks as COMPLETED when all jobs are finished
-   */
   async incrementScanJobMetadataFailure(libraryId: string): Promise<void> {
     try {
-      // First, increment the failure count
       await this.pool.query(
         `UPDATE "ScanJob" 
          SET "metadataFailedCount" = "metadataFailedCount" + 1,
@@ -570,8 +479,6 @@ export class Database {
          )`,
         [libraryId]
       );
-
-      // Completion check is done separately after logging in index.ts
     } catch (error) {
       this.logger.debug(
         { error, libraryId },

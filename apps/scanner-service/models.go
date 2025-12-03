@@ -37,6 +37,7 @@ type ScanResponse struct {
 // MetadataJob represents a job pushed to Redis queue
 type MetadataJob struct {
 	MediaID    string `json:"media_id"`
+	MediaType  string `json:"media_type"` // Added to support split tables
 	Title      string `json:"title"`
 	Year       *int   `json:"year,omitempty"`
 	FolderPath string `json:"folder_path"`

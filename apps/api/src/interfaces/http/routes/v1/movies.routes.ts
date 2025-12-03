@@ -32,8 +32,40 @@ const router: Router = express.Router();
  *                         type: string
  *                       title:
  *                         type: string
- *                       year:
- *                         type: integer
+ *                       originalTitle:
+ *                         type: string
+ *                         nullable: true
+ *                       overview:
+ *                         type: string
+ *                         nullable: true
+ *                       posterUrl:
+ *                         type: string
+ *                         nullable: true
+ *                       backdropUrl:
+ *                         type: string
+ *                         nullable: true
+ *                       releaseDate:
+ *                         type: string
+ *                         format: date-time
+ *                         nullable: true
+ *                       rating:
+ *                         type: number
+ *                         nullable: true
+ *                       meshGradientColors:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       mediaItems:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                             filePath:
+ *                               type: string
+ *                             fileSize:
+ *                               type: string
  *                       media:
  *                         type: array
  *                         items:

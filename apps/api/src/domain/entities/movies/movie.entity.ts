@@ -5,18 +5,20 @@
 import { Movie, Media } from "@prisma/client";
 
 /**
- * Movie with its associated media information
+ * Movie with its associated media files
  */
-export interface MovieWithMedia extends Movie {
-  media: Media;
+export interface MovieWithFiles extends Movie {
+  // The list of files associated with this movie
+  // Mapped from 'medias' relation to 'media' property for API consistency
+  media: Media[];
 }
 
 /**
- * Movie response type (same as MovieWithMedia but explicitly for API responses)
+ * Movie response type
  */
-export type MovieResponse = MovieWithMedia;
+export type MovieResponse = MovieWithFiles;
 
 /**
  * Movies list response type
  */
-export type MoviesListResponse = MovieWithMedia[];
+export type MoviesListResponse = MovieWithFiles[];

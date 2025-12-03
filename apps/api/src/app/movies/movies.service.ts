@@ -2,56 +2,51 @@ import { prisma } from "../../infrastructure/prisma";
 import { logger } from "@dester/logger";
 import { NotFoundError } from "../../infrastructure/utils/errors";
 import { serializeBigInt } from "../../infrastructure/utils/serialization";
-import {
-  enrichMediaWithColors,
-  enrichMediaArrayWithColors,
-} from "../../infrastructure/utils/media-enrichment";
 import type {
   MoviesListResponse,
   MovieResponse,
 } from "../../domain/entities/movies/movie.entity";
 
 export const moviesService = {
-  getMovies: async (): Promise<MoviesListResponse> => {
+  getMovies: async (baseUrl: string): Promise<MoviesListResponse> => {
     logger.info("📽️  Fetching movies list...");
 
+    // Fetch Movie metadata including associated files
     const movies = await prisma.movie.findMany({
       include: {
-        media: true,
+        mediaItems: true, // List of files associated with the movie
+        genres: true, // Include genres
       },
       orderBy: {
-        media: {
-          createdAt: "desc",
-        },
+        createdAt: "desc",
       },
       take: 10, // Limit to 10 most recent
     });
 
-    logger.info(`Found ${movies.length} movies, enriching with colors...`);
+    logger.info(`Found ${movies.length} movies`);
 
-    // Enrich with mesh gradient colors on-demand
-    const enrichedMovies = await enrichMediaArrayWithColors(
-      movies.map((m) => m.media)
-    );
-
-    // Map back to movie structure
-    const moviesWithColors = movies.map((movie, index) => ({
+    // Map to response structure
+    const moviesResponse = movies.map((movie) => ({
       ...movie,
-      media: enrichedMovies[index],
+      media: movie.mediaItems, // Map 'mediaItems' (files) to 'media' property
     }));
 
-    return serializeBigInt(moviesWithColors) as MoviesListResponse;
+    return serializeBigInt(
+      moviesResponse,
+      baseUrl
+    ) as unknown as MoviesListResponse;
   },
 
   getMovieById: async (
-    id: string
-  ): Promise<MovieResponse & { streamUrl: string }> => {
-    logger.info(`📽️  Fetching movie by ID: ${id}`);
-
+    id: string,
+    baseUrl: string
+  ): Promise<MovieResponse & { streamUrl?: string }> => {
+    // Look up by Movie ID (metadata)
     const movie = await prisma.movie.findUnique({
       where: { id },
       include: {
-        media: true,
+        mediaItems: true, // List of files
+        genres: true, // Include genres
       },
     });
 
@@ -59,21 +54,30 @@ export const moviesService = {
       throw new NotFoundError("Movie", id);
     }
 
-    logger.info(
-      `Found movie: "${movie.media.title}", enriching with colors...`
-    );
+    logger.info(`Found movie: "${movie.title}"`);
 
-    // Enrich with mesh gradient colors on-demand
-    const enrichedMedia = await enrichMediaWithColors(movie.media);
-    const movieWithColors = {
+    // Map to response structure
+    const movieWithFiles = {
       ...movie,
-      media: enrichedMedia,
+      media: movie.mediaItems, // Map files to 'media' property
     };
 
-    const serialized = serializeBigInt(movieWithColors) as MovieResponse;
+    const serialized = serializeBigInt(
+      movieWithFiles,
+      baseUrl
+    ) as unknown as MovieResponse;
+
+    // Add streamUrl using the first file's ID if available
+    const firstFileId =
+      movie.mediaItems && movie.mediaItems.length > 0
+        ? movie.mediaItems[0]?.id
+        : undefined;
+
     return {
       ...serialized,
-      streamUrl: `/api/v1/stream/${id}`,
+      ...(firstFileId
+        ? { streamUrl: `${baseUrl}/api/v1/stream/${firstFileId}` }
+        : {}),
     };
   },
 };

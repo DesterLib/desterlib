@@ -12,11 +12,22 @@ export interface ScanOptions {
     tv?: number;
   };
 
-  // File filtering
-  filenamePattern?: string; // Regex pattern
+  // Pattern configuration (per media type)
+  // Movies and TV shows have different naming conventions
+  mediaTypePatterns?: {
+    movie?: {
+      filenamePattern?: string; // e.g., ".*\.(mkv|mp4)$"
+      directoryPattern?: string; // e.g., "^[^\\/]+(?:\\s*\\(\\d{4}\\))?$"
+    };
+    tv?: {
+      filenamePattern?: string; // e.g., ".*[Ss]\\d{2}[Ee]\\d{2}.*\\.(mkv|mp4)$"
+      directoryPattern?: string; // e.g., "^[^\\/]+(?:/Season \\d+)?$"
+    };
+  };
 
-  // Directory filtering
-  directoryPattern?: string; // Regex pattern
+  // Legacy global patterns (deprecated, kept for backwards compatibility)
+  filenamePattern?: string;
+  directoryPattern?: string;
 
   // Scan behavior
   rescan?: boolean;

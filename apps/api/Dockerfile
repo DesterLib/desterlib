@@ -24,7 +24,7 @@ RUN pnpm install --frozen-lockfile
 
 # Generate Prisma client
 WORKDIR /app/apps/api
-RUN npx prisma generate
+RUN pnpm exec prisma generate
 
 # Build the API
 WORKDIR /app
@@ -46,7 +46,7 @@ echo "Database is ready!"
 # Push database schema
 cd /app/apps/api
 echo "Running Prisma database push..."
-npx prisma db push --accept-data-loss
+pnpm exec prisma db push --accept-data-loss
 
 # Start the application
 cd /app/apps/api
@@ -54,7 +54,7 @@ echo "Starting application..."
 echo "Current working directory: $(pwd)"
 
 echo "Starting DesterLib API server on port ${PORT:-3001}..."
-npm start
+pnpm start
 EOF
 
 RUN chmod +x /app/start.sh

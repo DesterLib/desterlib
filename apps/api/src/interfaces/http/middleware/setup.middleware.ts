@@ -19,14 +19,36 @@ const limiter = rateLimit({
 // Helper to get local IP address
 function getLocalIpAddress(): string {
   const nets = networkInterfaces();
+  const candidates: string[] = [];
+
   for (const name of Object.keys(nets)) {
     for (const net of nets[name]!) {
       // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
-      if (net.family === "IPv4" && !net.internal) {
-        return net.address;
+      if (net.family !== "IPv4" || net.internal) {
+        continue;
       }
+
+      candidates.push(net.address);
     }
   }
+
+  // Prefer private LAN addresses over link-local or others
+  const isPrivateLan = (ip: string) =>
+    ip.startsWith("192.168.") ||
+    ip.startsWith("10.") ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+
+  const privateIp = candidates.find(isPrivateLan);
+  if (privateIp) {
+    return privateIp;
+  }
+
+  // Fallback: first non-internal IPv4 address, even if link-local
+  if (candidates.length > 0) {
+    // candidates contains only non-internal IPv4 addresses, so the first entry is safe
+    return candidates[0] as string;
+  }
+
   return "127.0.0.1";
 }
 

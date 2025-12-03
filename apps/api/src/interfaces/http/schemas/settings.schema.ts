@@ -10,6 +10,23 @@ const scanOptionsSchema = z
         tv: z.number().int().min(0).max(10).optional(),
       })
       .optional(),
+    mediaTypePatterns: z
+      .object({
+        movie: z
+          .object({
+            filenamePattern: z.string().max(500).optional(),
+            directoryPattern: z.string().max(500).optional(),
+          })
+          .optional(),
+        tv: z
+          .object({
+            filenamePattern: z.string().max(500).optional(),
+            directoryPattern: z.string().max(500).optional(),
+          })
+          .optional(),
+      })
+      .optional(),
+    // Legacy global patterns (deprecated, but supported for backwards compatibility)
     fileExtensions: z.array(z.string()).max(20).optional(),
     filenamePattern: z.string().max(500).optional(),
     excludePattern: z.string().max(500).optional(),

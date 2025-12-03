@@ -40,6 +40,8 @@ export interface MovieMetadata {
   releaseDate: string | null; // ISO date string
   rating: number | null;
   posterUrl: string | null;
+  nullPosterUrl: string | null;
   backdropUrl: string | null;
+  logoUrl: string | null;
   genres: string[];
 }

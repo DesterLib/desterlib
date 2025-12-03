@@ -5,7 +5,7 @@ export const searchService = {
   /**
    * Search for media (movies and TV shows) by title
    */
-  searchMedia: async (query: string) => {
+  searchMedia: async (query: string, baseUrl: string) => {
     // Total limit across all media types
     const TOTAL_LIMIT = 10;
 
@@ -24,7 +24,7 @@ export const searchService = {
           type: "MOVIE",
         },
         include: {
-          movie: true,
+          movies: true,
         },
         orderBy: {
           title: "asc",
@@ -52,24 +52,31 @@ export const searchService = {
 
     // Format results and convert BigInt to string for JSON serialization
     const formattedMovies = movies
-      .filter((media) => media.movie !== null)
-      .map((media) => ({
-        ...media.movie,
-        fileSize: media.movie!.fileSize?.toString() ?? null,
-        media: {
-          id: media.id,
-          title: media.title,
-          type: media.type,
-          description: media.description,
-          posterUrl: media.posterUrl,
-          backdropUrl: media.backdropUrl,
-          meshGradientColors: media.meshGradientColors,
-          releaseDate: media.releaseDate,
-          rating: media.rating,
-          createdAt: media.createdAt,
-          updatedAt: media.updatedAt,
-        },
-      }));
+      .filter((media) => media.movies && media.movies.length > 0)
+      .map((media) => {
+        const movie = media.movies[0];
+        if (!movie) {
+          return null;
+        }
+        return {
+          ...movie,
+          fileSize: movie.fileSize?.toString() ?? null,
+          media: {
+            id: media.id,
+            title: media.title,
+            type: media.type,
+            description: media.description,
+            posterUrl: media.posterUrl,
+            backdropUrl: media.backdropUrl,
+            meshGradientColors: media.meshGradientColors,
+            releaseDate: media.releaseDate,
+            rating: media.rating,
+            createdAt: media.createdAt,
+            updatedAt: media.updatedAt,
+          },
+        };
+      })
+      .filter((movie): movie is NonNullable<typeof movie> => movie !== null);
 
     const formattedTvShows = tvShows
       .filter((media) => media.tvShow !== null)
@@ -111,9 +118,12 @@ export const searchService = {
       .filter((item) => item.type === "tvShow")
       .map((item) => item.data);
 
-    return serializeBigInt({
-      movies: finalMovies,
-      tvShows: finalTvShows,
-    });
+    return serializeBigInt(
+      {
+        movies: finalMovies,
+        tvShows: finalTvShows,
+      },
+      baseUrl
+    );
   },
 };

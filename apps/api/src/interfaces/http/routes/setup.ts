@@ -6,7 +6,7 @@ import v1Routes from "./v1";
 
 // Get API version for request interceptor
 function getApiVersion(): string {
-  return (swaggerSpec as any).info?.version || "0.2.1";
+  return (swaggerSpec as any).info?.version || "0.3.0";
 }
 
 export function setupRoutes(app: Application) {

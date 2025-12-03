@@ -190,16 +190,57 @@ const swaggerOptions: swaggerJsdoc.Options = {
                     },
                   },
                 },
+                mediaTypePatterns: {
+                  type: "object",
+                  description:
+                    "Media-type-specific filename and directory patterns. Movies and TV shows have different naming conventions.",
+                  additionalProperties: true,
+                  properties: {
+                    movie: {
+                      type: "object",
+                      description: "Patterns for movie scanning",
+                      properties: {
+                        filenamePattern: {
+                          type: "string",
+                          description: "Regex pattern for movie filenames",
+                          example: ".*\\.(mkv|mp4|avi)$",
+                        },
+                        directoryPattern: {
+                          type: "string",
+                          description: "Regex pattern for movie directories",
+                          example: "^[^\\/]+(?:\\s*\\(\\d{4}\\))?$",
+                        },
+                      },
+                    },
+                    tv: {
+                      type: "object",
+                      description: "Patterns for TV show scanning",
+                      properties: {
+                        filenamePattern: {
+                          type: "string",
+                          description: "Regex pattern for TV episode filenames",
+                          example: ".*[Ss]\\d{2}[Ee]\\d{2}.*\\.(mkv|mp4)$",
+                        },
+                        directoryPattern: {
+                          type: "string",
+                          description:
+                            "Regex pattern for TV show/season directories",
+                          example: "^(?:[^\\/]+|Season\\s*\\d+)$",
+                        },
+                      },
+                    },
+                  },
+                },
                 filenamePattern: {
                   type: "string",
                   description:
-                    "Regex pattern to match filenames. Default matches common video extensions.",
+                    "Legacy global filename pattern (deprecated - use mediaTypePatterns instead). Default matches common video extensions.",
                   example: ".*\\.(mkv|mp4|avi)$",
                 },
                 directoryPattern: {
                   type: "string",
                   description:
-                    "Regex pattern to match directory names. Default matches common media organization patterns.",
+                    "Legacy global directory pattern (deprecated - use mediaTypePatterns instead). Default matches common media organization patterns.",
                   example: "^[^\\/]+(?:\\s*\\(\\d{4}\\))?$",
                 },
                 rescan: {
@@ -247,11 +288,40 @@ const swaggerOptions: swaggerJsdoc.Options = {
                     },
                   },
                 },
+                mediaTypePatterns: {
+                  type: "object",
+                  properties: {
+                    movie: {
+                      type: "object",
+                      properties: {
+                        filenamePattern: {
+                          type: "string",
+                        },
+                        directoryPattern: {
+                          type: "string",
+                        },
+                      },
+                    },
+                    tv: {
+                      type: "object",
+                      properties: {
+                        filenamePattern: {
+                          type: "string",
+                        },
+                        directoryPattern: {
+                          type: "string",
+                        },
+                      },
+                    },
+                  },
+                },
                 filenamePattern: {
                   type: "string",
+                  description: "Legacy global pattern (deprecated)",
                 },
                 directoryPattern: {
                   type: "string",
+                  description: "Legacy global pattern (deprecated)",
                 },
                 rescan: {
                   type: "boolean",
@@ -353,13 +423,48 @@ const swaggerOptions: swaggerJsdoc.Options = {
             mediaTypeDepth: {
               $ref: "#/components/schemas/MediaTypeDepth",
             },
+            mediaTypePatterns: {
+              type: "object",
+              description:
+                "Media-type-specific patterns for filenames and directories",
+              properties: {
+                movie: {
+                  type: "object",
+                  properties: {
+                    filenamePattern: {
+                      type: "string",
+                      description: "Regex pattern for movie filenames",
+                    },
+                    directoryPattern: {
+                      type: "string",
+                      description: "Regex pattern for movie directories",
+                    },
+                  },
+                },
+                tv: {
+                  type: "object",
+                  properties: {
+                    filenamePattern: {
+                      type: "string",
+                      description: "Regex pattern for TV episode filenames",
+                    },
+                    directoryPattern: {
+                      type: "string",
+                      description: "Regex pattern for TV show directories",
+                    },
+                  },
+                },
+              },
+            },
             filenamePattern: {
               type: "string",
-              description: "Regex pattern to match filenames",
+              description:
+                "Legacy global filename pattern (deprecated - use mediaTypePatterns)",
             },
             directoryPattern: {
               type: "string",
-              description: "Regex pattern to match directory names",
+              description:
+                "Legacy global directory pattern (deprecated - use mediaTypePatterns)",
             },
             rescan: {
               type: "boolean",

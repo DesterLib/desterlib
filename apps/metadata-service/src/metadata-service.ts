@@ -1,3 +1,4 @@
+// Update MetadataService to use new table structure
 import { Logger } from "@dester/logger";
 import { Database } from "./database";
 import { MetadataProvider } from "./providers/metadata-provider.interface";
@@ -27,6 +28,8 @@ export class MetadataService {
     this.imageProcessor = new ImageProcessor(logger, storagePath);
     this.scanJobLogger = scanJobLogger || null;
   }
+
+  // ... (verifyLocalImagesExist kept as is) ...
 
   /**
    * Verify if local image files exist and are valid for the given URLs
@@ -75,17 +78,25 @@ export class MetadataService {
     return { posterExists, backdropExists };
   }
 
+  // New signature accepting mediaType
   async fetchAndSaveMetadata(
     mediaId: string,
+    mediaType: string, // 'MOVIE', 'TV_SHOW', etc.
     title: string,
     year?: number,
     libraryId?: string
   ): Promise<void> {
     try {
       // Check if media already has complete metadata
-      const hasComplete = await this.database.hasCompleteMetadata(mediaId);
+      const hasComplete = await this.database.hasCompleteMetadata(
+        mediaId,
+        mediaType
+      );
       if (hasComplete) {
-        const existingMetadata = await this.database.getMediaMetadata(mediaId);
+        const existingMetadata = await this.database.getMediaMetadata(
+          mediaId,
+          mediaType
+        );
         if (existingMetadata) {
           // Verify local images exist if we're using local paths
           const { posterExists, backdropExists } =
@@ -112,7 +123,7 @@ export class MetadataService {
               },
               "Metadata already exists and images are valid, skipping fetch"
             );
-            // Still update scan job metadata success counter as metadata already exists
+            // Still update scan job metadata success counter
             if (libraryId) {
               await this.database
                 .incrementScanJobMetadataSuccess(libraryId)
@@ -184,20 +195,13 @@ export class MetadataService {
       // Generate a unique provider-based ID string for filenames
       const providerIdStr = `${this.provider.getProviderName()}${metadata.providerId}`;
 
-      // Get media type from database to organize images by type
-      const mediaType = await this.database.getMediaType(mediaId);
-
       // Process images (download & compress)
-      // ImageProcessor will automatically:
-      // 1. Check if files exist on disk by providerId and mediaType
-      // 2. Verify they're valid images (not corrupted/empty)
-      // 3. Reuse existing images if found, download only if missing
-      // Images are organized by media type: movies/, tv/, music/, comics/
-      // This handles cases where:
-      // - Metadata is missing in DB but images exist on disk (from previous run)
-      // - Images were downloaded but DB save failed
-      // - Images exist and are valid, just need to link them in DB
-      const [localPosterPath, localBackdropPath] = await Promise.all([
+      const [
+        localPosterPath,
+        localBackdropPath,
+        localNullPosterPath,
+        localLogoPath,
+      ] = await Promise.all([
         this.imageProcessor.processImage(
           metadata.posterUrl,
           "poster",
@@ -210,23 +214,42 @@ export class MetadataService {
           providerIdStr,
           mediaType
         ),
+        this.imageProcessor.processImage(
+          metadata.nullPosterUrl,
+          "null-poster",
+          providerIdStr,
+          mediaType
+        ),
+        this.imageProcessor.processImage(
+          metadata.logoUrl,
+          "logo",
+          providerIdStr,
+          mediaType
+        ),
       ]);
 
       // Save metadata to database
-      // Prefer local path if available, fallback to remote URL
       const finalPosterUrl = localPosterPath
         ? `/metadata/${localPosterPath}`
         : metadata.posterUrl;
       const finalBackdropUrl = localBackdropPath
         ? `/metadata/${localBackdropPath}`
         : metadata.backdropUrl;
+      const finalNullPosterUrl = localNullPosterPath
+        ? `/metadata/${localNullPosterPath}`
+        : metadata.nullPosterUrl;
+      const finalLogoUrl = localLogoPath
+        ? `/metadata/${localLogoPath}`
+        : metadata.logoUrl;
 
-      await this.database.updateMediaMetadata(mediaId, {
-        tmdbId: parseInt(metadata.providerId, 10), // Keep field name for backward compatibility
+      await this.database.updateMediaMetadata(mediaId, mediaType, {
+        tmdbId: parseInt(metadata.providerId, 10),
         title: metadata.title,
         overview: metadata.overview || null,
         posterUrl: finalPosterUrl,
+        nullPosterUrl: finalNullPosterUrl,
         backdropUrl: finalBackdropUrl,
+        logoUrl: finalLogoUrl,
         releaseDate,
         rating: metadata.rating || null,
         genres: metadata.genres,
@@ -243,7 +266,6 @@ export class MetadataService {
       );
 
       // Update scan job metadata success counter if libraryId is provided
-      // Do this after logging to ensure proper log order
       if (libraryId) {
         await this.database
           .incrementScanJobMetadataSuccess(libraryId)

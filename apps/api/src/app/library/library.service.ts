@@ -129,17 +129,18 @@ export const libraryService = {
   delete: async (libraryId: string): Promise<LibraryDeleteResult> => {
     logger.info(`🗑️  Starting deletion of library: ${libraryId}`);
 
-    // Find the library first
+    // Find the library first with all associated content
     const library = await prisma.library.findUnique({
       where: { id: libraryId },
       include: {
-        media: {
+        movies: {
           include: {
-            media: {
-              include: {
-                libraries: true,
-              },
-            },
+            libraries: { select: { id: true } },
+          },
+        },
+        tvShows: {
+          include: {
+            libraries: { select: { id: true } },
           },
         },
       },
@@ -151,33 +152,56 @@ export const libraryService = {
 
     logger.info(`📚 Found library: ${library.name}`);
 
-    // Find media that ONLY belongs to this library
-    const mediaToDelete = library.media
-      .filter((ml) => ml.media.libraries.length === 1)
-      .map((ml) => ml.mediaId);
+    // Identify items that ONLY belong to this library
+    const moviesToDelete = library.movies
+      .filter(
+        (m) => m.libraries.length === 1 && m.libraries[0].id === libraryId
+      )
+      .map((m) => m.id);
+
+    const tvShowsToDelete = library.tvShows
+      .filter(
+        (t) => t.libraries.length === 1 && t.libraries[0].id === libraryId
+      )
+      .map((t) => t.id);
+
+    const totalMedia = library.movies.length + library.tvShows.length;
+    const totalToDelete = moviesToDelete.length + tvShowsToDelete.length;
 
     logger.info(
       `📊 Analysis:
-  - Total media in library: ${library.media.length}
-  - Media only in this library (will be deleted): ${mediaToDelete.length}
-  - Media in other libraries (will be kept): ${library.media.length - mediaToDelete.length}`
+  - Total media in library: ${totalMedia}
+  - Movies only in this library (will be deleted): ${moviesToDelete.length}
+  - TV Shows only in this library (will be deleted): ${tvShowsToDelete.length}
+  - Media in other libraries (will be kept): ${totalMedia - totalToDelete}`
     );
 
     // Use a transaction to ensure atomicity
     const result = await prisma.$transaction(async (tx) => {
       let deletedCount = 0;
 
-      // Delete media that only belongs to this library
-      if (mediaToDelete.length > 0) {
-        const deleteResult = await tx.media.deleteMany({
+      // Delete movies that only belong to this library
+      if (moviesToDelete.length > 0) {
+        const deleteMovies = await tx.movie.deleteMany({
           where: {
             id: {
-              in: mediaToDelete,
+              in: moviesToDelete,
             },
           },
         });
-        deletedCount = deleteResult.count;
-        logger.info(`✓ Deleted ${deletedCount} media entries`);
+        deletedCount += deleteMovies.count;
+      }
+
+      // Delete TV shows that only belong to this library
+      if (tvShowsToDelete.length > 0) {
+        const deleteTV = await tx.tVShow.deleteMany({
+          where: {
+            id: {
+              in: tvShowsToDelete,
+            },
+          },
+        });
+        deletedCount += deleteTV.count;
       }
 
       // Delete the library itself
@@ -217,19 +241,25 @@ export const libraryService = {
     const libraries = await prisma.library.findMany({
       where,
       include: {
-        media: true,
+        _count: {
+          select: {
+            movies: true,
+            tvShows: true,
+          },
+        },
       },
       orderBy: [{ isLibrary: "desc" }, { name: "asc" }],
     });
 
     const librariesWithMetadata: LibraryWithMetadata[] = libraries.map(
       (library) => {
-        const { media, ...libraryWithoutMedia } = library;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { _count, ...libraryData } = library;
         return {
-          ...libraryWithoutMedia,
+          ...libraryData,
           createdAt: library.createdAt,
           updatedAt: library.updatedAt,
-          mediaCount: media.length,
+          mediaCount: (_count.movies || 0) + (_count.tvShows || 0),
         };
       }
     );

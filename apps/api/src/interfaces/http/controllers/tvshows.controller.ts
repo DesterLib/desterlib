@@ -41,12 +41,22 @@ function sendSuccess<T>(
   return res.status(statusCode).json(response);
 }
 
+/**
+ * Get base URL from request
+ */
+function getBaseUrl(req: Request): string {
+  const protocol = req.protocol;
+  const host = req.get("host") || "localhost:3001";
+  return `${protocol}://${host}`;
+}
+
 export const tvshowsControllers = {
   /**
    * Get all TV shows
    */
   getTVShows: asyncHandler(async (req: Request, res: Response) => {
-    const tvshows = await tvshowsService.getTVShows();
+    const baseUrl = getBaseUrl(req);
+    const tvshows = await tvshowsService.getTVShows(baseUrl);
     return sendSuccess(res, tvshows);
   }),
 
@@ -55,7 +65,8 @@ export const tvshowsControllers = {
    */
   getTVShowById: asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.validatedData as GetTVShowByIdRequest;
-    const tvshow = await tvshowsService.getTVShowById(id);
+    const baseUrl = getBaseUrl(req);
+    const tvshow = await tvshowsService.getTVShowById(id, baseUrl);
     return sendSuccess(res, tvshow);
   }),
 };

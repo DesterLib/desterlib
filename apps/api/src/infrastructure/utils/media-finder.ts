@@ -14,140 +14,59 @@ export interface MediaFileInfo {
   type: "movie" | "episode" | "music" | "comic";
 }
 
-type MovieWithMedia = {
-  filePath: string | null;
-  fileSize: bigint | null;
-  media: { title: string };
-} | null;
-
-type EpisodeWithMedia = {
-  filePath: string | null;
-  fileSize: bigint | null;
-  season: {
-    tvShow: {
-      media: { title: string };
-    };
-  };
-} | null;
-
-type MusicWithMedia = {
-  filePath: string | null;
-  fileSize: bigint | null;
-  media: { title: string };
-} | null;
-
-type ComicWithMedia = {
-  filePath: string | null;
-  fileSize: bigint | null;
-  media: { title: string };
-} | null;
-
-const MEDIA_QUERIES = [
-  {
-    type: "movie" as const,
-    finder: (id: string) =>
-      prisma.movie.findUnique({
-        where: { id },
-        include: { media: true },
-      }),
-    mapper: (result: MovieWithMedia): MediaFileInfo | null =>
-      result?.filePath
-        ? {
-            filePath: result.filePath,
-            fileSize: result.fileSize || BigInt(0),
-            title: result.media?.title,
-            type: "movie",
-          }
-        : null,
-  },
-  {
-    type: "episode" as const,
-    finder: (id: string) =>
-      prisma.episode.findUnique({
-        where: { id },
-        include: {
-          season: {
-            include: {
-              tvShow: {
-                include: { media: true },
-              },
-            },
-          },
-        },
-      }),
-    mapper: (result: EpisodeWithMedia): MediaFileInfo | null =>
-      result?.filePath
-        ? {
-            filePath: result.filePath,
-            fileSize: result.fileSize || BigInt(0),
-            title: result.season?.tvShow?.media?.title,
-            type: "episode",
-          }
-        : null,
-  },
-  {
-    type: "music" as const,
-    finder: (id: string) =>
-      prisma.music.findUnique({
-        where: { id },
-        include: { media: true },
-      }),
-    mapper: (result: MusicWithMedia): MediaFileInfo | null =>
-      result?.filePath
-        ? {
-            filePath: result.filePath,
-            fileSize: result.fileSize || BigInt(0),
-            title: result.media?.title,
-            type: "music",
-          }
-        : null,
-  },
-  {
-    type: "comic" as const,
-    finder: (id: string) =>
-      prisma.comic.findUnique({
-        where: { id },
-        include: { media: true },
-      }),
-    mapper: (result: ComicWithMedia): MediaFileInfo | null =>
-      result?.filePath
-        ? {
-            filePath: result.filePath,
-            fileSize: result.fileSize || BigInt(0),
-            title: result.media?.title,
-            type: "comic",
-          }
-        : null,
-  },
-];
-
 /**
  * Find media file by ID across all media types
  */
 export async function findMediaFileById(id: string): Promise<MediaFileInfo> {
   logger.info(`🔍 Searching for media file with ID: ${id}`);
 
-  for (const query of MEDIA_QUERIES) {
-    const result = await query.finder(id);
+  // Query the central MediaItem table
+  const mediaItem = await prisma.mediaItem.findUnique({
+    where: { id },
+    include: {
+      movie: true,
+      episode: {
+        include: {
+          season: {
+            include: {
+              tvShow: true,
+            },
+          },
+        },
+      },
+      music: true,
+      comic: true,
+    },
+  });
 
-    let mediaInfo: MediaFileInfo | null = null;
-
-    if (query.type === "movie") {
-      mediaInfo = query.mapper(result as MovieWithMedia);
-    } else if (query.type === "episode") {
-      mediaInfo = query.mapper(result as EpisodeWithMedia);
-    } else if (query.type === "music") {
-      mediaInfo = query.mapper(result as MusicWithMedia);
-    } else if (query.type === "comic") {
-      mediaInfo = query.mapper(result as ComicWithMedia);
-    }
-
-    if (mediaInfo) {
-      logger.info(`✅ Found ${query.type}: ${mediaInfo.title || id}`);
-      return mediaInfo;
-    }
+  if (!mediaItem) {
+    logger.error(`❌ Media file not found with ID: ${id}`);
+    throw new NotFoundError("Media file", id);
   }
 
-  logger.error(`❌ Media file not found with ID: ${id}`);
-  throw new NotFoundError("Media file", id);
+  let type: "movie" | "episode" | "music" | "comic" = "movie";
+  let title: string | undefined;
+
+  if (mediaItem.movie) {
+    type = "movie";
+    title = mediaItem.movie.title;
+  } else if (mediaItem.episode) {
+    type = "episode";
+    title = `${mediaItem.episode.season?.tvShow?.title} - S${mediaItem.episode.season?.number}E${mediaItem.episode.number} - ${mediaItem.episode.title}`;
+  } else if (mediaItem.music) {
+    type = "music";
+    title = mediaItem.music.title;
+  } else if (mediaItem.comic) {
+    type = "comic";
+    title = mediaItem.comic.title;
+  }
+
+  logger.info(`✅ Found ${type}: ${title || id}`);
+
+  return {
+    filePath: mediaItem.filePath,
+    fileSize: mediaItem.fileSize || BigInt(0),
+    title,
+    type,
+  };
 }

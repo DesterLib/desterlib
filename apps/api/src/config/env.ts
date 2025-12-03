@@ -29,6 +29,10 @@ export const config = {
     process.env.METADATA_SERVICE_URL || "http://localhost:8081",
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || "100", 10),
-  metadataPath: path.resolve(__dirname, "../../../", process.env.METADATA_PATH),
-  apiLogPath: path.resolve(__dirname, "../../../", process.env.API_LOG_PATH),
+  metadataPath: path.resolve(
+    __dirname,
+    "../../../../",
+    process.env.METADATA_PATH
+  ),
+  apiLogPath: path.resolve(__dirname, "../../../../", process.env.API_LOG_PATH),
 } as const;

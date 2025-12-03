@@ -55,14 +55,19 @@ const router: Router = express.Router();
  *                 tmdbApiKey: "your_tmdb_api_key_here"
  *             updateScanSettings:
  *               summary: Update scan settings
- *               description: Update media scanning configuration
+ *               description: Update media scanning configuration with media-type-specific patterns
  *               value:
  *                 scanSettings:
  *                   mediaTypeDepth:
  *                     movie: 2
  *                     tv: 4
- *                   filenamePattern: ".*\\.(mkv|mp4|avi)$"
- *                   directoryPattern: "^[^\\/]+(?:\\s*\\(\\d{4}\\))?$"
+ *                   mediaTypePatterns:
+ *                     movie:
+ *                       filenamePattern: ".*\\.(mkv|mp4|avi)$"
+ *                       directoryPattern: "^[^\\/]+(?:\\s*\\(\\d{4}\\))?$"
+ *                     tv:
+ *                       filenamePattern: ".*[Ss]\\d{2}[Ee]\\d{2}.*\\.(mkv|mp4)$"
+ *                       directoryPattern: "^(?:[^\\/]+|Season\\s*\\d+)$"
  *                   rescan: false
  *                   followSymlinks: true
  *             updateMultiple:
@@ -74,6 +79,9 @@ const router: Router = express.Router();
  *                   mediaTypeDepth:
  *                     movie: 2
  *                     tv: 4
+ *                   mediaTypePatterns:
+ *                     movie:
+ *                       filenamePattern: ".*\\.(mkv|mp4|avi)$"
  *     responses:
  *       '200':
  *         description: Settings updated successfully

@@ -6,6 +6,7 @@ import {
 } from "../schemas/library.schema";
 import type { z } from "zod";
 import { libraryService } from "../../../app/library";
+import { serializeBigInt } from "../../../infrastructure/utils/serialization";
 
 type DeleteLibraryRequest = z.infer<typeof deleteLibrarySchema>;
 type UpdateLibraryRequest = z.infer<typeof updateLibrarySchema>;
@@ -47,6 +48,15 @@ function sendSuccess<T>(
   return res.status(statusCode).json(response);
 }
 
+/**
+ * Get base URL from request
+ */
+function getBaseUrl(req: Request): string {
+  const protocol = req.protocol;
+  const host = req.get("host") || "localhost:3001";
+  return `${protocol}://${host}`;
+}
+
 export const libraryControllers = {
   /**
    * Delete a library and its associated media
@@ -54,8 +64,10 @@ export const libraryControllers = {
   delete: asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.validatedData as DeleteLibraryRequest;
     const result = await libraryService.delete(id);
+    const baseUrl = getBaseUrl(req);
+    const serialized = serializeBigInt(result, baseUrl);
 
-    return sendSuccess(res, result, 200, result.message);
+    return sendSuccess(res, serialized, 200, result.message);
   }),
 
   /**
@@ -73,8 +85,10 @@ export const libraryControllers = {
     }
 
     const libraries = await libraryService.getLibraries(filters);
+    const baseUrl = getBaseUrl(req);
+    const serialized = serializeBigInt(libraries, baseUrl);
 
-    return sendSuccess(res, libraries);
+    return sendSuccess(res, serialized);
   }),
 
   /**
@@ -83,7 +97,9 @@ export const libraryControllers = {
   update: asyncHandler(async (req: Request, res: Response) => {
     const { id, ...updateData } = req.validatedData as UpdateLibraryRequest;
     const result = await libraryService.update(id, updateData);
+    const baseUrl = getBaseUrl(req);
+    const serialized = serializeBigInt(result, baseUrl);
 
-    return sendSuccess(res, result, 200, result.message);
+    return sendSuccess(res, serialized, 200, result.message);
   }),
 };
