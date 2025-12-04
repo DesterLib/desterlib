@@ -185,23 +185,6 @@ ws.onmessage = (event) => {
 };
 ```
 
-## Special Features
-
-### Mesh Gradient Colors
-
-All media items include `meshGradientColors` - an array of 4 hex colors extracted from poster images for beautiful UI backgrounds:
-
-```json
-{
-  "media": {
-    "title": "The Matrix",
-    "meshGradientColors": ["#7C3AED", "#2563EB", "#EC4899", "#8B5CF6"]
-  }
-}
-```
-
-These colors are generated on-demand when fetching media and cached for performance.
-
 ## CORS Configuration
 
 The API automatically allows:

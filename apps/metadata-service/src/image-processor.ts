@@ -41,7 +41,7 @@ export class ImageProcessor {
    */
   async processImage(
     url: string | null,
-    type: "poster" | "backdrop" | "null-poster" | "logo",
+    type: "poster" | "backdrop" | "null-poster" | "null-backdrop" | "logo",
     providerId: string,
     mediaType: string | null = null
   ): Promise<string | null> {
@@ -60,6 +60,7 @@ export class ImageProcessor {
         poster: "posters",
         backdrop: "backdrops",
         "null-poster": "null-posters",
+        "null-backdrop": "null-backdrops",
         logo: "logos",
       };
       const folderName = folderMap[type];
@@ -125,7 +126,7 @@ export class ImageProcessor {
         // Logos should be smaller, ~300px width
         pipeline = pipeline.resize(300, null, { withoutEnlargement: true });
       } else {
-        // Standard backdrop size ~1280px width
+        // Standard backdrop size ~1280px width (backdrop and null-backdrop)
         pipeline = pipeline.resize(1280, null, { withoutEnlargement: true });
       }
 

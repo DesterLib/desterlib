@@ -162,15 +162,10 @@ export class TMDBProvider implements MetadataProvider {
    * Map TMDB movie data to standardized metadata format
    */
   private mapTMDBToMetadata(tmdbMovie: TMDBMovie): MovieMetadata {
-    // Extract English poster (primary)
-    const enPoster = tmdbMovie.images?.posters.find(
-      (p) => p.iso_639_1 === "en"
-    );
-    const posterUrl = enPoster
-      ? this.getImageUrl(enPoster.file_path)
-      : this.getImageUrl(tmdbMovie.poster_path);
+    // Use default poster_path (has logo overlay)
+    const posterUrl = this.getImageUrl(tmdbMovie.poster_path);
 
-    // Extract null language poster (no text overlay)
+    // Extract null language poster (no text/logo overlay) from images array
     const nullPoster = tmdbMovie.images?.posters.find(
       (p) => p.iso_639_1 === null
     );
@@ -178,13 +173,16 @@ export class TMDBProvider implements MetadataProvider {
       ? this.getImageUrl(nullPoster.file_path)
       : null;
 
-    // Extract English backdrop (primary)
+    // Extract English backdrop from images array
     const enBackdrop = tmdbMovie.images?.backdrops.find(
       (b) => b.iso_639_1 === "en"
     );
     const backdropUrl = enBackdrop
       ? this.getImageUrl(enBackdrop.file_path)
       : this.getImageUrl(tmdbMovie.backdrop_path);
+
+    // Use default backdrop_path for nullBackdropUrl (clean, no text overlay)
+    const nullBackdropUrl = this.getImageUrl(tmdbMovie.backdrop_path);
 
     // Find English logo
     const logo = tmdbMovie.images?.logos.find((l) => l.iso_639_1 === "en");
@@ -201,6 +199,7 @@ export class TMDBProvider implements MetadataProvider {
       posterUrl,
       nullPosterUrl,
       backdropUrl,
+      nullBackdropUrl,
       logoUrl,
       genres,
     };

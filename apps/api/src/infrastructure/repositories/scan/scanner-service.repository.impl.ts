@@ -35,13 +35,14 @@ export class ScannerServiceRepository implements IScannerServiceRepository {
     options: ScanRequestOptions
   ): Promise<ScanJob> {
     try {
-      // Build request body - Go service uses root_path, max_depth, media_type, and scan_job_id
+      // Build request body - Go service uses root_path, max_depth, media_type, scan_job_id, and rescan
       const requestBody: {
         root_path: string;
         library_id: string;
         max_depth?: number;
         media_type?: string;
         scan_job_id?: string;
+        rescan?: boolean;
       } = {
         root_path: path,
         library_id: libraryId,
@@ -55,9 +56,12 @@ export class ScannerServiceRepository implements IScannerServiceRepository {
       if (options.scanJobId) {
         requestBody.scan_job_id = options.scanJobId;
       }
+      if (options.rescan !== undefined) {
+        requestBody.rescan = options.rescan;
+      }
 
       logger.info(
-        `Offloading scan to Go scanner service: ${path} (max_depth: ${options.maxDepth})`
+        `Offloading scan to Go scanner service: ${path} (max_depth: ${options.maxDepth}, rescan: ${options.rescan ?? false})`
       );
 
       const response = await this.httpClient.post<{

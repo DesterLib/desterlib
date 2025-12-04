@@ -155,13 +155,13 @@ export const libraryService = {
     // Identify items that ONLY belong to this library
     const moviesToDelete = library.movies
       .filter(
-        (m) => m.libraries.length === 1 && m.libraries[0].id === libraryId
+        (m) => m.libraries.length === 1 && m.libraries[0]?.id === libraryId
       )
       .map((m) => m.id);
 
     const tvShowsToDelete = library.tvShows
       .filter(
-        (t) => t.libraries.length === 1 && t.libraries[0].id === libraryId
+        (t) => t.libraries.length === 1 && t.libraries[0]?.id === libraryId
       )
       .map((t) => t.id);
 

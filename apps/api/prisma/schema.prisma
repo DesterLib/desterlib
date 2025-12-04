@@ -68,6 +68,7 @@ model Movie {
   posterUrl           String?
   nullPosterUrl       String?
   backdropUrl         String?
+  nullBackdropUrl     String?
   logoUrl             String?
   
   releaseDate         DateTime?
@@ -102,6 +103,7 @@ model TVShow {
   posterUrl           String?
   nullPosterUrl       String?
   backdropUrl         String?
+  nullBackdropUrl     String?
   logoUrl             String?
   
   firstAirDate        DateTime?

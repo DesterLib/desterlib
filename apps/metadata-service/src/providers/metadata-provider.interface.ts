@@ -42,6 +42,7 @@ export interface MovieMetadata {
   posterUrl: string | null;
   nullPosterUrl: string | null;
   backdropUrl: string | null;
+  nullBackdropUrl: string | null;
   logoUrl: string | null;
   genres: string[];
 }

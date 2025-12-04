@@ -25,6 +25,7 @@ type ScanRequest struct {
 	LibraryID string `json:"library_id,omitempty"`
 	MediaType string `json:"media_type,omitempty"` // MOVIE, TV_SHOW
 	ScanJobID string `json:"scan_job_id,omitempty"` // Database scan job ID for tracking progress
+	Rescan    bool   `json:"rescan,omitempty"`       // Force re-scan and re-fetch metadata
 }
 
 // ScanResponse represents a scan response
@@ -43,4 +44,5 @@ type MetadataJob struct {
 	FolderPath string `json:"folder_path"`
 	Filename   string `json:"filename"`
 	LibraryID  string `json:"library_id,omitempty"`
+	Rescan     bool   `json:"rescan,omitempty"` // Force re-fetch metadata even if exists
 }

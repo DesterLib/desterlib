@@ -20,6 +20,7 @@ export interface MediaEntry {
   };
   metadata?: MediaMetadata;
   nullPosterUrl?: string | null;
+  nullBackdropUrl?: string | null;
   logoUrl?: string | null;
 }
 

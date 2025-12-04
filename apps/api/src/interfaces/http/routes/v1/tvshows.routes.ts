@@ -51,10 +51,6 @@ const router: Router = express.Router();
  *                       rating:
  *                         type: number
  *                         nullable: true
- *                       meshGradientColors:
- *                         type: array
- *                         items:
- *                           type: string
  *                       media:
  *                         type: array
  *                         items:

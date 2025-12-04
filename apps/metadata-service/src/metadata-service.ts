@@ -36,14 +36,20 @@ export class MetadataService {
    */
   private async verifyLocalImagesExist(
     posterUrl: string | null,
-    backdropUrl: string | null
-  ): Promise<{ posterExists: boolean; backdropExists: boolean }> {
+    backdropUrl: string | null,
+    nullBackdropUrl: string | null = null
+  ): Promise<{
+    posterExists: boolean;
+    backdropExists: boolean;
+    nullBackdropExists: boolean;
+  }> {
     // Get base storage path from image processor (accessing private property)
     const baseStoragePath = (this.imageProcessor as any)
       .baseStoragePath as string;
 
     let posterExists = false;
     let backdropExists = false;
+    let nullBackdropExists = false;
 
     if (posterUrl?.startsWith("/metadata/")) {
       const relativePath = posterUrl.replace("/metadata/", "");
@@ -75,7 +81,22 @@ export class MetadataService {
       }
     }
 
-    return { posterExists, backdropExists };
+    if (nullBackdropUrl?.startsWith("/metadata/")) {
+      const relativePath = nullBackdropUrl.replace("/metadata/", "");
+      const fullPath = path.join(baseStoragePath, relativePath);
+      try {
+        const stats = await fs.stat(fullPath);
+        if (stats.size > 0) {
+          // Quick validation: try to read metadata with sharp
+          await sharp(fullPath).metadata();
+          nullBackdropExists = true;
+        }
+      } catch {
+        nullBackdropExists = false;
+      }
+    }
+
+    return { posterExists, backdropExists, nullBackdropExists };
   }
 
   // New signature accepting mediaType
@@ -84,14 +105,22 @@ export class MetadataService {
     mediaType: string, // 'MOVIE', 'TV_SHOW', etc.
     title: string,
     year?: number,
-    libraryId?: string
+    libraryId?: string,
+    rescan?: boolean
   ): Promise<void> {
     try {
-      // Check if media already has complete metadata
-      const hasComplete = await this.database.hasCompleteMetadata(
-        mediaId,
-        mediaType
-      );
+      // Log rescan flag for debugging
+      if (rescan) {
+        this.logger.info(
+          { mediaId, title, rescan },
+          "RESCAN MODE: Forcing metadata re-fetch"
+        );
+      }
+
+      // Check if media already has complete metadata (skip if rescan is true)
+      const hasComplete =
+        !rescan &&
+        (await this.database.hasCompleteMetadata(mediaId, mediaType));
       if (hasComplete) {
         const existingMetadata = await this.database.getMediaMetadata(
           mediaId,
@@ -99,22 +128,28 @@ export class MetadataService {
         );
         if (existingMetadata) {
           // Verify local images exist if we're using local paths
-          const { posterExists, backdropExists } =
+          const { posterExists, backdropExists, nullBackdropExists } =
             await this.verifyLocalImagesExist(
               existingMetadata.posterUrl,
-              existingMetadata.backdropUrl
+              existingMetadata.backdropUrl,
+              existingMetadata.nullBackdropUrl
             );
 
-          // If we have ExternalId (TMDB link) and both images exist, skip fetching
-          if (
-            existingMetadata.hasExternalId &&
+          // If we have ExternalId (TMDB link) and images exist, skip fetching
+          // Check if at least poster or backdrop exists (including null variants)
+          const hasValidImages =
             (existingMetadata.posterUrl?.startsWith("/metadata/")
               ? posterExists
-              : existingMetadata.posterUrl !== null) &&
+              : existingMetadata.posterUrl !== null) ||
             (existingMetadata.backdropUrl?.startsWith("/metadata/")
               ? backdropExists
-              : existingMetadata.backdropUrl !== null)
-          ) {
+              : existingMetadata.backdropUrl !== null) ||
+            existingMetadata.nullPosterUrl !== null ||
+            (existingMetadata.nullBackdropUrl?.startsWith("/metadata/")
+              ? nullBackdropExists
+              : existingMetadata.nullBackdropUrl !== null);
+
+          if (existingMetadata.hasExternalId && hasValidImages) {
             this.logger.debug(
               {
                 mediaId,
@@ -200,6 +235,7 @@ export class MetadataService {
         localPosterPath,
         localBackdropPath,
         localNullPosterPath,
+        localNullBackdropPath,
         localLogoPath,
       ] = await Promise.all([
         this.imageProcessor.processImage(
@@ -221,6 +257,12 @@ export class MetadataService {
           mediaType
         ),
         this.imageProcessor.processImage(
+          metadata.nullBackdropUrl,
+          "null-backdrop",
+          providerIdStr,
+          mediaType
+        ),
+        this.imageProcessor.processImage(
           metadata.logoUrl,
           "logo",
           providerIdStr,
@@ -238,6 +280,9 @@ export class MetadataService {
       const finalNullPosterUrl = localNullPosterPath
         ? `/metadata/${localNullPosterPath}`
         : metadata.nullPosterUrl;
+      const finalNullBackdropUrl = localNullBackdropPath
+        ? `/metadata/${localNullBackdropPath}`
+        : metadata.nullBackdropUrl;
       const finalLogoUrl = localLogoPath
         ? `/metadata/${localLogoPath}`
         : metadata.logoUrl;
@@ -249,6 +294,7 @@ export class MetadataService {
         posterUrl: finalPosterUrl,
         nullPosterUrl: finalNullPosterUrl,
         backdropUrl: finalBackdropUrl,
+        nullBackdropUrl: finalNullBackdropUrl,
         logoUrl: finalLogoUrl,
         releaseDate,
         rating: metadata.rating || null,

@@ -122,10 +122,6 @@ router.get(
 
 router.put("/", validateBody(updateLibrarySchema), libraryControllers.update);
 
-router.delete(
-  "/",
-  validateBody(deleteLibrarySchema),
-  libraryControllers.delete
-);
+router.delete("/:id", libraryControllers.delete);
 
 export default router;

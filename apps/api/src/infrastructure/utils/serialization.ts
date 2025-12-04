@@ -65,6 +65,7 @@ export function serializeBigInt<T>(obj: T, baseUrl?: string): T {
         (key === "posterUrl" ||
           key === "backdropUrl" ||
           key === "nullPosterUrl" ||
+          key === "nullBackdropUrl" ||
           key === "logoUrl" ||
           key === "stillPath") &&
         typeof value === "string" &&

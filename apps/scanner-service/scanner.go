@@ -57,8 +57,8 @@ func (s *ScannerService) ScanHandler(w http.ResponseWriter, r *http.Request) {
 		mediaType = "MOVIE"
 	}
 
-	// Start scanning in goroutine (pass scanJobId if provided)
-	go s.scanDirectory(req.RootPath, req.LibraryID, mediaType, maxDepth, req.ScanJobID)
+	// Start scanning in goroutine (pass scanJobId and rescan flag if provided)
+	go s.scanDirectory(req.RootPath, req.LibraryID, mediaType, maxDepth, req.ScanJobID, req.Rescan)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(ScanResponse{
@@ -68,7 +68,7 @@ func (s *ScannerService) ScanHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *ScannerService) scanDirectory(rootPath, libraryId, mediaType string, maxDepth int, scanJobId string) {
+func (s *ScannerService) scanDirectory(rootPath, libraryId, mediaType string, maxDepth int, scanJobId string, rescan bool) {
 	// Handle panics and mark scan job as FAILED if something goes wrong
 	defer func() {
 		if r := recover(); r != nil {
@@ -184,6 +184,7 @@ func (s *ScannerService) scanDirectory(rootPath, libraryId, mediaType string, ma
 					FolderPath: movie.FolderPath,
 					Filename:   movie.Filename,
 					LibraryID:  libraryId,
+					Rescan:     rescan, // Pass rescan flag to force metadata re-fetch
 				}
 
 				if err := s.redis.PushMetadataJob(s.config.ScanQueueName, job); err != nil {

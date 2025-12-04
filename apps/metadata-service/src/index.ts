@@ -222,7 +222,7 @@ async function startConsumer() {
   const processingLibraries = new Set<string>();
 
   const processJob = async (job: any) => {
-    // Destructure media_type
+    // Destructure media_type and rescan flag
     const {
       media_id,
       title,
@@ -231,8 +231,14 @@ async function startConsumer() {
       folder_path,
       filename,
       media_type,
+      rescan,
     } = job;
     const type = (media_type || "MOVIE").toUpperCase();
+    
+    // Log rescan flag for debugging
+    if (rescan) {
+      logger.info({ mediaId: media_id, title, rescan }, "Processing job with RESCAN flag");
+    }
 
     try {
       if (!metadataService) {
@@ -337,7 +343,8 @@ async function startConsumer() {
         type,
         title,
         year,
-        library_id
+        library_id,
+        rescan
       );
       logger.info(
         { mediaId: media_id, type },

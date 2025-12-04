@@ -142,6 +142,7 @@ export class Database {
       posterUrl: string | null;
       nullPosterUrl: string | null;
       backdropUrl: string | null;
+      nullBackdropUrl: string | null;
       logoUrl: string | null;
       releaseDate: Date | null;
       rating: number | null;
@@ -185,9 +186,10 @@ export class Database {
           "${dateField}" = $5,
           rating = $6,
           "nullPosterUrl" = $7,
-          "logoUrl" = $8,
+          "nullBackdropUrl" = $8,
+          "logoUrl" = $9,
           "updatedAt" = NOW()
-         WHERE id = $9`,
+         WHERE id = $10`,
         [
           metadata.title,
           metadata.overview,
@@ -196,6 +198,7 @@ export class Database {
           metadata.releaseDate,
           metadata.rating,
           metadata.nullPosterUrl,
+          metadata.nullBackdropUrl,
           metadata.logoUrl,
           mediaId,
         ]
@@ -271,6 +274,8 @@ export class Database {
   ): Promise<{
     posterUrl: string | null;
     backdropUrl: string | null;
+    nullPosterUrl: string | null;
+    nullBackdropUrl: string | null;
     hasExternalId: boolean;
   } | null> {
     const tableName = mediaType === "TV_SHOW" ? "TVShow" : "Movie";
@@ -280,11 +285,15 @@ export class Database {
       const result = await this.pool.query<{
         posterUrl: string | null;
         backdropUrl: string | null;
+        nullPosterUrl: string | null;
+        nullBackdropUrl: string | null;
         hasExternalId: boolean;
       }>(
         `SELECT 
           m."posterUrl",
           m."backdropUrl",
+          m."nullPosterUrl",
+          m."nullBackdropUrl",
           CASE WHEN e.id IS NOT NULL THEN true ELSE false END as "hasExternalId"
         FROM "${tableName}" m
         LEFT JOIN "ExternalId" e ON e."${idField}" = m.id AND e.source = 'TMDB'

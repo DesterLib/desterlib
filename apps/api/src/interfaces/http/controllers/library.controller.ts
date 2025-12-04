@@ -62,7 +62,15 @@ export const libraryControllers = {
    * Delete a library and its associated media
    */
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.validatedData as DeleteLibraryRequest;
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: "Library ID is required",
+      });
+    }
+
     const result = await libraryService.delete(id);
     const baseUrl = getBaseUrl(req);
     const serialized = serializeBigInt(result, baseUrl);

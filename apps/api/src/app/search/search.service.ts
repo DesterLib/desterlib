@@ -12,19 +12,19 @@ export const searchService = {
     // Fetch more than needed to ensure we get a good mix
     const FETCH_LIMIT = 20;
 
-    // Search the Media table directly by title and filter by type
+    // Search movies and TV shows directly
     const [movies, tvShows] = await Promise.all([
       // Search for movies
-      prisma.media.findMany({
+      prisma.movie.findMany({
         where: {
           title: {
             contains: query,
             mode: "insensitive",
           },
-          type: "MOVIE",
         },
         include: {
-          movies: true,
+          mediaItems: true,
+          genres: true,
         },
         orderBy: {
           title: "asc",
@@ -32,16 +32,15 @@ export const searchService = {
         take: FETCH_LIMIT,
       }),
       // Search for TV shows
-      prisma.media.findMany({
+      prisma.tVShow.findMany({
         where: {
           title: {
             contains: query,
             mode: "insensitive",
           },
-          type: "TV_SHOW",
         },
         include: {
-          tvShow: true,
+          genres: true,
         },
         orderBy: {
           title: "asc",
@@ -51,51 +50,21 @@ export const searchService = {
     ]);
 
     // Format results and convert BigInt to string for JSON serialization
-    const formattedMovies = movies
-      .filter((media) => media.movies && media.movies.length > 0)
-      .map((media) => {
-        const movie = media.movies[0];
-        if (!movie) {
-          return null;
-        }
-        return {
-          ...movie,
-          fileSize: movie.fileSize?.toString() ?? null,
-          media: {
-            id: media.id,
-            title: media.title,
-            type: media.type,
-            description: media.description,
-            posterUrl: media.posterUrl,
-            backdropUrl: media.backdropUrl,
-            meshGradientColors: media.meshGradientColors,
-            releaseDate: media.releaseDate,
-            rating: media.rating,
-            createdAt: media.createdAt,
-            updatedAt: media.updatedAt,
-          },
-        };
-      })
-      .filter((movie): movie is NonNullable<typeof movie> => movie !== null);
+    const formattedMovies = movies.map((movie) => {
+      return {
+        ...movie,
+        mediaItems: movie.mediaItems.map((item) => ({
+          ...item,
+          fileSize: item.fileSize?.toString() ?? null,
+        })),
+      };
+    });
 
-    const formattedTvShows = tvShows
-      .filter((media) => media.tvShow !== null)
-      .map((media) => ({
-        ...media.tvShow,
-        media: {
-          id: media.id,
-          title: media.title,
-          type: media.type,
-          description: media.description,
-          posterUrl: media.posterUrl,
-          backdropUrl: media.backdropUrl,
-          meshGradientColors: media.meshGradientColors,
-          releaseDate: media.releaseDate,
-          rating: media.rating,
-          createdAt: media.createdAt,
-          updatedAt: media.updatedAt,
-        },
-      }));
+    const formattedTvShows = tvShows.map((tvShow) => {
+      return {
+        ...tvShow,
+      };
+    });
 
     // Interleave movies and TV shows, then limit to TOTAL_LIMIT
     const combined = [];
