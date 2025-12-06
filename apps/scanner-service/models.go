@@ -20,12 +20,13 @@ type MovieInfo struct {
 
 // ScanRequest represents a scan request
 type ScanRequest struct {
-	RootPath  string `json:"root_path"`
-	MaxDepth  int    `json:"max_depth,omitempty"`
-	LibraryID string `json:"library_id,omitempty"`
-	MediaType string `json:"media_type,omitempty"` // MOVIE, TV_SHOW
-	ScanJobID string `json:"scan_job_id,omitempty"` // Database scan job ID for tracking progress
-	Rescan    bool   `json:"rescan,omitempty"`       // Force re-scan and re-fetch metadata
+	RootPath       string `json:"root_path"`
+	MaxDepth       int    `json:"max_depth,omitempty"`
+	LibraryID      string `json:"library_id,omitempty"`
+	MediaType      string `json:"media_type,omitempty"`      // MOVIE, TV_SHOW
+	ScanJobID      string `json:"scan_job_id,omitempty"`      // Database scan job ID for tracking progress
+	Rescan         bool   `json:"rescan,omitempty"`           // Force re-scan and re-fetch metadata
+	FollowSymlinks bool   `json:"follow_symlinks,omitempty"` // Follow symbolic links when scanning
 }
 
 // ScanResponse represents a scan response

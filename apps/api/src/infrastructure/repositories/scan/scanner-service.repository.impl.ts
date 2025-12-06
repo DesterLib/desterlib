@@ -43,6 +43,7 @@ export class ScannerServiceRepository implements IScannerServiceRepository {
         media_type?: string;
         scan_job_id?: string;
         rescan?: boolean;
+        follow_symlinks?: boolean;
       } = {
         root_path: path,
         library_id: libraryId,
@@ -59,9 +60,12 @@ export class ScannerServiceRepository implements IScannerServiceRepository {
       if (options.rescan !== undefined) {
         requestBody.rescan = options.rescan;
       }
+      if (options.followSymlinks !== undefined) {
+        requestBody.follow_symlinks = options.followSymlinks;
+      }
 
       logger.info(
-        `Offloading scan to Go scanner service: ${path} (max_depth: ${options.maxDepth}, rescan: ${options.rescan ?? false})`
+        `Offloading scan to Go scanner service: ${path} (max_depth: ${options.maxDepth}, rescan: ${options.rescan ?? false}, follow_symlinks: ${options.followSymlinks ?? true})`
       );
 
       const response = await this.httpClient.post<{

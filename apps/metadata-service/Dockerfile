@@ -18,6 +18,6 @@ COPY src ./src
 # Build TypeScript
 RUN pnpm run build
 
-EXPOSE 8081
+EXPOSE 8082
 
 CMD ["node", "dist/index.js"]

@@ -26,7 +26,7 @@ export const config = {
   redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
   scannerServiceUrl: process.env.SCANNER_SERVICE_URL || "http://localhost:8080",
   metadataServiceUrl:
-    process.env.METADATA_SERVICE_URL || "http://localhost:8081",
+    process.env.METADATA_SERVICE_URL || "http://localhost:8082",
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || "100", 10),
   metadataPath: path.resolve(

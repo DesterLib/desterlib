@@ -38,7 +38,7 @@ if (!process.env.SCAN_JOB_LOG_PATH) {
 // Resolve paths relative to project root (not current working directory)
 const projectRoot = path.resolve(__dirname, "../../../");
 const config = {
-  port: parseInt(process.env.METADATA_PORT || "8081", 10),
+  port: parseInt(process.env.METADATA_PORT || "8082", 10),
   databaseUrl: process.env.DATABASE_URL,
   redisUrl: process.env.REDIS_URL || "redis://localhost:6379/0",
   queueName: process.env.METADATA_QUEUE_NAME || "metadata:jobs",
