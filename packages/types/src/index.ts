@@ -20,3 +20,6 @@ export type EventChannel =
   | `scanner:${string}`
   | `metadata:${string}`
   | `api:${string}`;
+
+// Plugin system types
+export type { IPlugin, PluginConfig, PluginStatus } from "./plugin.interface";

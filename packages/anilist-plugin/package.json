@@ -1,0 +1,23 @@
+{
+  "name": "@dester/anilist-plugin",
+  "version": "0.1.0",
+  "description": "AniList metadata provider plugin for Dester",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@dester/logger": "workspace:*",
+    "@dester/types": "workspace:*",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@types/node": "^20.10.5"
+  }
+}

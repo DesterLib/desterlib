@@ -1,0 +1,28 @@
+{
+  "name": "@dester/tmdb-plugin",
+  "version": "0.3.0",
+  "description": "TMDB metadata provider plugin for Dester",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@dester/logger": "workspace:*",
+    "@dester/redis": "workspace:*",
+    "@dester/types": "workspace:*",
+    "axios": "^1.6.2",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.3",
+    "sharp": "0.34.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@types/pg": "^8.10.9",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@types/node": "^20.10.5"
+  }
+}
