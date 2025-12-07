@@ -336,21 +336,9 @@ model Library {
 // EXTERNAL IDS
 // ────────────────────────────
 
-enum ExternalIdSource {
-  TMDB
-  IMDB
-  TVDB
-  ANIDB
-  MYANIMELIST
-  MUSICBRAINZ
-  SPOTIFY
-  COMICVINE
-  OTHER
-}
-
 model ExternalId {
-  id         String           @id @default(cuid())
-  source     ExternalIdSource
+  id         String   @id @default(cuid())
+  source     String   // Plugin-defined source identifier (e.g., "TMDB", "ANILIST")
   externalId String
   
   movieId    String?

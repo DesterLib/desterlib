@@ -5,9 +5,6 @@ CREATE TYPE "MediaType" AS ENUM ('MOVIE', 'TV_SHOW', 'MUSIC', 'COMIC');
 CREATE TYPE "RoleType" AS ENUM ('ACTOR', 'DIRECTOR', 'WRITER', 'PRODUCER', 'ARTIST', 'COMPOSER', 'AUTHOR', 'CREATOR', 'GUEST_STAR');
 
 -- CreateEnum
-CREATE TYPE "ExternalIdSource" AS ENUM ('TMDB', 'IMDB', 'TVDB', 'ANIDB', 'MYANIMELIST', 'MUSICBRAINZ', 'SPOTIFY', 'COMICVINE', 'OTHER');
-
--- CreateEnum
 CREATE TYPE "ScanJobStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'PAUSED');
 
 -- CreateEnum
@@ -49,10 +46,10 @@ CREATE TABLE "Movie" (
     "overview" TEXT,
     "tagline" TEXT,
     "posterUrl" TEXT,
-    "plainPosterUrl" TEXT,
+    "nullPosterUrl" TEXT,
     "backdropUrl" TEXT,
+    "nullBackdropUrl" TEXT,
     "logoUrl" TEXT,
-    "meshGradientColors" TEXT[],
     "releaseDate" TIMESTAMP(3),
     "rating" DOUBLE PRECISION,
     "contentRating" TEXT,
@@ -70,10 +67,10 @@ CREATE TABLE "TVShow" (
     "originalTitle" TEXT,
     "overview" TEXT,
     "posterUrl" TEXT,
-    "plainPosterUrl" TEXT,
+    "nullPosterUrl" TEXT,
     "backdropUrl" TEXT,
+    "nullBackdropUrl" TEXT,
     "logoUrl" TEXT,
-    "meshGradientColors" TEXT[],
     "firstAirDate" TIMESTAMP(3),
     "rating" DOUBLE PRECISION,
     "contentRating" TEXT,
@@ -214,7 +211,7 @@ CREATE TABLE "Library" (
 -- CreateTable
 CREATE TABLE "ExternalId" (
     "id" TEXT NOT NULL,
-    "source" "ExternalIdSource" NOT NULL,
+    "source" TEXT NOT NULL,
     "externalId" TEXT NOT NULL,
     "movieId" TEXT,
     "tvShowId" TEXT,
