@@ -1,11 +1,17 @@
 import express, { Router } from "express";
 import { settingsControllers } from "../../controllers/settings.controller";
 import { providerControllers } from "../../controllers/provider.controller";
-import { validate } from "../../middleware";
+import { validate, validateBody, validateParams } from "../../middleware";
 import {
   updateSettingsSchema,
   getSettingsSchema,
 } from "../../schemas/settings.schema";
+import {
+  getProviderByNameSchema,
+  upsertProviderSchema,
+  updateProviderSchema,
+  deleteProviderSchema,
+} from "../../schemas/provider.schema";
 
 const router: Router = express.Router();
 
@@ -247,7 +253,11 @@ router.post("/reset-scan", settingsControllers.resetScanSettings);
  */
 router.get("/providers", providerControllers.getAll);
 
-router.post("/providers", providerControllers.upsert);
+router.post(
+  "/providers",
+  validateBody(upsertProviderSchema),
+  providerControllers.upsert
+);
 
 /**
  * @swagger
@@ -320,11 +330,24 @@ router.post("/providers", providerControllers.upsert);
  *       '404':
  *         $ref: '#/components/responses/NotFound'
  */
-router.get("/providers/:name", providerControllers.getByName);
+router.get(
+  "/providers/:name",
+  validateParams(getProviderByNameSchema),
+  providerControllers.getByName
+);
 
-router.put("/providers/:name", providerControllers.update);
+router.put(
+  "/providers/:name",
+  validateParams(updateProviderSchema),
+  validateBody(updateProviderSchema),
+  providerControllers.update
+);
 
-router.delete("/providers/:name", providerControllers.delete);
+router.delete(
+  "/providers/:name",
+  validateParams(deleteProviderSchema),
+  providerControllers.delete
+);
 
 /**
  * @swagger

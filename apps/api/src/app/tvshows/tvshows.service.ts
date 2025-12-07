@@ -55,19 +55,43 @@ export const tvshowsService = {
 
     logger.info(`Found TV show: "${tvshow.title}"`);
 
-    const serialized = serializeBigInt(tvshow, baseUrl) as any;
+    const serialized = serializeBigInt(tvshow, baseUrl) as {
+      seasons: Array<{
+        id: string;
+        number: number;
+        name: string | null;
+        overview: string | null;
+        airDate: Date | null;
+        posterUrl: string | null;
+        tvShowId: string;
+        episodes: Array<{
+          id: string;
+          number: number;
+          title: string;
+          description: string | null;
+          airDate: Date | null;
+          stillUrl: string | null;
+          seasonId: string;
+          mediaItems: Array<{
+            id: string;
+            filePath: string;
+            fileSize: bigint | null;
+            duration: number | null;
+          }>;
+        }>;
+      }>;
+    };
 
     // Transform seasons and episodes to match API schema
-    const seasonsWithTransformedData = serialized.seasons.map(
-      (season: any) => ({
-        id: season.id,
-        seasonNumber: season.number,
-        name: season.name || `Season ${season.number}`,
-        overview: season.overview,
-        airDate: season.airDate,
-        posterUrl: season.posterUrl,
-        tvShowId: season.tvShowId,
-        episodes: season.episodes.map((episode: any) => {
+    const seasonsWithTransformedData = serialized.seasons.map((season) => ({
+      id: season.id,
+      seasonNumber: season.number,
+      name: season.name || `Season ${season.number}`,
+      overview: season.overview,
+      airDate: season.airDate,
+      posterUrl: season.posterUrl,
+      tvShowId: season.tvShowId,
+      episodes: season.episodes.map((episode) => {
           // Get file info from the first media item if available
           const mediaItem =
             episode.mediaItems && episode.mediaItems.length > 0

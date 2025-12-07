@@ -12,6 +12,7 @@ import { container } from "./infrastructure/container";
 import { settingsManager } from "./infrastructure/core/settings";
 import { DesterWebSocketServer } from "./infrastructure/websocket";
 import { logger } from "@dester/logger";
+import { PluginConfig } from "@dester/types";
 
 const app = express();
 const httpServer = createServer(app);
@@ -73,6 +74,111 @@ const startServer = async () => {
     // Initialize settings
     await settingsManager.initialize();
 
+    // Load and initialize plugins
+    const pluginManager = container.getPluginManager();
+    logger.info({ plugins: config.plugins }, "Loading plugins...");
+
+    // Load all plugins
+    for (const pluginName of config.plugins) {
+      try {
+        await pluginManager.loadPlugin(pluginName);
+      } catch (error) {
+        logger.error({ error, plugin: pluginName }, "Failed to load plugin");
+        // Continue with other plugins even if one fails
+      }
+    }
+
+    // Initialize plugins with configuration
+    // Load provider config from database and pass to plugins
+    const { ProviderService } = await import("./app/providers/index.js");
+    const providerService = new ProviderService(prisma);
+    const enabledProviders = await providerService.getEnabledProviders();
+    const tmdbProvider = enabledProviders.find(
+      (p: { name: string }) => p.name.toLowerCase() === "tmdb"
+    );
+
+    const pluginConfigs: Array<{ name: string; config: PluginConfig }> = [];
+    for (const pluginName of config.plugins) {
+      // For tmdb plugin, load config from database
+      if (pluginName === "@dester/tmdb-plugin" || pluginName === "tmdb") {
+        if (!tmdbProvider || !tmdbProvider.enabled) {
+          logger.warn(
+            "TMDB provider not found or disabled, skipping plugin initialization"
+          );
+          continue;
+        }
+
+        // Type-safe access to provider config
+        const providerConfig = tmdbProvider.config as
+          | {
+              apiKey?: string;
+              api_key?: string;
+              baseUrl?: string;
+              base_url?: string;
+              rateLimitRps?: number;
+              rate_limit_rps?: number;
+            }
+          | null
+          | undefined;
+        pluginConfigs.push({
+          name: "tmdb",
+          config: {
+            apiKey: providerConfig?.apiKey || providerConfig?.api_key,
+            baseUrl:
+              providerConfig?.baseUrl ||
+              providerConfig?.base_url ||
+              "https://api.themoviedb.org/3",
+            rateLimitRps:
+              providerConfig?.rateLimitRps ||
+              providerConfig?.rate_limit_rps ||
+              parseFloat(process.env.METADATA_RATE_LIMIT_RPS || "4"),
+            logger, // Pass logger to plugin
+          },
+        });
+      } else {
+        // For other plugins, use default config
+        pluginConfigs.push({
+          name: pluginName,
+          config: {
+            ...config.pluginConfig,
+            logger,
+          },
+        });
+      }
+    }
+
+    await pluginManager.initializePlugins(pluginConfigs);
+    logger.info("Plugins initialized");
+
+    // Start plugins
+    await pluginManager.startPlugins();
+    logger.info("Plugins started");
+
+    // Start metadata queue consumer
+    const metadataQueueService = container.getMetadataQueueService();
+    const { createMetadataProcessorService } = await import(
+      "./app/metadata/index.js"
+    );
+    const metadataProcessorService = createMetadataProcessorService();
+    const maxConcurrentJobs = parseInt(
+      (config.pluginConfig.maxConcurrentJobs as string) || "20",
+      10
+    );
+
+    // Check if queue is available before starting consumer
+    const isReady = await metadataQueueService.ping();
+    if (isReady) {
+      logger.info("Starting metadata queue consumer...");
+      await metadataQueueService.consume(async (job) => {
+        await metadataProcessorService.process(job);
+      }, maxConcurrentJobs);
+      logger.info("Metadata queue consumer started");
+    } else {
+      logger.warn(
+        "Redis not available. Metadata queue consumer will not start. Start Redis with: docker-compose up redis or redis-server"
+      );
+    }
+
     httpServer.on("error", (error: NodeJS.ErrnoException) => {
       if (error.code === "EADDRINUSE") {
         logger.error(`❌ Port ${config.port} is already in use!`);
@@ -111,7 +217,25 @@ const startServer = async () => {
 const gracefulShutdown = async (signal: string) => {
   logger.info(`Received ${signal}, shutting down gracefully...`);
 
-  // Close WebSocket server first
+  // Stop metadata queue consumer
+  try {
+    const metadataQueueService = container.getMetadataQueueService();
+    await metadataQueueService.close();
+    logger.info("Metadata queue consumer stopped");
+  } catch (error) {
+    logger.error({ error }, "Error stopping metadata queue consumer");
+  }
+
+  // Stop plugins first
+  try {
+    const pluginManager = container.getPluginManager();
+    await pluginManager.stopPlugins();
+    logger.info("Plugins stopped");
+  } catch (error) {
+    logger.error({ error }, "Error stopping plugins");
+  }
+
+  // Close WebSocket server
   if (wsServer) {
     await wsServer.shutdown();
   }

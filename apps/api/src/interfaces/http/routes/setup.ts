@@ -6,7 +6,9 @@ import v1Routes from "./v1";
 
 // Get API version for request interceptor
 function getApiVersion(): string {
-  return (swaggerSpec as any).info?.version || "0.3.0";
+  // Swagger spec type doesn't expose info.version in a type-safe way
+  const spec = swaggerSpec as { info?: { version?: string } };
+  return spec?.info?.version || "0.3.0";
 }
 
 export function setupRoutes(app: Application) {
@@ -41,7 +43,10 @@ export function setupRoutes(app: Application) {
         displayRequestDuration: true,
         filter: true,
         tryItOutEnabled: true,
-        requestInterceptor: requestInterceptor as any,
+        // swagger-ui-express types don't properly type requestInterceptor
+        requestInterceptor: requestInterceptor as (request: {
+          headers: Record<string, string>;
+        }) => { headers: Record<string, string> },
       },
     })
   );

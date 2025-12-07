@@ -8,19 +8,9 @@ import { getImageSchema } from "../schemas/image.schema";
 import { promises as fs } from "fs";
 import { createReadStream } from "fs";
 import path from "path";
+import { asyncHandler } from "../../../infrastructure/utils/async-handler";
 
 type GetImageRequest = z.infer<typeof getImageSchema>;
-
-/**
- * Async handler wrapper for error handling
- */
-function asyncHandler(
-  fn: (req: Request, res: Response, next: any) => Promise<any>
-) {
-  return (req: Request, res: Response, next: any) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-}
 
 export const imageControllers = {
   /**

@@ -7,6 +7,25 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
+interface PrismaQueryEvent {
+  query: string;
+  params: string;
+  duration: number;
+  target: string;
+  timestamp: Date;
+}
+
+interface PrismaLogEvent {
+  message: string;
+  target: string;
+  timestamp: Date;
+}
+
+interface PrismaClientWithEvents {
+  $on(event: "query", callback: (e: PrismaQueryEvent) => void): void;
+  $on(event: "warn" | "error", callback: (e: PrismaLogEvent) => void): void;
+}
+
 // Create PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -32,28 +51,24 @@ const prisma =
 
 // Integrate Prisma logging with custom logger
 // Using type assertion since Prisma's $on typing doesn't include event emitter pattern
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const prismaClient = prisma as any;
+const prismaClient = prisma as PrismaClientWithEvents;
 
 // Only enable query logging if explicitly enabled via PRISMA_LOG env var
 if (process.env.PRISMA_LOG === "true") {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  prismaClient.$on("query", (e: any) => {
+  prismaClient.$on("query", (e: PrismaQueryEvent) => {
     logger.debug(`prisma:query ${e.query}`, {
       duration: `${e.duration}ms`,
       params: e.params,
     });
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  prismaClient.$on("warn", (e: any) => {
+  prismaClient.$on("warn", (e: PrismaLogEvent) => {
     logger.warn(`prisma:warn ${e.message}`, { target: e.target });
   });
 }
 
 // Error logging in all environments
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-prismaClient.$on("error", (e: any) => {
+prismaClient.$on("error", (e: PrismaLogEvent) => {
   logger.error(`prisma:error ${e.message}`, { target: e.target });
 });
 

@@ -2,45 +2,8 @@ import type { Request, Response } from "express";
 import { logsService } from "../../../app/logs";
 import { logger } from "@dester/logger";
 import type { GetLogsQuery } from "../schemas/logs.schema";
-
-/**
- * Async handler wrapper for error handling
- */
-function asyncHandler(
-  fn: (req: Request, res: Response, next: any) => Promise<any>
-) {
-  return (req: Request, res: Response, next: any) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-}
-
-/**
- * Send success response
- */
-function sendSuccess<T>(
-  res: Response,
-  data: T,
-  statusCode: number = 200,
-  message?: string
-): Response {
-  const response: {
-    success: true;
-    data?: T;
-    message?: string;
-  } = {
-    success: true,
-  };
-
-  if (data !== null && data !== undefined) {
-    response.data = data;
-  }
-
-  if (message) {
-    response.message = message;
-  }
-
-  return res.status(statusCode).json(response);
-}
+import { asyncHandler } from "../../../infrastructure/utils/async-handler";
+import { sendSuccess } from "../utils/response.helpers";
 
 /**
  * Get recent logs

@@ -1,4 +1,4 @@
-import { PrismaClient, MetadataProvider } from "@prisma/client";
+import { PrismaClient, MetadataProvider, Prisma } from "@prisma/client";
 import { logger } from "@dester/logger";
 
 export type MetadataProviderConfig = MetadataProvider;
@@ -45,7 +45,7 @@ export class ProviderService {
     name: string,
     enabled: boolean,
     priority: number,
-    config: Record<string, any>
+    config: Prisma.JsonValue
   ): Promise<MetadataProviderConfig> {
     return await this.prisma.metadataProvider.upsert({
       where: {
@@ -56,12 +56,12 @@ export class ProviderService {
         name,
         enabled,
         priority,
-        config: config as any, // Prisma Json type
+        config,
       },
       update: {
         enabled,
         priority,
-        config: config as any, // Prisma Json type
+        config,
       },
     });
   }
@@ -74,14 +74,14 @@ export class ProviderService {
     providerUpdates: {
       enabled?: boolean;
       priority?: number;
-      config?: Record<string, any>;
+      config?: Prisma.JsonValue;
     }
   ): Promise<MetadataProviderConfig | null> {
     // Build update object, only including defined fields
     const updateData: {
       enabled?: boolean;
       priority?: number;
-      config?: any;
+      config?: Prisma.JsonValue;
     } = {};
 
     if (providerUpdates.enabled !== undefined) {
@@ -91,7 +91,7 @@ export class ProviderService {
       updateData.priority = providerUpdates.priority;
     }
     if (providerUpdates.config !== undefined) {
-      updateData.config = providerUpdates.config as any;
+      updateData.config = providerUpdates.config;
     }
 
     // If no updates, just return the existing provider
@@ -106,9 +106,14 @@ export class ProviderService {
         },
         data: updateData,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If provider doesn't exist, Prisma throws P2025
-      if (error.code === "P2025") {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "P2025"
+      ) {
         return null;
       }
       throw error;
@@ -126,9 +131,14 @@ export class ProviderService {
         },
       });
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If provider doesn't exist, Prisma throws P2025
-      if (error.code === "P2025") {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "P2025"
+      ) {
         return false;
       }
       throw error;
@@ -148,7 +158,7 @@ export class ProviderService {
       priority?: number;
       baseUrl?: string;
       rateLimitRps?: number;
-      [key: string]: any; // Allow additional provider-specific config
+      [key: string]: Prisma.JsonValue | undefined; // Allow additional provider-specific config
     }
   ): Promise<void> {
     const {
@@ -160,9 +170,14 @@ export class ProviderService {
       ...additionalConfig
     } = config;
 
-    const providerConfig: Record<string, any> = {
-      ...additionalConfig,
-    };
+    const providerConfig: Record<string, Prisma.JsonValue> = {};
+    
+    // Copy additional config, filtering out undefined values
+    for (const [key, value] of Object.entries(additionalConfig)) {
+      if (value !== undefined) {
+        providerConfig[key] = value;
+      }
+    }
 
     if (apiKey) {
       providerConfig.apiKey = apiKey;

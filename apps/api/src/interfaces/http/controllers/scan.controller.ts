@@ -2,52 +2,24 @@ import type { Request, Response } from "express";
 import { scanPathSchema } from "../schemas/scan.schema";
 import type { z } from "zod";
 import { logger } from "@dester/logger";
-import { container } from "../../../infrastructure/container";
 import { NotFoundError } from "../../../infrastructure/utils/errors";
 import { getDefaultScanSettings } from "../../../infrastructure/core/settings";
 import { libraryService } from "../../../app/library";
 import { MediaType, ScanJobStatus } from "@prisma/client";
 import { prisma } from "../../../infrastructure/prisma";
 import type { ScanRequestOptions } from "../../../domain/entities/scan/scan-request.entity";
-import { calculateScanJobProgress } from "../../../app/scan/get-scan-status.use-case";
+import {
+  scanJobService,
+  scanStatusService,
+  scanResumeService,
+  scanOffloadService,
+  calculateScanJobProgress,
+} from "../../../app/scan";
+import { ScanJobRepository } from "../../../infrastructure/repositories/scan/scan-job.repository";
+import { asyncHandler } from "../../../infrastructure/utils/async-handler";
+import { sendSuccess } from "../utils/response.helpers";
 
 type ScanPathRequest = z.infer<typeof scanPathSchema>;
-
-/**
- * Async handler wrapper for error handling
- */
-function asyncHandler(
-  fn: (req: Request, res: Response, next: any) => Promise<any>
-) {
-  return (req: Request, res: Response, next: any) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-}
-
-/**
- * Send success response
- */
-function sendSuccess<T>(
-  res: Response,
-  data: T,
-  statusCode: number = 200,
-  message?: string
-): Response {
-  const response: {
-    success: true;
-    data: T;
-    message?: string;
-  } = {
-    success: true,
-    data,
-  };
-
-  if (message) {
-    response.message = message;
-  }
-
-  return res.status(statusCode).json(response);
-}
 
 export const scanControllers = {
   /**
@@ -112,12 +84,8 @@ export const scanControllers = {
       `Offloading scan to Go scanner service: ${normalizedPath} (max_depth: ${maxDepth}, rescan: ${scanOptions.rescan}, followSymlinks: ${scanOptions.followSymlinks})`
     );
 
-    // Get use cases from container
-    const offloadScanUseCase = container.getOffloadScanUseCase();
-    const createScanJobUseCase = container.getCreateScanJobUseCase();
-
     // Create ScanJob record in database FIRST (before starting scanner)
-    const scanJobEntity = await createScanJobUseCase.execute(
+    const scanJobEntity = await scanJobService.create(
       library.id,
       normalizedPath,
       libraryType!
@@ -127,7 +95,7 @@ export const scanControllers = {
     scanOptions.scanJobId = scanJobEntity.id;
 
     // Offload scan to Go scanner service (scanJobId is now passed via scanOptions)
-    const scannerJob = await offloadScanUseCase.execute(
+    const scannerJob = await scanOffloadService.offload(
       normalizedPath,
       library.id,
       scanOptions
@@ -163,9 +131,8 @@ export const scanControllers = {
       throw new NotFoundError("Scan job", scanJobId);
     }
 
-    // Get use case from container
-    const getScanStatusUseCase = container.getGetScanStatusUseCase();
-    const status = await getScanStatusUseCase.execute(scanJobId);
+    // Get scan status
+    const status = await scanStatusService.getStatus(scanJobId);
 
     return sendSuccess(res, status);
   }),
@@ -195,7 +162,7 @@ export const scanControllers = {
     }
 
     // Use repository to query scan jobs
-    const scanJobRepo = container.getScanJobRepository();
+    const scanJobRepo = new ScanJobRepository();
     const { jobs, total } = await scanJobRepo.findAll({
       status: statusEnum,
       libraryId,
@@ -268,8 +235,7 @@ export const scanControllers = {
       throw new NotFoundError("Scan job", scanJobId);
     }
 
-    const resumeScanUseCase = container.getResumeScanUseCase();
-    const scanJob = await resumeScanUseCase.execute(scanJobId);
+    const scanJob = await scanResumeService.resume(scanJobId);
 
     if (!scanJob) {
       throw new NotFoundError("Scan job", scanJobId);
@@ -305,7 +271,7 @@ export const scanControllers = {
       `Cleaning up scan jobs older than ${days} days (before ${cutoffDate.toISOString()})`
     );
 
-    const scanJobRepo = container.getScanJobRepository();
+    const scanJobRepo = new ScanJobRepository();
 
     // Delete jobs efficiently using database query
     const deletedCount = await scanJobRepo.deleteMany({

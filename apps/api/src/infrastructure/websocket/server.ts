@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { logger } from "@dester/logger";
 import axios from "axios";
 import { config } from "../../config/env";
+import { container } from "../container";
 import {
   WebSocketMessageType,
   WebSocketMessage,
@@ -205,11 +206,25 @@ export class DesterWebSocketServer {
       }
     };
 
+    // Check plugin status
+    let metadataStatus = "unknown";
     try {
-      const [metadataStatus, scannerStatus] = await Promise.all([
-        checkService(config.metadataServiceUrl),
-        checkService(config.scannerServiceUrl),
-      ]);
+      const pluginManager = container.getPluginManager();
+      const tmdbPlugin = pluginManager.getPlugin("tmdb");
+      if (tmdbPlugin) {
+        const pluginStatus = tmdbPlugin.getStatus();
+        metadataStatus =
+          pluginStatus.status === "running" ? "healthy" : "unhealthy";
+      } else {
+        metadataStatus = "not_loaded";
+      }
+    } catch (error) {
+      logger.debug({ error }, "Failed to check plugin status");
+      metadataStatus = "error";
+    }
+
+    try {
+      const scannerStatus = await checkService(config.scannerServiceUrl);
 
       const services = {
         metadata_service: metadataStatus,
@@ -237,7 +252,7 @@ export class DesterWebSocketServer {
       return {
         status: "unhealthy",
         services: {
-          metadata_service: "error",
+          metadata_service: metadataStatus,
           scanner_service: "error",
         },
       };

@@ -1,82 +1,52 @@
 import type { Request, Response } from "express";
-import axios from "axios";
 import { providerService } from "../../../app/providers";
-import { config } from "../../../config/env";
+import { container } from "../../../infrastructure/container";
 import { logger } from "@dester/logger";
+import { asyncHandler } from "../../../infrastructure/utils/async-handler";
+import { sendSuccess } from "../utils/response.helpers";
+import {
+  hasReloadProviders,
+  type IPluginWithReloadProviders,
+} from "../../../infrastructure/plugins/plugin-extensions";
+import {
+  getProviderByNameSchema,
+  upsertProviderSchema,
+  updateProviderSchema,
+  deleteProviderSchema,
+} from "../schemas/provider.schema";
+import type { z } from "zod";
+import { NotFoundError } from "../../../infrastructure/utils/errors";
+import type { Prisma } from "@prisma/client";
+
+type GetProviderByNameRequest = z.infer<typeof getProviderByNameSchema>;
+type UpsertProviderRequest = z.infer<typeof upsertProviderSchema>;
+type UpdateProviderRequest = z.infer<typeof updateProviderSchema>;
+type DeleteProviderRequest = z.infer<typeof deleteProviderSchema>;
 
 /**
- * Async handler wrapper for error handling
- */
-function asyncHandler(
-  fn: (req: Request, res: Response, next: any) => Promise<any>
-) {
-  return (req: Request, res: Response, next: any) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-}
-
-/**
- * Send success response
- */
-function sendSuccess<T>(
-  res: Response,
-  data: T,
-  statusCode: number = 200,
-  message?: string
-): Response {
-  const response: {
-    success: true;
-    data: T;
-    message?: string;
-  } = {
-    success: true,
-    data,
-  };
-
-  if (message) {
-    response.message = message;
-  }
-
-  return res.status(statusCode).json(response);
-}
-
-/**
- * Helper function to reload providers in the metadata service
+ * Helper function to reload providers in the plugin
  * This is called automatically after provider changes to ensure
- * the metadata service picks up new providers without needing a restart.
+ * the plugin picks up new providers without needing a restart.
  * Errors are logged but don't fail the operation.
  */
 export async function reloadProvidersInMetadataService(): Promise<void> {
   try {
-    await axios.post(
-      `${config.metadataServiceUrl}/providers/reload`,
-      {},
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        timeout: 10000, // 10 second timeout
-      }
-    );
-    logger.info("Metadata service providers reloaded successfully");
-  } catch (error: any) {
-    // Log error but don't throw - provider operation should succeed
-    // even if metadata service is temporarily unavailable
-    if (error.response) {
-      logger.warn(
-        { status: error.response.status, error: error.response.data },
-        "Failed to reload providers in metadata service (service returned error)"
-      );
-    } else if (error.request) {
-      logger.warn(
-        "Failed to reload providers in metadata service (service unavailable). Provider will be available after metadata service restart."
-      );
+    const pluginManager = container.getPluginManager();
+    const tmdbPlugin = pluginManager.getPlugin("tmdb");
+
+    if (hasReloadProviders(tmdbPlugin)) {
+      await tmdbPlugin.reloadProviders();
+      logger.info("TMDB plugin providers reloaded successfully");
     } else {
-      logger.warn(
-        { error },
-        "Failed to reload providers in metadata service (unexpected error)"
-      );
+      logger.warn("TMDB plugin not found or does not support reloadProviders");
     }
+  } catch (error: unknown) {
+    // Log error but don't throw - provider operation should succeed
+    // even if plugin is temporarily unavailable
+    logger.warn(
+      { error },
+      "Failed to reload providers in TMDB plugin (non-critical)"
+    );
   }
 }
 
@@ -101,22 +71,12 @@ export const providerControllers = {
    * Get a specific provider by name
    */
   getByName: asyncHandler(async (req: Request, res: Response) => {
-    const name = req.params.name;
-
-    if (!name || typeof name !== "string") {
-      return res.status(400).json({
-        success: false,
-        error: "Provider name is required",
-      });
-    }
+    const { name } = req.validatedData as GetProviderByNameRequest;
 
     const provider = await providerService.getProvider(name);
 
     if (!provider) {
-      return res.status(404).json({
-        success: false,
-        error: "Provider not found",
-      });
+      throw new NotFoundError("Provider", name);
     }
 
     return sendSuccess(res, provider);
@@ -126,21 +86,18 @@ export const providerControllers = {
    * Create or update a provider
    */
   upsert: asyncHandler(async (req: Request, res: Response) => {
-    const name = req.params.name || req.body.name;
-    const { enabled, priority, config } = req.body;
+    const validatedData = req.validatedData as UpsertProviderRequest;
+    const name = req.params.name || validatedData.name;
 
-    if (!name || typeof name !== "string") {
-      return res.status(400).json({
-        success: false,
-        error: "Provider name is required",
-      });
+    if (!name) {
+      throw new Error("Provider name is required");
     }
 
     const provider = await providerService.upsertProvider(
       name,
-      enabled ?? true,
-      priority ?? 0,
-      config ?? {}
+      validatedData.enabled ?? true,
+      validatedData.priority ?? 0,
+      (validatedData.config ?? {}) as Prisma.JsonValue
     );
 
     // Reload providers in metadata service to pick up the new/updated provider
@@ -153,27 +110,17 @@ export const providerControllers = {
    * Update a provider
    */
   update: asyncHandler(async (req: Request, res: Response) => {
-    const name = req.params.name;
-    const { enabled, priority, config } = req.body;
-
-    if (!name || typeof name !== "string") {
-      return res.status(400).json({
-        success: false,
-        error: "Provider name is required",
-      });
-    }
+    const { name } = req.validatedData as UpdateProviderRequest;
+    const validatedData = req.validatedData as UpdateProviderRequest;
 
     const provider = await providerService.updateProvider(name, {
-      enabled,
-      priority,
-      config,
+      enabled: validatedData.enabled,
+      priority: validatedData.priority,
+      config: validatedData.config as Prisma.JsonValue | undefined,
     });
 
     if (!provider) {
-      return res.status(404).json({
-        success: false,
-        error: "Provider not found",
-      });
+      throw new NotFoundError("Provider", name);
     }
 
     // Reload providers in metadata service to pick up the updated provider
@@ -186,22 +133,12 @@ export const providerControllers = {
    * Delete a provider
    */
   delete: asyncHandler(async (req: Request, res: Response) => {
-    const name = req.params.name;
-
-    if (!name || typeof name !== "string") {
-      return res.status(400).json({
-        success: false,
-        error: "Provider name is required",
-      });
-    }
+    const { name } = req.validatedData as DeleteProviderRequest;
 
     const deleted = await providerService.deleteProvider(name);
 
     if (!deleted) {
-      return res.status(404).json({
-        success: false,
-        error: "Provider not found",
-      });
+      throw new NotFoundError("Provider", name);
     }
 
     // Reload providers in metadata service to remove the deleted provider
@@ -211,52 +148,42 @@ export const providerControllers = {
   }),
 
   /**
-   * Reload providers in the metadata service
+   * Reload providers in the TMDB plugin
    */
   reload: asyncHandler(async (req: Request, res: Response) => {
     try {
-      const response = await axios.post(
-        `${config.metadataServiceUrl}/providers/reload`,
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          timeout: 10000, // 10 second timeout
-        }
-      );
+      const pluginManager = container.getPluginManager();
+      const tmdbPlugin = pluginManager.getPlugin("tmdb");
 
-      return sendSuccess(
-        res,
-        response.data,
-        response.status,
-        response.data.message || "Providers reloaded successfully"
-      );
-    } catch (error: any) {
-      logger.error({ error }, "Failed to reload providers in metadata service");
-
-      // Handle axios errors
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        return res.status(error.response.status).json({
-          success: false,
-          error: error.response.data?.error || "Failed to reload providers",
-        });
-      } else if (error.request) {
-        // The request was made but no response was received
+      if (!tmdbPlugin) {
         return res.status(503).json({
           success: false,
-          error:
-            "Metadata service unavailable. Make sure the metadata service is running.",
-        });
-      } else {
-        // Something happened in setting up the request
-        return res.status(500).json({
-          success: false,
-          error: "Internal server error",
+          error: "TMDB plugin not found or not loaded",
         });
       }
+
+      if (hasReloadProviders(tmdbPlugin)) {
+        await tmdbPlugin.reloadProviders();
+        return sendSuccess(
+          res,
+          { provider: "tmdb" },
+          200,
+          "Providers reloaded successfully"
+        );
+      } else {
+        return res.status(503).json({
+          success: false,
+          error: "TMDB plugin does not support reloadProviders",
+        });
+      }
+    } catch (error: unknown) {
+      logger.error({ error }, "Failed to reload providers in TMDB plugin");
+      const errorMessage =
+        error instanceof Error ? error.message : "Internal server error";
+      return res.status(500).json({
+        success: false,
+        error: errorMessage,
+      });
     }
   }),
 };

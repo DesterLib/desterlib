@@ -55,13 +55,11 @@ export const libraryService = {
   }) => {
     const { path, name, description, libraryType } = data;
 
-    // Check if library with this path already exists
     const existingLibrary = await prisma.library.findFirst({
       where: { libraryPath: path, isLibrary: true },
     });
 
     if (existingLibrary) {
-      // Update existing library
       logger.info(
         `Updating existing library: ${existingLibrary.name} (${path})`
       );
@@ -71,7 +69,6 @@ export const libraryService = {
         isLibrary: true,
       };
 
-      // Update name if provided
       if (name !== undefined && name !== existingLibrary.name) {
         updateData.name = name;
         // Regenerate slug if name changed
@@ -94,7 +91,6 @@ export const libraryService = {
       logger.info(`✓ Updated library: ${updated.name}`);
       return updated;
     } else {
-      // Create new library
       // Generate name from path if not provided
       const libraryName =
         name ||
@@ -129,7 +125,6 @@ export const libraryService = {
   delete: async (libraryId: string): Promise<LibraryDeleteResult> => {
     logger.info(`🗑️  Starting deletion of library: ${libraryId}`);
 
-    // Find the library first with all associated content
     const library = await prisma.library.findUnique({
       where: { id: libraryId },
       include: {
@@ -176,11 +171,9 @@ export const libraryService = {
   - Media in other libraries (will be kept): ${totalMedia - totalToDelete}`
     );
 
-    // Use a transaction to ensure atomicity
     const result = await prisma.$transaction(async (tx) => {
       let deletedCount = 0;
 
-      // Delete movies that only belong to this library
       if (moviesToDelete.length > 0) {
         const deleteMovies = await tx.movie.deleteMany({
           where: {
@@ -192,7 +185,6 @@ export const libraryService = {
         deletedCount += deleteMovies.count;
       }
 
-      // Delete TV shows that only belong to this library
       if (tvShowsToDelete.length > 0) {
         const deleteTV = await tx.tVShow.deleteMany({
           where: {
@@ -204,7 +196,6 @@ export const libraryService = {
         deletedCount += deleteTV.count;
       }
 
-      // Delete the library itself
       await tx.library.delete({
         where: { id: libraryId },
       });
@@ -253,7 +244,6 @@ export const libraryService = {
 
     const librariesWithMetadata: LibraryWithMetadata[] = libraries.map(
       (library) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { _count, ...libraryData } = library;
         return {
           ...libraryData,
@@ -281,7 +271,6 @@ export const libraryService = {
   ): Promise<LibraryUpdateResult> => {
     logger.info(`✏️  Updating library: ${libraryId}`, updateData);
 
-    // First, check if library exists
     const existingLibrary = await prisma.library.findUnique({
       where: { id: libraryId },
     });
@@ -290,7 +279,6 @@ export const libraryService = {
       throw new NotFoundError("Library", libraryId);
     }
 
-    // Update the library, handling empty strings for URLs
     const cleanUpdateData: Prisma.LibraryUpdateInput = {};
 
     if (updateData.name !== undefined) cleanUpdateData.name = updateData.name;

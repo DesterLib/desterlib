@@ -4,6 +4,7 @@ import { join } from "path";
 import axios from "axios";
 import { config } from "../../../config/env";
 import { logger } from "@dester/logger";
+import { container } from "../../../infrastructure/container";
 
 const router: Router = express.Router();
 
@@ -34,11 +35,27 @@ function getApiVersion(): string {
  *               $ref: '#/components/schemas/HealthResponse'
  */
 router.get("/health", async (req, res) => {
-  let metadataServiceStatus = "unknown";
+  let metadataPluginStatus = "unknown";
   let scannerServiceStatus = "unknown";
 
-  // Non-blocking checks for downstream services
-  // We use a short timeout to ensure the main API health check remains fast
+  // Check plugin status
+  try {
+    const pluginManager = container.getPluginManager();
+    const tmdbPlugin = pluginManager.getPlugin("tmdb");
+
+    if (tmdbPlugin) {
+      const pluginStatus = tmdbPlugin.getStatus();
+      metadataPluginStatus =
+        pluginStatus.status === "running" ? "healthy" : "unhealthy";
+    } else {
+      metadataPluginStatus = "not_loaded";
+    }
+  } catch (error) {
+    logger.debug({ error }, "Failed to check plugin status");
+    metadataPluginStatus = "unknown";
+  }
+
+  // Non-blocking check for scanner service
   const checkService = async (url: string): Promise<string> => {
     try {
       await axios.get(`${url}/health`, { timeout: 1000 });
@@ -49,15 +66,9 @@ router.get("/health", async (req, res) => {
   };
 
   try {
-    const [metadataStatus, scannerStatus] = await Promise.all([
-      checkService(config.metadataServiceUrl),
-      checkService(config.scannerServiceUrl),
-    ]);
-
-    metadataServiceStatus = metadataStatus;
-    scannerServiceStatus = scannerStatus;
+    scannerServiceStatus = await checkService(config.scannerServiceUrl);
   } catch (error) {
-    logger.error({ error }, "Failed to check downstream services");
+    logger.error({ error }, "Failed to check scanner service");
   }
 
   // Determine overall status
@@ -69,7 +80,7 @@ router.get("/health", async (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     services: {
-      metadata_service: metadataServiceStatus,
+      metadata_plugin: metadataPluginStatus,
       scanner_service: scannerServiceStatus,
     },
   });

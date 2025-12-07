@@ -12,19 +12,9 @@ import { streamMediaSchema } from "../schemas/stream.schema";
 import { promises as fs } from "fs";
 import { createReadStream } from "fs";
 import path from "path";
+import { asyncHandler } from "../../../infrastructure/utils/async-handler";
 
 type StreamMediaRequest = z.infer<typeof streamMediaSchema>;
-
-/**
- * Async handler wrapper for error handling
- */
-function asyncHandler(
-  fn: (req: Request, res: Response, next: any) => Promise<any>
-) {
-  return (req: Request, res: Response, next: any) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-}
 
 export const streamControllers = {
   /**

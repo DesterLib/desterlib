@@ -42,20 +42,26 @@ export class UnauthorizedError extends ApiError {
   }
 }
 
-export class ForbiddenError extends ApiError {
-  constructor(message: string = "Access forbidden") {
-    super(message, 403, "Forbidden");
+/**
+ * Custom error with error code for metadata processing
+ */
+export class MetadataError extends Error {
+  constructor(
+    message: string,
+    public code: string
+  ) {
+    super(message);
+    this.name = "MetadataError";
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
-export class ConflictError extends ApiError {
-  constructor(message: string) {
-    super(message, 409, "Conflict");
-  }
-}
+/**
+ * Error codes for metadata processing
+ */
+export const METADATA_ERROR_CODES = {
+  MEDIA_NOT_FOUND: "MEDIA_NOT_FOUND",
+} as const;
 
-export class UnprocessableEntityError extends ApiError {
-  constructor(message: string) {
-    super(message, 422, "Unprocessable entity");
-  }
-}
+export type MetadataErrorCode =
+  (typeof METADATA_ERROR_CODES)[keyof typeof METADATA_ERROR_CODES];
