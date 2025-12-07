@@ -1,25 +1,25 @@
 /**
- * Offload Scan Use Case
- * Business logic for offloading a scan request to the Go scanner service
+ * Scan Offload Service
+ * Handles offloading scan requests to the Go scanner service
  */
 
-import type { IScannerServiceRepository } from "../../domain/repositories/scan/scanner-service.repository.interface";
+import type { ScannerServiceRepository } from "../../infrastructure/repositories/scan/scanner-service.repository";
 import type { ScanJob } from "../../domain/entities/scan/scan-job.entity";
 import type { ScanRequestOptions } from "../../domain/entities/scan/scan-request.entity";
 
-export class OffloadScanUseCase {
+export class ScanOffloadService {
   constructor(
-    private readonly scannerServiceRepository: IScannerServiceRepository
+    private readonly scannerServiceRepository: ScannerServiceRepository
   ) {}
 
   /**
-   * Execute the offload scan use case
+   * Offload a scan request to the Go scanner service
    * @param path - The root path to scan
    * @param libraryId - The library ID
    * @param options - Scan options (defaults already applied in controller)
    * @returns Promise resolving to the scan job information
    */
-  async execute(
+  async offload(
     path: string,
     libraryId: string,
     options: ScanRequestOptions

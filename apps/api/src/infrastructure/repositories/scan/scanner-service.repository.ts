@@ -1,10 +1,9 @@
 /**
- * Scanner Service Repository Implementation
+ * Scanner Service Repository
  * HTTP client implementation for communicating with the Go scanner service
  */
 
 import axios, { AxiosInstance } from "axios";
-import type { IScannerServiceRepository } from "../../../domain/repositories/scan/scanner-service.repository.interface";
 import type { ScanJob } from "../../../domain/entities/scan/scan-job.entity";
 import type { ScanRequestOptions } from "../../../domain/entities/scan/scan-request.entity";
 import { logger } from "@dester/logger";
@@ -14,7 +13,7 @@ export interface ScannerServiceRepositoryOptions {
   timeout?: number;
 }
 
-export class ScannerServiceRepository implements IScannerServiceRepository {
+export class ScannerServiceRepository {
   private readonly httpClient: AxiosInstance;
   private readonly scannerServiceUrl: string;
 

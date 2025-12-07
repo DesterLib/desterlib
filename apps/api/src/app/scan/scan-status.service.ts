@@ -1,9 +1,9 @@
 /**
- * Get Scan Status Use Case
- * Business logic for retrieving scan job status from the database
+ * Scan Status Service
+ * Handles retrieving scan job status from the database
  */
 
-import type { IScanJobRepository } from "../../domain/repositories/scan/scan-job.repository.interface";
+import type { ScanJobRepository } from "../../infrastructure/repositories/scan/scan-job.repository";
 import type { ScanJobStatus } from "../../domain/entities/scan/scan-job.entity";
 import { NotFoundError } from "../../infrastructure/utils/errors";
 
@@ -60,15 +60,15 @@ export function calculateScanJobProgress(job: {
   return 0;
 }
 
-export class GetScanStatusUseCase {
-  constructor(private readonly scanJobRepository: IScanJobRepository) {}
+export class ScanStatusService {
+  constructor(private readonly scanJobRepository: ScanJobRepository) {}
 
   /**
-   * Execute the get scan status use case
+   * Get scan job status
    * @param jobId - The scan job ID (database ID)
    * @returns Promise resolving to the scan job status
    */
-  async execute(jobId: string): Promise<ScanJobStatus> {
+  async getStatus(jobId: string): Promise<ScanJobStatus> {
     const scanJob = await this.scanJobRepository.findById(jobId);
 
     if (!scanJob) {

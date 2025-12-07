@@ -1,21 +1,21 @@
 /**
- * Resume Scan Use Case
- * Business logic for resuming a paused or failed scan job
+ * Scan Resume Service
+ * Handles resuming paused or failed scan jobs
  */
 
-import type { IScanJobRepository } from "../../domain/repositories/scan/scan-job.repository.interface";
+import type { ScanJobRepository } from "../../infrastructure/repositories/scan/scan-job.repository";
 import { NotFoundError } from "../../infrastructure/utils/errors";
 import { logger } from "@dester/logger";
 
-export class ResumeScanUseCase {
-  constructor(private readonly scanJobRepository: IScanJobRepository) {}
+export class ScanResumeService {
+  constructor(private readonly scanJobRepository: ScanJobRepository) {}
 
   /**
-   * Execute the resume scan use case
+   * Resume a paused or failed scan job
    * @param scanJobId - The scan job ID to resume
    * @returns Promise resolving to the updated scan job entity
    */
-  async execute(scanJobId: string) {
+  async resume(scanJobId: string) {
     // Find the scan job
     const scanJob = await this.scanJobRepository.findById(scanJobId);
 
