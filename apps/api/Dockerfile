@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
-# Install build dependencies for native modules and postgresql-client
-RUN apk add --no-cache python3 make g++ postgresql-client wget
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++ wget
 
 # Install pnpm globally
 RUN npm install -g pnpm
@@ -23,8 +23,9 @@ COPY apps/api ./apps/api
 RUN pnpm install --frozen-lockfile
 
 # Generate Prisma client
+# Set a dummy DATABASE_URL for prisma generate (doesn't need real connection)
 WORKDIR /app/apps/api
-RUN pnpm exec prisma generate
+RUN DATABASE_URL="file:./dummy.db" pnpm exec prisma generate
 
 # Build the API
 WORKDIR /app
@@ -36,14 +37,19 @@ RUN cat > /app/start.sh << 'EOF'
 set -e
 
 echo "=== DesterLib API Container Startup ==="
-echo "Waiting for database to be ready..."
-until pg_isready -h ${POSTGRES_HOST:-postgres} -p ${POSTGRES_PORT:-5432} -U ${POSTGRES_USER:-postgres}; do
-  echo "Database is unavailable - sleeping"
-  sleep 2
-done
-echo "Database is ready!"
 
-# Push database schema
+# Ensure database directory exists (for SQLite)
+if [ -n "$DATABASE_URL" ]; then
+  # Extract path from file: URL if present
+  DB_PATH=$(echo "$DATABASE_URL" | sed 's|^file:||')
+  DB_DIR=$(dirname "$DB_PATH")
+  if [ "$DB_DIR" != "." ] && [ "$DB_DIR" != "/" ]; then
+    echo "Creating database directory: $DB_DIR"
+    mkdir -p "$DB_DIR"
+  fi
+fi
+
+# Push database schema (SQLite - no connection check needed)
 cd /app/apps/api
 echo "Running Prisma database push..."
 pnpm exec prisma db push --accept-data-loss
