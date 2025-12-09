@@ -1,8 +1,0 @@
-*.go.sum.bak
-*.test
-*.test.exe
-.vscode
-.idea
-.DS_Store
-*.log
-
