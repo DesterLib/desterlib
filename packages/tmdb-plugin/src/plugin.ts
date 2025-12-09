@@ -54,16 +54,13 @@ export class TMDBPlugin implements IPlugin {
     }
 
     // Get provider config from config (passed by API)
-    const apiKey =
-      (config.apiKey as string) || (config.config?.apiKey as string);
+    const apiKey = (config.apiKey as string) || (config.config?.apiKey as string);
     const baseUrl =
       (config.baseUrl as string) ||
       (config.config?.baseUrl as string) ||
       "https://api.themoviedb.org/3";
     const rateLimitRps = parseFloat(
-      (config.rateLimitRps as string) ||
-        (config.config?.rateLimitRps as string) ||
-        "4"
+      (config.rateLimitRps as string) || (config.config?.rateLimitRps as string) || "4"
     );
 
     if (!apiKey) {
@@ -74,12 +71,7 @@ export class TMDBPlugin implements IPlugin {
     this.rateLimiter = new RateLimiter(rateLimitRps, this.getLogger());
 
     // Initialize TMDB provider directly (no database access needed)
-    this.provider = new TMDBProvider(
-      apiKey,
-      baseUrl,
-      this.rateLimiter,
-      this.getLogger()
-    );
+    this.provider = new TMDBProvider(apiKey, baseUrl, this.rateLimiter, this.getLogger());
 
     this.getLogger().info(
       {
@@ -108,9 +100,7 @@ export class TMDBPlugin implements IPlugin {
 
     return {
       status,
-      message: hasProvider
-        ? "TMDB plugin is operational"
-        : "TMDB provider not configured",
+      message: hasProvider ? "TMDB plugin is operational" : "TMDB provider not configured",
       provider: hasProvider ? "configured" : "missing",
     };
   }
@@ -134,17 +124,24 @@ export class TMDBPlugin implements IPlugin {
       return null;
     }
 
-    // For now, only support movies
-    if (mediaType !== "MOVIE") {
+    // Support both MOVIE and TV_SHOW
+    let metadata: any = null;
+
+    if (mediaType === "MOVIE") {
+      metadata = await this.provider.searchMovie(title, year);
+    } else if (mediaType === "TV_SHOW") {
+      if (!this.provider.searchTVShow) {
+        this.getLogger().warn({ mediaType }, "TV show search not supported by provider");
+        return null;
+      }
+      metadata = await this.provider.searchTVShow(title, year);
+    } else {
       this.getLogger().warn(
         { mediaType },
-        "Media type not yet supported, only MOVIE is supported"
+        "Media type not supported, only MOVIE and TV_SHOW are supported"
       );
       return null;
     }
-
-    // Fetch metadata from TMDB
-    const metadata = await this.provider.searchMovie(title, year);
 
     if (!metadata) {
       return null;

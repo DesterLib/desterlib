@@ -27,6 +27,30 @@ interface TMDBSearchResult {
   }>;
 }
 
+interface TMDBTVShow {
+  id: number;
+  name: string;
+  overview: string;
+  first_air_date: string;
+  vote_average: number;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  genres: Array<{ id: number; name: string }>;
+  images?: {
+    posters: Array<{ file_path: string; iso_639_1: string | null }>;
+    logos: Array<{ file_path: string; iso_639_1: string | null }>;
+    backdrops: Array<{ file_path: string; iso_639_1: string | null }>;
+  };
+}
+
+interface TMDBTVShowSearchResult {
+  results: Array<{
+    id: number;
+    name: string;
+    first_air_date: string;
+  }>;
+}
+
 /**
  * TMDB (The Movie Database) metadata provider
  */
@@ -70,10 +94,7 @@ export class TMDBProvider implements MetadataProvider {
   /**
    * Search for a movie by title and year
    */
-  async searchMovie(
-    title: string,
-    year?: number
-  ): Promise<MovieMetadata | null> {
+  async searchMovie(title: string, year?: number): Promise<MovieMetadata | null> {
     await this.rateLimiter.acquire();
 
     const params: any = {
@@ -88,12 +109,9 @@ export class TMDBProvider implements MetadataProvider {
 
     for (let attempt = 0; attempt < this.maxRetries; attempt++) {
       try {
-        const response = await this.client.get<TMDBSearchResult>(
-          "/search/movie",
-          {
-            params,
-          }
-        );
+        const response = await this.client.get<TMDBSearchResult>("/search/movie", {
+          params,
+        });
 
         if (response.data.results.length === 0) {
           this.logger.warn({ title, year }, "No TMDB results found");
@@ -114,10 +132,7 @@ export class TMDBProvider implements MetadataProvider {
       }
     }
 
-    this.logger.error(
-      { error: lastError, title, year },
-      "TMDB search failed after retries"
-    );
+    this.logger.error({ error: lastError, title, year }, "TMDB search failed after retries");
     throw lastError || new Error("TMDB search failed");
   }
 
@@ -151,10 +166,7 @@ export class TMDBProvider implements MetadataProvider {
       }
     }
 
-    this.logger.error(
-      { error: lastError, movieId },
-      "TMDB getMovieDetails failed after retries"
-    );
+    this.logger.error({ error: lastError, movieId }, "TMDB getMovieDetails failed after retries");
     throw lastError || new Error("TMDB getMovieDetails failed");
   }
 
@@ -166,17 +178,11 @@ export class TMDBProvider implements MetadataProvider {
     const posterUrl = this.getImageUrl(tmdbMovie.poster_path);
 
     // Extract null language poster (no text/logo overlay) from images array
-    const nullPoster = tmdbMovie.images?.posters.find(
-      (p) => p.iso_639_1 === null
-    );
-    const nullPosterUrl = nullPoster
-      ? this.getImageUrl(nullPoster.file_path)
-      : null;
+    const nullPoster = tmdbMovie.images?.posters.find((p) => p.iso_639_1 === null);
+    const nullPosterUrl = nullPoster ? this.getImageUrl(nullPoster.file_path) : null;
 
     // Extract English backdrop from images array
-    const enBackdrop = tmdbMovie.images?.backdrops.find(
-      (b) => b.iso_639_1 === "en"
-    );
+    const enBackdrop = tmdbMovie.images?.backdrops.find((b) => b.iso_639_1 === "en");
     const backdropUrl = enBackdrop
       ? this.getImageUrl(enBackdrop.file_path)
       : this.getImageUrl(tmdbMovie.backdrop_path);
@@ -206,12 +212,132 @@ export class TMDBProvider implements MetadataProvider {
   }
 
   /**
+   * Search for a TV show by title and year
+   */
+  async searchTVShow(title: string, year?: number): Promise<MovieMetadata | null> {
+    await this.rateLimiter.acquire();
+
+    const params: any = {
+      query: title,
+    };
+
+    if (year) {
+      params.first_air_date_year = year;
+    }
+
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+      try {
+        const response = await this.client.get<TMDBTVShowSearchResult>("/search/tv", {
+          params,
+        });
+
+        if (response.data.results.length === 0) {
+          this.logger.warn({ title, year }, "No TMDB TV show results found");
+          return null;
+        }
+
+        // Return the first result (most relevant)
+        const tvShowId = response.data.results[0].id;
+        return await this.getTVShowDetails(tvShowId);
+      } catch (error: any) {
+        lastError = error;
+        const delay = this.baseRetryDelay * Math.pow(2, attempt);
+        this.logger.warn(
+          { error: error.message, attempt: attempt + 1, delay },
+          "TMDB TV show search failed, retrying..."
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
+    this.logger.error(
+      { error: lastError, title, year },
+      "TMDB TV show search failed after retries"
+    );
+    throw lastError || new Error("TMDB TV show search failed");
+  }
+
+  /**
+   * Get detailed TV show information by TMDB ID
+   */
+  async getTVShowDetails(tvShowId: number): Promise<MovieMetadata> {
+    await this.rateLimiter.acquire();
+
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+      try {
+        const response = await this.client.get<TMDBTVShow>(`/tv/${tvShowId}`, {
+          params: {
+            append_to_response: "images",
+            language: "en-US",
+            include_image_language: "en,null",
+          },
+        });
+
+        return this.mapTMDBTVShowToMetadata(response.data);
+      } catch (error: any) {
+        lastError = error;
+        const delay = this.baseRetryDelay * Math.pow(2, attempt);
+        this.logger.warn(
+          { error: error.message, attempt: attempt + 1, delay, tvShowId },
+          "TMDB getTVShowDetails failed, retrying..."
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
+    this.logger.error({ error: lastError, tvShowId }, "TMDB getTVShowDetails failed after retries");
+    throw lastError || new Error("TMDB getTVShowDetails failed");
+  }
+
+  /**
+   * Map TMDB TV show data to standardized metadata format
+   */
+  private mapTMDBTVShowToMetadata(tmdbTVShow: TMDBTVShow): MovieMetadata {
+    // Use default poster_path (has logo overlay)
+    const posterUrl = this.getImageUrl(tmdbTVShow.poster_path);
+
+    // Extract null language poster (no text/logo overlay) from images array
+    const nullPoster = tmdbTVShow.images?.posters.find((p) => p.iso_639_1 === null);
+    const nullPosterUrl = nullPoster ? this.getImageUrl(nullPoster.file_path) : null;
+
+    // Extract English backdrop from images array
+    const enBackdrop = tmdbTVShow.images?.backdrops.find((b) => b.iso_639_1 === "en");
+    const backdropUrl = enBackdrop
+      ? this.getImageUrl(enBackdrop.file_path)
+      : this.getImageUrl(tmdbTVShow.backdrop_path);
+
+    // Use default backdrop_path for nullBackdropUrl (clean, no text overlay)
+    const nullBackdropUrl = this.getImageUrl(tmdbTVShow.backdrop_path);
+
+    // Find English logo
+    const logo = tmdbTVShow.images?.logos.find((l) => l.iso_639_1 === "en");
+    const logoUrl = logo ? this.getImageUrl(logo.file_path) : null;
+
+    const genres = tmdbTVShow.genres.map((g) => g.name);
+
+    return {
+      providerId: tmdbTVShow.id.toString(),
+      title: tmdbTVShow.name, // TV shows use "name" instead of "title"
+      overview: tmdbTVShow.overview || null,
+      releaseDate: tmdbTVShow.first_air_date || null, // TV shows use "first_air_date"
+      rating: tmdbTVShow.vote_average || null,
+      posterUrl,
+      nullPosterUrl,
+      backdropUrl,
+      nullBackdropUrl,
+      logoUrl,
+      genres,
+    };
+  }
+
+  /**
    * Build full image URL from path
    */
-  private getImageUrl(
-    path: string | null,
-    size: string = "original"
-  ): string | null {
+  private getImageUrl(path: string | null, size: string = "original"): string | null {
     if (!path) {
       return null;
     }

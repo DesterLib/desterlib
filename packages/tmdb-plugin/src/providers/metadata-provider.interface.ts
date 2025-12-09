@@ -19,6 +19,21 @@ export interface MetadataProvider {
   getMovieDetails(movieId: number): Promise<MovieMetadata>;
 
   /**
+   * Search for a TV show by title and optional year
+   * @param title TV show title
+   * @param year Optional first air year
+   * @returns TV show metadata or null if not found
+   */
+  searchTVShow?(title: string, year?: number): Promise<MovieMetadata | null>;
+
+  /**
+   * Get detailed TV show information by provider-specific ID
+   * @param tvShowId Provider-specific TV show ID
+   * @returns TV show metadata
+   */
+  getTVShowDetails?(tvShowId: number): Promise<MovieMetadata>;
+
+  /**
    * Get the provider name (e.g., "tmdb", "omdb")
    */
   getProviderName(): string;
