@@ -27,7 +27,13 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", ".astro/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        ".astro/**",
+        "../../dist/**"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"],

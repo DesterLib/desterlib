@@ -44,18 +44,26 @@ if (process.env.API_LOG_PATH) {
     // Ensure directory exists
     fs.mkdirSync(logDir, { recursive: true });
 
-    // Create file stream destination with pino-pretty formatter
-    // This ensures logs are written in a readable format that matches the logs service expectations
-    fileDestination = pino.transport({
-      target: "pino-pretty",
-      options: {
-        destination: logFile,
-        colorize: false, // No colors in file
-        translateTime: "SYS:standard",
-        ignore: "pid,hostname",
-        singleLine: false,
-      },
-    });
+    // Create file stream destination
+    // In pkg executables, pino-pretty transport may not resolve, so use pino.destination() instead
+    // This writes JSON logs which is fine for file storage
+    try {
+      // Try to use pino-pretty for readable logs (works in normal Node.js)
+      fileDestination = pino.transport({
+        target: "pino-pretty",
+        options: {
+          destination: logFile,
+          colorize: false, // No colors in file
+          translateTime: "SYS:standard",
+          ignore: "pid,hostname",
+          singleLine: false,
+        },
+      });
+    } catch (transportError) {
+      // Fallback to regular file destination if pino-pretty transport fails
+      // This happens in pkg executables where module resolution is different
+      fileDestination = pino.destination(logFile);
+    }
   } catch (error) {
     // Silently fail if file logging can't be set up
     console.error("Failed to setup file logging:", error);
@@ -73,17 +81,27 @@ if (fileDestination) {
 
 // Add pretty console output in development
 if (isDevelopment) {
-  streams.push({
-    level: "debug",
-    stream: pino.transport({
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        translateTime: "SYS:standard",
-        ignore: "pid,hostname",
-      },
-    }),
-  });
+  try {
+    // Try to use pino-pretty for pretty console output
+    streams.push({
+      level: "debug",
+      stream: pino.transport({
+        target: "pino-pretty",
+        options: {
+          colorize: true,
+          translateTime: "SYS:standard",
+          ignore: "pid,hostname",
+        },
+      }),
+    });
+  } catch (error) {
+    // Fallback to regular pino output if pino-pretty is not available
+    // This can happen in pkg executables
+    streams.push({
+      level: "debug",
+      stream: process.stdout,
+    });
+  }
 }
 
 export const logger =
