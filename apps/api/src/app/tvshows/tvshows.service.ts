@@ -6,6 +6,7 @@ import type {
   TVShowsListResponse,
   TVShowResponse,
 } from "../../domain/entities/tvshows/tvshow.entity";
+import type { MediaItem } from "@prisma/client";
 
 export const tvshowsService = {
   getTVShows: async (baseUrl: string): Promise<TVShowsListResponse> => {
@@ -55,7 +56,7 @@ export const tvshowsService = {
 
     logger.info(`Found TV show: "${tvshow.title}"`);
 
-    const serialized = serializeBigInt(tvshow, baseUrl) as {
+    type TVShowWithSeasonsSerialized = TVShowResponse & {
       seasons: Array<{
         id: string;
         number: number;
@@ -64,6 +65,8 @@ export const tvshowsService = {
         airDate: Date | null;
         posterUrl: string | null;
         tvShowId: string;
+        createdAt: Date;
+        updatedAt: Date;
         episodes: Array<{
           id: string;
           number: number;
@@ -72,56 +75,65 @@ export const tvshowsService = {
           airDate: Date | null;
           stillUrl: string | null;
           seasonId: string;
-          mediaItems: Array<{
-            id: string;
-            filePath: string;
-            fileSize: bigint | null;
-            duration: number | null;
-          }>;
+          createdAt: Date;
+          updatedAt: Date;
+          mediaItems: MediaItem[];
         }>;
       }>;
     };
 
+    const serialized = serializeBigInt(
+      tvshow,
+      baseUrl
+    ) as TVShowWithSeasonsSerialized;
+
     // Transform seasons and episodes to match API schema
     const seasonsWithTransformedData = serialized.seasons.map((season) => ({
       id: season.id,
+      number: season.number,
       seasonNumber: season.number,
       name: season.name || `Season ${season.number}`,
       overview: season.overview,
       airDate: season.airDate,
       posterUrl: season.posterUrl,
       tvShowId: season.tvShowId,
+      createdAt: season.createdAt,
+      updatedAt: season.updatedAt,
       episodes: season.episodes.map((episode) => {
-          // Get file info from the first media item if available
-          const mediaItem =
-            episode.mediaItems && episode.mediaItems.length > 0
-              ? episode.mediaItems[0]
-              : null;
+        // Get file info from the first media item if available
+        const mediaItem =
+          episode.mediaItems && episode.mediaItems.length > 0
+            ? episode.mediaItems[0]
+            : null;
 
-          return {
-            id: episode.id,
-            episodeNumber: episode.number,
-            seasonNumber: season.number,
-            title: episode.title,
-            overview: episode.description,
-            airDate: episode.airDate,
-            runtime: mediaItem?.duration,
-            stillUrl: episode.stillUrl,
-            // File info from MediaItem
-            filePath: mediaItem?.filePath,
-            fileSize: mediaItem?.fileSize,
-            seasonId: episode.seasonId,
-            streamUrl: mediaItem
-              ? `${baseUrl}/api/v1/stream/${mediaItem.id}`
-              : null,
-          };
-        }),
-      })
-    );
+        return {
+          id: episode.id,
+          number: episode.number,
+          episodeNumber: episode.number,
+          seasonNumber: season.number,
+          title: episode.title,
+          description: episode.description,
+          overview: episode.description,
+          airDate: episode.airDate,
+          runtime: mediaItem?.duration,
+          stillUrl: episode.stillUrl,
+          // File info from MediaItem
+          filePath: mediaItem?.filePath,
+          fileSize: mediaItem?.fileSize,
+          seasonId: episode.seasonId,
+          streamUrl: mediaItem
+            ? `${baseUrl}/api/v1/stream/${mediaItem.id}`
+            : null,
+          mediaItems: episode.mediaItems,
+          createdAt: episode.createdAt,
+          updatedAt: episode.updatedAt,
+        };
+      }),
+    }));
 
     return {
       ...serialized,
       seasons: seasonsWithTransformedData,
-    };
+    } as TVShowResponse;
   },
 };

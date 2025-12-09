@@ -1,5 +1,6 @@
 import { prisma } from "../../infrastructure/prisma";
 import { serializeBigInt } from "../../infrastructure/utils/serialization";
+import type { Prisma } from "@prisma/client";
 
 export const searchService = {
   /**
@@ -19,7 +20,6 @@ export const searchService = {
         where: {
           title: {
             contains: query,
-            mode: "insensitive",
           },
         },
         include: {
@@ -36,7 +36,6 @@ export const searchService = {
         where: {
           title: {
             contains: query,
-            mode: "insensitive",
           },
         },
         include: {
@@ -50,7 +49,11 @@ export const searchService = {
     ]);
 
     // Format results and convert BigInt to string for JSON serialization
-    const formattedMovies = movies.map((movie) => {
+    type MovieWithRelations = Prisma.MovieGetPayload<{
+      include: { mediaItems: true; genres: true };
+    }>;
+
+    const formattedMovies = (movies as MovieWithRelations[]).map((movie) => {
       return {
         ...movie,
         mediaItems: movie.mediaItems.map((item) => ({
