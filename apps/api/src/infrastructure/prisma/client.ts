@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { logger } from "@dester/logger";
 
 declare global {
@@ -26,13 +25,9 @@ interface PrismaClientWithEvents {
   $on(event: "warn" | "error", callback: (e: PrismaLogEvent) => void): void;
 }
 
-// Create PostgreSQL connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+const adapter = new PrismaBetterSqlite3({
+  url: process.env.DATABASE_URL!,
 });
-
-// Create Prisma adapter
-const adapter = new PrismaPg(pool);
 
 // Prevent multiple instances of Prisma Client in development
 const prisma =

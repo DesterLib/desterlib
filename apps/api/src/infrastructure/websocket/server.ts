@@ -92,10 +92,7 @@ export class DesterWebSocketServer {
         const data = JSON.parse(message.toString());
         this.handleClientMessage(extWs, data);
       } catch (error) {
-        logger.error(
-          { error, clientId: extWs.id },
-          "Failed to parse WebSocket message"
-        );
+        logger.error({ error, clientId: extWs.id }, "Failed to parse WebSocket message");
       }
     });
 
@@ -133,10 +130,7 @@ export class DesterWebSocketServer {
       try {
         ws.send(JSON.stringify(message));
       } catch (error) {
-        logger.error(
-          { error, clientId: ws.id },
-          "Failed to send message to client"
-        );
+        logger.error({ error, clientId: ws.id }, "Failed to send message to client");
       }
     }
   }
@@ -154,18 +148,12 @@ export class DesterWebSocketServer {
           client.send(messageStr);
           sentCount++;
         } catch (error) {
-          logger.error(
-            { error, clientId: client.id },
-            "Failed to broadcast to client"
-          );
+          logger.error({ error, clientId: client.id }, "Failed to broadcast to client");
         }
       }
     });
 
-    logger.debug(
-      { type: message.type, clientCount: sentCount },
-      "Broadcast message sent"
-    );
+    logger.debug({ type: message.type, clientCount: sentCount }, "Broadcast message sent");
   }
 
   /**
@@ -213,8 +201,7 @@ export class DesterWebSocketServer {
       const tmdbPlugin = pluginManager.getPlugin("tmdb");
       if (tmdbPlugin) {
         const pluginStatus = tmdbPlugin.getStatus();
-        metadataStatus =
-          pluginStatus.status === "running" ? "healthy" : "unhealthy";
+        metadataStatus = pluginStatus.status === "running" ? "healthy" : "unhealthy";
       } else {
         metadataStatus = "not_loaded";
       }
@@ -232,10 +219,8 @@ export class DesterWebSocketServer {
       };
 
       // Determine overall status
-      const allHealthy =
-        metadataStatus === "healthy" && scannerStatus === "healthy";
-      const anyUnreachable =
-        metadataStatus === "unreachable" || scannerStatus === "unreachable";
+      const allHealthy = metadataStatus === "healthy" && scannerStatus === "healthy";
+      const anyUnreachable = metadataStatus === "unreachable" || scannerStatus === "unreachable";
 
       let status: "healthy" | "degraded" | "unhealthy";
       if (allHealthy) {
@@ -320,10 +305,7 @@ export class DesterWebSocketServer {
       }
     }, this.HEALTH_CHECK_INTERVAL);
 
-    logger.info(
-      { interval: this.HEALTH_CHECK_INTERVAL },
-      "Health monitoring started"
-    );
+    logger.info({ interval: this.HEALTH_CHECK_INTERVAL }, "Health monitoring started");
   }
 
   /**
@@ -344,7 +326,9 @@ export class DesterWebSocketServer {
       });
     }, this.PING_INTERVAL);
 
-    this.wss.on("close", () => {
+    // Remove existing close listener to prevent accumulation
+    this.wss.removeAllListeners("close");
+    this.wss.once("close", () => {
       clearInterval(interval);
     });
 
@@ -403,13 +387,9 @@ export class DesterWebSocketServer {
   public async shutdown() {
     logger.info("Shutting down WebSocket server...");
 
-    // Clear intervals
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
-    if (this.healthCheckInterval) {
-      clearInterval(this.healthCheckInterval);
-    }
+    // Clear intervals (always set in constructor)
+    clearInterval(this.heartbeatInterval!);
+    clearInterval(this.healthCheckInterval!);
 
     // Close all client connections
     this.clients.forEach((client) => {

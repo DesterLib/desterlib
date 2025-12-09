@@ -21,8 +21,9 @@ const PATH_CONFIG = {
 
 /**
  * Check if running in Docker container (cached)
+ * Internal function - only used within this module
  */
-export function isRunningInDocker(): boolean {
+function isRunningInDocker(): boolean {
   if (isDockerEnvironment === null) {
     try {
       accessSync(PATH_CONFIG.DOCKER_CHECK_PATH);

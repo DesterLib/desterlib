@@ -33,19 +33,3 @@ export function normalizePath(path: string): string {
 
   return normalized;
 }
-
-/**
- * Join path segments, normalizing the result
- */
-export function joinPaths(...segments: string[]): string {
-  const filtered = segments.filter((seg) => seg && seg.trim() !== "");
-  if (filtered.length === 0) {
-    return "";
-  }
-
-  // Normalize each segment
-  const normalized = filtered.map(normalizePath);
-
-  // Join with forward slashes and normalize
-  return normalizePath(normalized.join("/"));
-}

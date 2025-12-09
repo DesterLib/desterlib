@@ -5,6 +5,8 @@ import type {
   UserSettings,
   PublicSettings,
 } from "../../domain/entities/settings";
+import { providerService } from "../../app/providers";
+import { reloadProvidersInMetadataService } from "../../interfaces/http/controllers/provider.controller";
 
 /**
  * Core setting keys
@@ -112,6 +114,7 @@ const coreSettings = [
     description: "API server port",
     isPublic: true,
   },
+  // TODO: JWT authentication not yet implemented - this setting is reserved for future use
   {
     key: SETTING_KEYS.JWT_SECRET,
     category: "CORE" as const,
@@ -470,7 +473,6 @@ async function syncProviderFromSetting(
   }
 
   try {
-    const { providerService } = await import("../../app/providers/index.js");
     await providerService.syncProvider(providerConfig.providerName, {
       apiKey,
       enabled: providerConfig.enabled,
@@ -479,10 +481,6 @@ async function syncProviderFromSetting(
     });
 
     // Reload providers in metadata service to pick up the synced provider
-    // Import the reload function from the provider controller
-    const { reloadProvidersInMetadataService } = await import(
-      "../../interfaces/http/controllers/provider.controller.js"
-    );
     await reloadProvidersInMetadataService();
   } catch (error) {
     logger.warn(

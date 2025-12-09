@@ -36,11 +36,8 @@ export class ValidationError extends ApiError {
   }
 }
 
-export class UnauthorizedError extends ApiError {
-  constructor(message: string = "Unauthorized access") {
-    super(message, 401, "Unauthorized");
-  }
-}
+// UnauthorizedError removed - not currently used
+// Re-add when JWT authentication is implemented
 
 /**
  * Custom error with error code for metadata processing
