@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 enum MediaType {
@@ -21,32 +21,32 @@ enum MediaType {
 model MediaItem {
   id             String    @id @default(cuid())
   filePath       String    @unique // File path on disk
-  fileSize       BigInt?   // File size in bytes
+  fileSize       BigInt? // File size in bytes
   fileModifiedAt DateTime? // Last modified time of file
-  duration       Int?      // in minutes (or seconds?)
-  
-  // Technical details
-  container      String?   // mkv, mp4
-  videoCodec     String?   // h264
-  audioCodec     String?   // aac
-  width          Int?
-  height         Int?
+  duration       Int? // in minutes (or seconds?)
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  // Technical details
+  container  String? // mkv, mp4
+  videoCodec String? // h264
+  audioCodec String? // aac
+  width      Int?
+  height     Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Parent Content Relations
-  movieId        String?
-  movie          Movie?    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  movieId String?
+  movie   Movie?  @relation(fields: [movieId], references: [id], onDelete: Cascade)
 
-  episodeId      String?
-  episode        Episode?  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
-  
-  musicId        String?
-  music          Music?    @relation(fields: [musicId], references: [id], onDelete: Cascade)
-  
-  comicId        String?
-  comic          Comic?    @relation(fields: [comicId], references: [id], onDelete: Cascade)
+  episodeId String?
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  musicId String?
+  music   Music?  @relation(fields: [musicId], references: [id], onDelete: Cascade)
+
+  comicId String?
+  comic   Comic?  @relation(fields: [comicId], references: [id], onDelete: Cascade)
 
   @@index([filePath])
   @@index([movieId])
@@ -60,32 +60,32 @@ model MediaItem {
 // ────────────────────────────
 
 model Movie {
-  id                  String    @id @default(cuid())
-  title               String
-  originalTitle       String?
-  overview            String?
-  tagline             String?
-  posterUrl           String?
-  nullPosterUrl       String?
-  backdropUrl         String?
-  nullBackdropUrl     String?
-  logoUrl             String?
-  
-  releaseDate         DateTime?
-  rating              Float?
-  contentRating       String?   // PG-13, R, etc.
-  trailerUrl          String?
-  
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id              String  @id @default(cuid())
+  title           String
+  originalTitle   String?
+  overview        String?
+  tagline         String?
+  posterUrl       String?
+  nullPosterUrl   String?
+  backdropUrl     String?
+  nullBackdropUrl String?
+  logoUrl         String?
+
+  releaseDate   DateTime?
+  rating        Float?
+  contentRating String? // PG-13, R, etc.
+  trailerUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  mediaItems          MediaItem[] // Files
-  genres              Genre[]     // Implicit M-N relation
-  credits             Credit[]    // Cast & Crew
-  
-  libraries           Library[]   // Implicit M-N relation
-  externalIds         ExternalId[]
+  mediaItems MediaItem[] // Files
+  genres     Genre[] // Implicit M-N relation
+  credits    Credit[] // Cast & Crew
+
+  libraries   Library[] // Implicit M-N relation
+  externalIds ExternalId[]
 
   @@index([title])
   @@index([releaseDate])
@@ -96,32 +96,32 @@ model Movie {
 // ────────────────────────────
 
 model TVShow {
-  id                  String    @id @default(cuid())
-  title               String
-  originalTitle       String?
-  overview            String?
-  posterUrl           String?
-  nullPosterUrl       String?
-  backdropUrl         String?
-  nullBackdropUrl     String?
-  logoUrl             String?
-  
-  firstAirDate        DateTime?
-  rating              Float?
-  contentRating       String?
-  status              String?   // Returning Series, Ended
-  network             String?
-  
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id              String  @id @default(cuid())
+  title           String
+  originalTitle   String?
+  overview        String?
+  posterUrl       String?
+  nullPosterUrl   String?
+  backdropUrl     String?
+  nullBackdropUrl String?
+  logoUrl         String?
+
+  firstAirDate  DateTime?
+  rating        Float?
+  contentRating String?
+  status        String? // Returning Series, Ended
+  network       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  seasons             Season[]
-  genres              Genre[]
-  credits             Credit[]
-  
-  libraries           Library[]
-  externalIds         ExternalId[]
+  seasons Season[]
+  genres  Genre[]
+  credits Credit[]
+
+  libraries   Library[]
+  externalIds ExternalId[]
 
   @@index([title])
 }
@@ -129,40 +129,40 @@ model TVShow {
 model Season {
   id        String    @id @default(cuid())
   number    Int
-  name      String?   // "Season 1"
+  name      String? // "Season 1"
   overview  String?
   posterUrl String?
   airDate   DateTime?
-  
-  tvShowId  String
-  tvShow    TVShow    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
-  
-  episodes  Episode[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  tvShowId String
+  tvShow   TVShow @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+
+  episodes Episode[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tvShowId, number])
   @@index([tvShowId])
 }
 
 model Episode {
-  id             String    @id @default(cuid())
-  title          String
-  description    String?
-  number         Int
-  seasonNumber   Int?      // Denormalized for easy access
-  
-  airDate        DateTime?
-  stillUrl       String?   // Episode image
-  
-  seasonId       String
-  season         Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  
-  mediaItems     MediaItem[] // Files (usually one, but could be versions)
+  id           String  @id @default(cuid())
+  title        String
+  description  String?
+  number       Int
+  seasonNumber Int? // Denormalized for easy access
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  airDate  DateTime?
+  stillUrl String? // Episode image
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  mediaItems MediaItem[] // Files (usually one, but could be versions)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([seasonId, number])
   @@index([seasonId])
@@ -173,22 +173,22 @@ model Episode {
 // ────────────────────────────
 
 model Music {
-  id             String    @id @default(cuid())
-  title          String    // Track title
-  artist         String
-  album          String?
-  albumArtist    String?
-  genre          String?   // Simple string or link to Genre? Sticking to string for Music often simpler, but let's use Genre relation if we want consistency.
-  year           Int?
-  trackNumber    Int?
-  discNumber     Int?
-  
-  posterUrl      String?   // Album art
-  
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id          String  @id @default(cuid())
+  title       String // Track title
+  artist      String
+  album       String?
+  albumArtist String?
+  genre       String? // Simple string or link to Genre? Sticking to string for Music often simpler, but let's use Genre relation if we want consistency.
+  year        Int?
+  trackNumber Int?
+  discNumber  Int?
 
-  mediaItems     MediaItem[] // Files
+  posterUrl String? // Album art
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mediaItems MediaItem[] // Files
 
   @@index([artist])
   @@index([album])
@@ -200,24 +200,24 @@ model Music {
 // ────────────────────────────
 
 model Comic {
-  id             String    @id @default(cuid())
-  title          String    // Series + Issue
-  series         String?
-  issue          Int?
-  volume         String?
-  publisher      String?
-  pages          Int?
-  description    String?
-  
-  posterUrl      String?   // Cover
-  
-  year           Int?
-  month          Int?
-  
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id          String  @id @default(cuid())
+  title       String // Series + Issue
+  series      String?
+  issue       Int?
+  volume      String?
+  publisher   String?
+  pages       Int?
+  description String?
 
-  mediaItems     MediaItem[] // Files
+  posterUrl String? // Cover
+
+  year  Int?
+  month Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mediaItems MediaItem[] // Files
 
   @@index([series])
   @@index([publisher])
@@ -246,11 +246,11 @@ model Person {
   birthDate  DateTime?
   deathDate  DateTime?
   profileUrl String?
-  
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
 
-  credits    Credit[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  credits Credit[]
 
   @@index([name])
 }
@@ -260,17 +260,17 @@ model Credit {
   id        String   @id @default(cuid())
   role      RoleType
   character String? // e.g., "Bruce Wayne"
-  order     Int?    // Billing order
-  
-  personId  String
-  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  order     Int? // Billing order
+
+  personId String
+  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   // Relations (Only one should be set)
-  movieId   String?
-  movie     Movie?   @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  
-  tvShowId  String?
-  tvShow    TVShow?  @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  movieId String?
+  movie   Movie?  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  tvShowId String?
+  tvShow   TVShow? @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -285,16 +285,16 @@ model Credit {
 // ────────────────────────────
 
 model Genre {
-  id          String   @id @default(cuid())
-  name        String   @unique // Canonical normalized name
-  slug        String   @unique // URL-friendly slug
-  
-  // Implicit Many-to-Many relations
-  movies      Movie[]
-  tvShows     TVShow[]
+  id   String @id @default(cuid())
+  name String @unique // Canonical normalized name
+  slug String @unique // URL-friendly slug
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Implicit Many-to-Many relations
+  movies  Movie[]
+  tvShows TVShow[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
 }
@@ -304,29 +304,29 @@ model Genre {
 // ────────────────────────────
 
 model Library {
-  id          String               @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  slug        String               @unique
+  slug        String  @unique
   description String?
   posterUrl   String?
   backdropUrl String?
 
-  isLibrary   Boolean              @default(false)
-  libraryPath String? 
-  libraryType MediaType? 
+  isLibrary   Boolean    @default(false)
+  libraryPath String?
+  libraryType MediaType?
 
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  parentId    String?
-  parent      Library?  @relation("LibraryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children    Library[] @relation("LibraryHierarchy")
+  parentId String?
+  parent   Library?  @relation("LibraryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Library[] @relation("LibraryHierarchy")
 
   // Content relations (Implicit M-N)
-  movies      Movie[]
-  tvShows     TVShow[]
-  
-  scanJobs    ScanJob[]
+  movies  Movie[]
+  tvShows TVShow[]
+
+  scanJobs ScanJob[]
 
   @@index([slug])
   @@index([parentId])
@@ -337,18 +337,18 @@ model Library {
 // ────────────────────────────
 
 model ExternalId {
-  id         String   @id @default(cuid())
-  source     String   // Plugin-defined source identifier (e.g., "TMDB", "ANILIST")
+  id         String @id @default(cuid())
+  source     String // Plugin-defined source identifier (e.g., "TMDB", "ANILIST")
   externalId String
-  
-  movieId    String?
-  movie      Movie?           @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  
-  tvShowId   String?
-  tvShow     TVShow?          @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  movieId String?
+  movie   Movie?  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  tvShowId String?
+  tvShow   TVShow? @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([source, externalId])
   @@index([externalId])
@@ -377,26 +377,26 @@ enum MetadataJobStatus {
 }
 
 model ScanJob {
-  id                  String        @id @default(cuid())
-  libraryId           String
-  scanPath            String
-  mediaType           MediaType
-  status              ScanJobStatus @default(PENDING)
-  metadataStatus      MetadataJobStatus @default(NOT_STARTED)
-  scannedCount        Int           @default(0)
-  metadataSuccessCount Int          @default(0)
-  metadataFailedCount  Int          @default(0)
-  
+  id                   String            @id @default(cuid())
+  libraryId            String
+  scanPath             String
+  mediaType            MediaType
+  status               ScanJobStatus     @default(PENDING)
+  metadataStatus       MetadataJobStatus @default(NOT_STARTED)
+  scannedCount         Int               @default(0)
+  metadataSuccessCount Int               @default(0)
+  metadataFailedCount  Int               @default(0)
+
   startedAt           DateTime?
-  completedAt        DateTime?
+  completedAt         DateTime?
   metadataStartedAt   DateTime?
   metadataCompletedAt DateTime?
-  
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   library Library @relation(fields: [libraryId], references: [id], onDelete: Cascade)
-  
+
   @@index([libraryId])
   @@index([status])
 }
@@ -406,11 +406,11 @@ model ScanJob {
 // ────────────────────────────
 
 model MetadataProvider {
-  id        String   @id
-  name      String   @unique
-  enabled   Boolean  @default(true)
-  priority  Int      @default(0)
-  config    Json     @default("{}")
+  id         String   @id
+  name       String   @unique
+  enabled    Boolean  @default(true)
+  priority   Int      @default(0)
+  config     Json     @default("\"{}\"")
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -455,7 +455,7 @@ model Setting {
   isRequired  Boolean         @default(false)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
-  
+
   @@index([category])
   @@index([module])
   @@map("Setting")
