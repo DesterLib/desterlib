@@ -1,0 +1,13 @@
+{
+  "name": "@dester/go-service",
+  "version": "0.3.0",
+  "description": "Go service for file system level stuffs",
+  "private": true,
+  "scripts": {
+    "build": "go build -o go-service .",
+    "start": "./go-service",
+    "dev": "go run .",
+    "test": "go test ./...",
+    "clean": "rm -f go-service"
+  }
+}
