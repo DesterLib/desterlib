@@ -1,11 +1,8 @@
 import express from "express";
 import { createServer } from "http";
 import os from "os";
-import { config } from "./config/env";
-import {
-  setupMiddleware,
-  setupErrorHandling,
-} from "./interfaces/http/middleware";
+import { config, validateConfig } from "./config/env";
+import { setupMiddleware, setupErrorHandling } from "./interfaces/http/middleware";
 import { setupRoutes } from "./interfaces/http/routes/setup";
 import { prisma } from "./infrastructure/prisma";
 import { container } from "./infrastructure/container";
@@ -13,12 +10,22 @@ import { settingsManager } from "./infrastructure/core/settings";
 import { DesterWebSocketServer } from "./infrastructure/websocket";
 import { logger } from "@dester/logger";
 import { PluginConfig } from "@dester/types";
+import { ProviderService } from "./app/providers";
+import { createMetadataProcessorService } from "./app/metadata";
 
 const app = express();
 const httpServer = createServer(app);
 
+// Set max listeners to prevent warnings (allow up to 50 listeners)
+httpServer.setMaxListeners(50);
+
 // WebSocket server instance (initialized after HTTP server starts)
 let wsServer: DesterWebSocketServer | null = null;
+
+// Track if signal handlers are already registered (use process property to persist across module reloads)
+if (!(process as any).__desterSignalHandlersRegistered) {
+  (process as any).__desterSignalHandlersRegistered = false;
+}
 
 // Initialize dependency injection container
 container.initialize();
@@ -50,9 +57,7 @@ const getLocalIp = () => {
 
   // Prefer private LAN addresses over link-local or others
   const isPrivateLan = (ip: string) =>
-    ip.startsWith("192.168.") ||
-    ip.startsWith("10.") ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+    ip.startsWith("192.168.") || ip.startsWith("10.") || /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
 
   const privateIp = candidates.find(isPrivateLan);
   if (privateIp) {
@@ -69,6 +74,9 @@ const getLocalIp = () => {
 
 const startServer = async () => {
   try {
+    // Validate required environment variables before starting
+    validateConfig();
+
     logger.info("Starting DesterLib server...");
 
     // Initialize settings
@@ -90,7 +98,6 @@ const startServer = async () => {
 
     // Initialize plugins with configuration
     // Load provider config from database and pass to plugins
-    const { ProviderService } = await import("./app/providers/index.js");
     const providerService = new ProviderService(prisma);
     const enabledProviders = await providerService.getEnabledProviders();
     const tmdbProvider = enabledProviders.find(
@@ -102,9 +109,7 @@ const startServer = async () => {
       // For tmdb plugin, load config from database
       if (pluginName === "@dester/tmdb-plugin" || pluginName === "tmdb") {
         if (!tmdbProvider || !tmdbProvider.enabled) {
-          logger.warn(
-            "TMDB provider not found or disabled, skipping plugin initialization"
-          );
+          logger.warn("TMDB provider not found or disabled, skipping plugin initialization");
           continue;
         }
 
@@ -125,13 +130,21 @@ const startServer = async () => {
           config: {
             apiKey: providerConfig?.apiKey || providerConfig?.api_key,
             baseUrl:
-              providerConfig?.baseUrl ||
-              providerConfig?.base_url ||
-              "https://api.themoviedb.org/3",
+              providerConfig?.baseUrl || providerConfig?.base_url || "https://api.themoviedb.org/3",
             rateLimitRps:
               providerConfig?.rateLimitRps ||
               providerConfig?.rate_limit_rps ||
               parseFloat(process.env.METADATA_RATE_LIMIT_RPS || "4"),
+            logger, // Pass logger to plugin
+          },
+        });
+      } else if (pluginName === "@dester/anilist-plugin" || pluginName === "anilist") {
+        // AniList plugin doesn't require API key, uses default config
+        // Rate limit: ~90 requests per minute (1.5 req/s), we use 1 req/s
+        pluginConfigs.push({
+          name: "anilist",
+          config: {
+            rateLimitRps: parseFloat(process.env.METADATA_RATE_LIMIT_RPS || "1"),
             logger, // Pass logger to plugin
           },
         });
@@ -156,9 +169,6 @@ const startServer = async () => {
 
     // Start metadata queue consumer
     const metadataQueueService = container.getMetadataQueueService();
-    const { createMetadataProcessorService } = await import(
-      "./app/metadata/index.js"
-    );
     const metadataProcessorService = createMetadataProcessorService();
     const maxConcurrentJobs = parseInt(
       (config.pluginConfig.maxConcurrentJobs as string) || "20",
@@ -179,14 +189,28 @@ const startServer = async () => {
       );
     }
 
-    httpServer.on("error", (error: NodeJS.ErrnoException) => {
+    // Check if server is already listening
+    if (httpServer.listening) {
+      logger.warn("Server is already listening, skipping start");
+      return;
+    }
+
+    // Remove existing listeners to prevent accumulation
+    httpServer.removeAllListeners("error");
+    httpServer.removeAllListeners("close");
+
+    httpServer.once("error", async (error: NodeJS.ErrnoException) => {
       if (error.code === "EADDRINUSE") {
         logger.error(`❌ Port ${config.port} is already in use!`);
         logger.error(`💡 To kill the process using this port, run:`);
         logger.error(`   lsof -ti:${config.port} | xargs kill -9`);
+        // Give logger time to flush before exiting
+        await new Promise((resolve) => setTimeout(resolve, 100));
         process.exit(1);
       } else {
         logger.error("Server error:", error);
+        // Give logger time to flush before exiting
+        await new Promise((resolve) => setTimeout(resolve, 100));
         process.exit(1);
       }
     });
@@ -199,17 +223,23 @@ const startServer = async () => {
       logger.info(`🔧 Environment: ${config.nodeEnv}`);
       logger.info(`🗄️  Database: ${config.databaseUrl}`);
 
-      // Initialize WebSocket server
-      try {
-        wsServer = new DesterWebSocketServer(httpServer);
-        logger.info(`🔌 WebSocket server: ws://${ip}:${config.port}/ws`);
-        logger.info(`💓 Health heartbeat: 30s interval`);
-      } catch (error) {
-        logger.error("Failed to initialize WebSocket server:", error);
+      // Initialize WebSocket server only if it doesn't exist
+      if (!wsServer) {
+        try {
+          wsServer = new DesterWebSocketServer(httpServer);
+          logger.info(`🔌 WebSocket server: ws://${ip}:${config.port}/ws`);
+          logger.info(`💓 Health heartbeat: 30s interval`);
+        } catch (error) {
+          logger.error("Failed to initialize WebSocket server:", error);
+        }
+      } else {
+        logger.info("WebSocket server already initialized");
       }
     });
   } catch (error) {
     logger.error("Failed to start server:", error);
+    // Give logger time to flush before exiting
+    await new Promise((resolve) => setTimeout(resolve, 100));
     process.exit(1);
   }
 };
@@ -238,30 +268,54 @@ const gracefulShutdown = async (signal: string) => {
   // Close WebSocket server
   if (wsServer) {
     await wsServer.shutdown();
+    wsServer = null;
   }
 
-  httpServer.close(() => {
-    logger.info("HTTP server closed");
+  // Remove all listeners before closing to prevent accumulation
+  httpServer.removeAllListeners();
+
+  return new Promise<void>((resolve) => {
+    httpServer.close(() => {
+      logger.info("HTTP server closed");
+      resolve();
+    });
+
+    // Force close after timeout if graceful close doesn't work
+    setTimeout(() => {
+      resolve();
+    }, 5000);
+  }).then(async () => {
+    await prisma.$disconnect();
+    logger.info("Database disconnected");
+
+    logger.info("Shutdown complete");
+    // Give logger time to flush before exiting
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    process.exit(0);
   });
-
-  await prisma.$disconnect();
-  logger.info("Database disconnected");
-
-  logger.info("Shutdown complete");
-  process.exit(0);
 };
 
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+// Register signal handlers only once per process (persists across module reloads)
+if (!(process as any).__desterSignalHandlersRegistered) {
+  // Remove existing listeners to prevent accumulation
+  process.removeAllListeners("SIGTERM");
+  process.removeAllListeners("SIGINT");
+  process.removeAllListeners("uncaughtException");
+  process.removeAllListeners("unhandledRejection");
 
-process.on("uncaughtException", (error) => {
-  logger.error("Uncaught Exception:", error);
-  gracefulShutdown("uncaughtException");
-});
+  process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.once("SIGINT", () => gracefulShutdown("SIGINT"));
+  process.once("uncaughtException", async (error) => {
+    logger.error("Uncaught Exception:", error);
+    await gracefulShutdown("uncaughtException");
+  });
+  process.once("unhandledRejection", async (reason) => {
+    logger.error("Unhandled Rejection:", reason);
+    await gracefulShutdown("unhandledRejection");
+  });
 
-process.on("unhandledRejection", (reason) => {
-  logger.error("Unhandled Rejection:", reason);
-  gracefulShutdown("unhandledRejection");
-});
+  (process as any).__desterSignalHandlersRegistered = true;
+}
 
-startServer();
+// Export startServer for programmatic use
+export { startServer };

@@ -1,22 +1,4 @@
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: desterlib-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: desterlib_prod
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   redis:
     image: redis:7-alpine
     container_name: desterlib-redis
@@ -38,35 +20,32 @@ services:
     container_name: desterlib-api
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
       - ../.env
     environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: desterlib_prod
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/desterlib_prod?schema=public
+      DATABASE_URL: file:/app/db/main.db
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
       PORT: 3001
       SCANNER_SERVICE_URL: http://scanner-service:8080
       FRONTEND_URL: http://localhost:3001
+      METADATA_PATH: /app/metadata
+      API_LOG_PATH: /app/logs
+      PLUGINS: "@dester/tmdb-plugin,@dester/anilist-plugin"
     ports:
       - "0.0.0.0:3001:3001"
     volumes:
+      # Update these paths to your local directories
+      - ../desterlib-data/db:/app/db
+      - ../desterlib-data/metadata:/app/metadata
+      - ../desterlib-data/logs:/app/logs
       # Update this path to your media library location
       - /Volumes/External/Library/Media:/media:ro
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1",
-        ]
+        ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -74,38 +53,35 @@ services:
 
   scanner-service:
     build:
-      context: ../apps/scanner-service
+      context: ../apps/go-service
       dockerfile: Dockerfile
     container_name: desterlib-scanner
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
       - ../.env
     environment:
       SCANNER_PORT: 8080
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/desterlib_prod?sslmode=disable
+      DATABASE_URL: file:/app/db/main.db
       REDIS_URL: redis://redis:6379/0
       SCANNER_WORKER_COUNT: 10
       SCAN_QUEUE_NAME: metadata:jobs
     ports:
       - "8080:8080"
     volumes:
+      # Database volume - same as API service
+      - ../desterlib-data/db:/app/db
       # Update this path to your media library location
       - /Volumes/External/Library/Media:/media:ro
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1",
-        ]
+        ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 20s
 
 volumes:
-  postgres_data:
   redis_data:
