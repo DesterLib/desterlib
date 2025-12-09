@@ -76,20 +76,24 @@ The CLI creates these files in `~/.desterlib/`:
 
 ```yaml
 services:
-  postgres:
-    image: postgres:15-alpine
-    # Database configuration
+  redis:
+    image: redis:7-alpine
+    # Queue and cache
 
   api:
     image: desterlib/api:latest
     # API server configuration
+
+  scanner-service:
+    image: desterlib/scanner:latest
+    # File scanner service
 ```
 
 **2. .env** (~15 lines)
 
 ```env
 # Required
-DATABASE_URL=postgresql://...
+DATABASE_URL=file:/app/db/main.db
 METADATA_PATH=./desterlib-data/metadata
 API_LOG_PATH=./desterlib-data/logs
 

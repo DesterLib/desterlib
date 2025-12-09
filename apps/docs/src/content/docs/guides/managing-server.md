@@ -77,8 +77,9 @@ Expected output:
 
 ```
 NAME                  STATUS        PORTS
-desterlib-postgres    Up 5 minutes  0.0.0.0:5432->5432/tcp
+desterlib-redis       Up 5 minutes  0.0.0.0:6379->6379/tcp
 desterlib-api         Up 5 minutes  0.0.0.0:3001->3001/tcp
+desterlib-scanner     Up 5 minutes  0.0.0.0:8080->8080/tcp
 ```
 
 ### View Logs
@@ -95,10 +96,10 @@ docker-compose logs -f
 docker-compose logs -f api
 ```
 
-**Database only:**
+**Scanner service only:**
 
 ```bash
-docker-compose logs -f postgres
+docker-compose logs -f scanner-service
 ```
 
 **Last 100 lines:**
@@ -121,8 +122,9 @@ docker-compose restart
 ### Restart Specific Service
 
 ```bash
-docker-compose restart api       # API only
-docker-compose restart postgres  # Database only
+docker-compose restart api            # API only
+docker-compose restart scanner-service # Scanner only
+docker-compose restart redis          # Redis only
 ```
 
 ## Updating DesterLib
@@ -183,15 +185,19 @@ Choose "Reconfigure" when prompted.
 ### Backup Database
 
 ```bash
-docker exec -t desterlib-postgres pg_dump -U desterlib desterlib > desterlib-backup.sql
+cd ~/.desterlib
+docker-compose stop
+cp desterlib-data/db/main.db ~/desterlib-backup.db
+docker-compose start
 ```
-
-This creates a SQL dump file with all your data.
 
 ### Restore Database
 
 ```bash
-cat desterlib-backup.sql | docker exec -i desterlib-postgres psql -U desterlib desterlib
+cd ~/.desterlib
+docker-compose down
+cp ~/desterlib-backup.db desterlib-data/db/main.db
+docker-compose up -d
 ```
 
 ### Backup Configuration
@@ -209,10 +215,10 @@ tar -czf desterlib-config.tar.gz desterlib/
 ### View Resource Consumption
 
 ```bash
-docker stats desterlib-api desterlib-postgres
+docker stats
 ```
 
-Shows CPU, memory, and network usage in real-time.
+Shows CPU, memory, and network usage for all containers.
 
 ### Limit Resources
 
@@ -281,7 +287,11 @@ Expected response:
 ### View Database Status
 
 ```bash
-docker exec -it desterlib-postgres psql -U desterlib -d desterlib -c "SELECT COUNT(*) FROM \"Media\";"
+# Check database file size
+ls -lh ~/.desterlib/desterlib-data/db/main.db
+
+# Check API health
+curl http://localhost:3001/health
 ```
 
 ## Troubleshooting
@@ -292,24 +302,14 @@ docker exec -it desterlib-postgres psql -U desterlib -d desterlib -c "SELECT COU
 
 ```bash
 docker-compose logs api
-docker-compose logs postgres
+docker-compose logs scanner-service
 ```
 
 **Common issues:**
 
-- Port already in use → Change port in `.env`
-- Database connection failed → Restart postgres first
+- Port already in use → Change port in `.env` or stop conflicting process
 - Permission denied → Check media path permissions
-
-### Database Connection Issues
-
-**Test database connection:**
-
-```bash
-docker exec -it desterlib-postgres psql -U desterlib -d desterlib
-```
-
-Should open PostgreSQL prompt. Type `\q` to exit.
+- Database file locked → Stop services and check file permissions
 
 ### High CPU/Memory Usage
 

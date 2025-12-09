@@ -9,25 +9,25 @@ Complete reference for configuring the DesterLib API server via environment vari
 
 ### DATABASE_URL
 
-**PostgreSQL connection string**
+**SQLite database file path**
 
 ```env
-DATABASE_URL=postgresql://username:password@host:port/database?schema=public
+DATABASE_URL=file:/path/to/database.db
 ```
 
-**Format:** `postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public`
+**Format:** `file:/absolute/path/to/database.db` or `/absolute/path/to/database.db`
 
 **Examples:**
 
 ```env
 # Docker Compose (default)
-DATABASE_URL=postgresql://desterlib:password@postgres:5432/desterlib?schema=public
-
-# External database
-DATABASE_URL=postgresql://user:pass@db.example.com:5432/desterlib?schema=public
+DATABASE_URL=file:/app/db/main.db
 
 # Local development
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test?schema=public
+DATABASE_URL=file:./desterlib-data/db/main.db
+
+# Absolute path
+DATABASE_URL=/Users/username/desterlib-data/db/main.db
 ```
 
 **Used by:** Prisma ORM for all database operations
@@ -185,41 +185,6 @@ RATE_LIMIT_MAX=100
 
 **Calculation:** With defaults, clients can make 100 requests per 15 minutes.
 
-## Docker-Specific Variables
-
-These are used by Docker Compose to configure the PostgreSQL container, **not** by the API directly:
-
-### POSTGRES_USER
-
-**Database username**
-
-```yaml
-# In docker-compose.yml environment section
-POSTGRES_USER: desterlib
-```
-
-**Used by:** PostgreSQL container initialization
-
-### POSTGRES_PASSWORD
-
-**Database password**
-
-```yaml
-POSTGRES_PASSWORD: your_secure_password
-```
-
-**Used by:** PostgreSQL container initialization
-
-### POSTGRES_DB
-
-**Database name**
-
-```yaml
-POSTGRES_DB: desterlib
-```
-
-**Used by:** PostgreSQL container initialization
-
 ## Variables NOT Used
 
 These variables are **NOT** read by the DesterLib API:
@@ -234,34 +199,7 @@ Stored in database settings, not environment variables.
 
 ### ❌ TMDB_API_KEY
 
-Configured via Settings API or Provider Management API in the application, not environment variables. The API key is stored in the database and automatically synced to the metadata provider system.
-
-**Configure via Settings API:**
-
-```bash
-curl -X PUT http://localhost:3001/api/v1/settings \
-  -H "Content-Type: application/json" \
-  -d '{"tmdbApiKey": "your_key"}'
-```
-
-**Or manage directly via Provider API:**
-
-```bash
-curl -X POST http://localhost:3001/api/v1/settings/providers \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "tmdb",
-    "enabled": true,
-    "priority": 0,
-    "config": {"apiKey": "your_key"}
-  }'
-```
-
-See [TMDB Setup Guide](/guides/tmdb-setup/) for details.
-
-### ❌ POSTGRES_HOST / POSTGRES_PORT
-
-The API only uses `DATABASE_URL`. Individual postgres connection vars are not read.
+Configured via Settings API or Provider Management API, not environment variables. See [TMDB Setup Guide](/guides/tmdb-setup/) for details.
 
 ## Configuration Methods
 
@@ -285,7 +223,7 @@ nano .env
 
 ```env
 # Required
-DATABASE_URL=postgresql://desterlib:password@postgres:5432/desterlib?schema=public
+DATABASE_URL=file:/app/db/main.db
 METADATA_PATH=/path/to/desterlib-data/metadata
 API_LOG_PATH=/path/to/desterlib-data/logs
 
@@ -305,7 +243,7 @@ api:
   image: desterlib/api:latest
   environment:
     # Required
-    DATABASE_URL: postgresql://...
+    DATABASE_URL: file:/app/db/main.db
     METADATA_PATH: /var/lib/desterlib/metadata
     API_LOG_PATH: /var/lib/desterlib/logs
     # Optional
@@ -322,7 +260,7 @@ api:
 Export before running:
 
 ```bash
-export DATABASE_URL="postgresql://..."
+export DATABASE_URL="file:./desterlib-data/db/main.db"
 export PORT=3001
 pnpm start
 ```
@@ -333,7 +271,7 @@ pnpm start
 
 ```env
 # Required
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test?schema=public
+DATABASE_URL=file:./desterlib-data/db/main.db
 METADATA_PATH=./desterlib-data/metadata
 API_LOG_PATH=./desterlib-data/logs
 
@@ -348,30 +286,15 @@ RATE_LIMIT_MAX=1000          # More lenient for development
 
 ```env
 # Required
-DATABASE_URL=postgresql://desterlib:STRONG_PASSWORD@postgres:5432/desterlib?schema=public
-METADATA_PATH=/var/lib/desterlib/metadata
-API_LOG_PATH=/var/lib/desterlib/logs
+DATABASE_URL=file:/app/db/main.db
+METADATA_PATH=/app/metadata
+API_LOG_PATH=/app/logs
 
 # Optional
 NODE_ENV=production
 PORT=3001
 RATE_LIMIT_WINDOW_MS=900000  # 15 minutes
 RATE_LIMIT_MAX=100           # Standard rate limiting
-```
-
-### High-Traffic Setup
-
-```env
-# Required
-DATABASE_URL=postgresql://...
-METADATA_PATH=/var/lib/desterlib/metadata
-API_LOG_PATH=/var/lib/desterlib/logs
-
-# Optional
-NODE_ENV=production
-PORT=3001
-RATE_LIMIT_WINDOW_MS=600000  # 10 minutes (shorter window)
-RATE_LIMIT_MAX=200           # Allow more requests
 ```
 
 ## Validation
@@ -390,7 +313,7 @@ You should see:
 ```
 🚀 Server running on port 3001
 🔧 Environment: production
-🗄️  Database: postgresql://desterlib:***@postgres:5432/desterlib
+🗄️  Database: file:/app/db/main.db
 ```
 
 ### Test Database Connection
@@ -406,16 +329,13 @@ Should return `{"status":"OK",...}`
 
 ### Database Connection Failed
 
-**Error:** `Error: P1001: Can't reach database server`
+**Error:** `Error: Can't reach database server`
 
 **Fixes:**
 
-1. Check `DATABASE_URL` format
-2. Verify database is running: `docker ps | grep postgres`
-3. Test connection:
-   ```bash
-   docker exec -it desterlib-postgres psql -U desterlib -d desterlib
-   ```
+1. Check `DATABASE_URL` format (should be `file:/path/to/db.db`)
+2. Verify database file exists and is accessible
+3. Check file permissions
 
 ### Port Already in Use
 
@@ -453,13 +373,7 @@ Then restart: `docker-compose restart api`
 
 ### Database Security
 
-**Generate secure password:**
-
-```bash
-openssl rand -base64 32
-```
-
-Use this for `POSTGRES_PASSWORD` in your database connection.
+**Note:** SQLite doesn't require a password. Ensure database file has proper permissions (600 recommended).
 
 ## Related Documentation
 

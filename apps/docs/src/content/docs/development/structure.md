@@ -138,7 +138,7 @@ Provides shared TypeScript configurations:
 
 Location: `apps/api/prisma/schema.prisma`
 
-The database uses PostgreSQL with Prisma ORM:
+The database uses SQLite with Prisma ORM:
 
 ```prisma
 // Example models

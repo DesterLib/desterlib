@@ -10,21 +10,9 @@ Package-specific changelogs are automatically generated in each package director
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Package Changelogs
+## Viewing Changes
 
-DesterLib consists of multiple packages, each with its own changelog:
-
-### [API Server Changelog](/api/changelog)
-
-Changelog for the DesterLib API Server. Contains all API changes, new features, bug fixes, and breaking changes.
-
-### [CLI Tool Changelog](/cli/changelog)
-
-Changelog for the DesterLib CLI Tool. Contains all CLI changes, new commands, and improvements.
-
-### [Documentation Changelog](/docs/changelog)
-
-Changelog for the DesterLib Documentation. Contains all documentation updates and improvements.
+All changes are tracked in the main repository. Check the [GitHub Releases](https://github.com/DesterLib/desterlib/releases) for the latest updates.
 
 ## Viewing Changelogs
 

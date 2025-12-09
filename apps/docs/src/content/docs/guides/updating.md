@@ -168,7 +168,7 @@ docker ps
 
 # Try pulling manually
 docker pull desterlib/api:latest
-docker pull postgres:15-alpine
+docker pull redis:7-alpine
 ```
 
 **Database migration failed:**
@@ -178,7 +178,10 @@ docker pull postgres:15-alpine
 docker-compose logs api
 
 # If corrupted, restore from backup
-cat backup.sql | docker exec -i desterlib-postgres psql -U desterlib desterlib
+cd ~/.desterlib
+docker-compose down
+cp ~/backup.db desterlib-data/db/main.db
+docker-compose up -d
 ```
 
 ### Version Not Changing

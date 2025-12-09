@@ -135,8 +135,6 @@ pnpm pr:create
 During alpha development, we use a simplified workflow: **Feature Branches → Main**. Once we reach stable releases, we'll introduce a `dev` branch for staging.
 :::
 
-See the [Development Workflow](/development/workflow/) for the complete workflow.
-
 ## 🔍 Finding Issues to Work On
 
 ### Good First Issues
@@ -251,8 +249,6 @@ pnpm commit
 # Follow the prompts - it's easy!
 ```
 
-See [Commit Guidelines](/development/commit-guidelines/) for details.
-
 ## 🦋 When to Add a Changeset
 
 ### ✅ Add Changeset For:
@@ -283,8 +279,6 @@ pnpm changeset
 #   - major (X.0.0) for breaking changes
 # Write clear summary (becomes changelog)
 ```
-
-See [Versioning Guide](/development/versioning/) for more.
 
 ## 🔄 PR Review Process
 
@@ -349,10 +343,6 @@ git push origin --delete feat/your-feature-name
 
 ## 📚 Additional Resources
 
-- [Development Workflow](/development/workflow/) - Complete development workflow
-- [Commit Guidelines](/development/commit-guidelines/) - Commit message format
-- [Versioning Guide](/development/versioning/) - Changesets and releases
-- [Quick Reference](/development/quick-reference/) - Common commands
 - [Project Structure](/development/structure/) - Codebase organization
 
 ## 💬 Getting Help

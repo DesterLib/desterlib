@@ -66,7 +66,7 @@ docker-compose up -d
 **Optional:** Customize with `.env` file in project root:
 
 ```env
-DATABASE_URL=postgresql://postgres:postgres@postgres:5432/desterlib
+DATABASE_URL=file:/app/db/main.db
 NODE_ENV=production
 PORT=3001
 ```
@@ -244,7 +244,7 @@ pnpm install
 docker-compose -f docker-compose.test.yml up -d
 
 # 3. Configure .env in apps/api/
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/desterlib_test
+DATABASE_URL=file:./desterlib-data/db/main.db
 NODE_ENV=development
 PORT=3001
 
@@ -281,13 +281,19 @@ If exposing to internet, use HTTPS and enable authentication!
 ### Database Backup
 
 ```bash
-docker exec -t desterlib-postgres pg_dump -U desterlib desterlib > backup.sql
+cd ~/.desterlib
+docker-compose stop
+cp desterlib-data/db/main.db ~/backup.db
+docker-compose start
 ```
 
 ### Database Restore
 
 ```bash
-cat backup.sql | docker exec -i desterlib-postgres psql -U desterlib desterlib
+cd ~/.desterlib
+docker-compose down
+cp ~/backup.db desterlib-data/db/main.db
+docker-compose up -d
 ```
 
 ### Uninstall

@@ -9,7 +9,7 @@ Protect your media library data with regular backups.
 
 ### Database (Critical)
 
-Your PostgreSQL database contains:
+Your SQLite database contains:
 
 - Media library catalog
 - Scan job history
@@ -39,13 +39,21 @@ You don't need to backup:
 
 ### Manual Backup
 
-Create a SQL dump of your database:
+Copy the SQLite database file:
 
 ```bash
-docker exec -t desterlib-postgres pg_dump -U desterlib desterlib > desterlib-backup-$(date +%Y%m%d).sql
+# Stop services first
+cd ~/.desterlib
+docker-compose stop
+
+# Copy database file
+cp desterlib-data/db/main.db ~/desterlib-backup-$(date +%Y%m%d).db
+
+# Start services
+docker-compose start
 ```
 
-This creates a file like: `desterlib-backup-20241113.sql`
+This creates a file like: `desterlib-backup-20241113.db`
 
 ### Automated Backups
 
@@ -56,12 +64,18 @@ This creates a file like: `desterlib-backup-20241113.sql`
 BACKUP_DIR=~/desterlib-backups
 mkdir -p $BACKUP_DIR
 
+# Stop services
+cd ~/.desterlib
+docker-compose stop
+
 # Database backup
-docker exec -t desterlib-postgres pg_dump -U desterlib desterlib > \
-  $BACKUP_DIR/db-$(date +%Y%m%d-%H%M%S).sql
+cp desterlib-data/db/main.db $BACKUP_DIR/db-$(date +%Y%m%d-%H%M%S).db
+
+# Start services
+docker-compose start
 
 # Keep only last 7 days
-find $BACKUP_DIR -name "db-*.sql" -mtime +7 -delete
+find $BACKUP_DIR -name "db-*.db" -mtime +7 -delete
 
 echo "Backup completed: $BACKUP_DIR"
 ```
@@ -104,22 +118,15 @@ tar -czf desterlib-config-$(date +%Y%m%d).tar.gz \
 
 ## Restore Database
 
-### From SQL Dump
+### From Database File
 
 ```bash
 # Stop the server first
 cd ~/.desterlib
 docker-compose down
 
-# Start database only
-docker-compose up -d postgres
-
-# Wait for database to be ready (10 seconds)
-sleep 10
-
 # Restore from backup
-cat desterlib-backup-20241113.sql | \
-  docker exec -i desterlib-postgres psql -U desterlib desterlib
+cp ~/desterlib-backup-20241113.db desterlib-data/db/main.db
 
 # Start all services
 docker-compose up -d
@@ -128,13 +135,11 @@ docker-compose up -d
 ### Verify Restore
 
 ```bash
-# Check media count
-docker exec -it desterlib-postgres psql -U desterlib -d desterlib \
-  -c "SELECT COUNT(*) FROM \"Media\";"
+# Check if database file exists and has content
+ls -lh ~/.desterlib/desterlib-data/db/main.db
 
-# Check last updated
-docker exec -it desterlib-postgres psql -U desterlib -d desterlib \
-  -c "SELECT title, \"updatedAt\" FROM \"Media\" ORDER BY \"updatedAt\" DESC LIMIT 5;"
+# Check API health
+curl http://localhost:3001/health
 ```
 
 ## Restore Configuration
@@ -170,14 +175,16 @@ git checkout docker-compose.yml
 
 ```bash
 # 1. Backup database
-docker exec -t desterlib-postgres pg_dump -U desterlib desterlib > migration.sql
+cd ~/.desterlib
+docker-compose stop
+cp desterlib-data/db/main.db ~/migration.db
 
 # 2. Backup configuration
-cp ~/.desterlib/.env desterlib-env-backup
-cp ~/.desterlib/docker-compose.yml desterlib-compose-backup
+cp .env desterlib-env-backup
+cp docker-compose.yml desterlib-compose-backup
 
 # 3. Transfer files to new server
-scp migration.sql user@new-server:/tmp/
+scp ~/migration.db user@new-server:/tmp/
 scp desterlib-*-backup user@new-server:/tmp/
 ```
 
@@ -191,12 +198,10 @@ npx @desterlib/cli
 cd ~/.desterlib && docker-compose down
 
 # 3. Restore database
-docker-compose up -d postgres
-sleep 10
-cat /tmp/migration.sql | docker exec -i desterlib-postgres psql -U desterlib desterlib
+cp /tmp/migration.db desterlib-data/db/main.db
 
 # 4. Restore config if needed
-cp /tmp/desterlib-env-backup ~/.desterlib/.env
+cp /tmp/desterlib-env-backup .env
 
 # 5. Start all services
 docker-compose up -d
@@ -215,9 +220,7 @@ npx @desterlib/cli
 # 2. Stop and restore database
 cd ~/.desterlib
 docker-compose down
-docker-compose up -d postgres
-sleep 10
-cat backup.sql | docker exec -i desterlib-postgres psql -U desterlib desterlib
+cp backup.db desterlib-data/db/main.db
 docker-compose up -d
 
 # 3. Your media library is restored!
@@ -285,9 +288,7 @@ cp -r ~/.desterlib/* .
 # Change ports (3002, 5433)
 
 # 4. Restore database
-docker-compose up -d postgres
-sleep 10
-cat ~/desterlib-backups/latest.sql | docker exec -i desterlib-test-postgres psql -U desterlib desterlib
+cp ~/desterlib-backups/latest.db desterlib-data/db/main.db
 
 # 5. Start and test
 docker-compose up -d
