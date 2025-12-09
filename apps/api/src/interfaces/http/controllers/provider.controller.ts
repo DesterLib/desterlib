@@ -97,7 +97,7 @@ export const providerControllers = {
       name,
       validatedData.enabled ?? true,
       validatedData.priority ?? 0,
-      (validatedData.config ?? {}) as Prisma.JsonValue
+      (validatedData.config ?? {}) as Prisma.InputJsonValue
     );
 
     // Reload providers in metadata service to pick up the new/updated provider
@@ -116,7 +116,7 @@ export const providerControllers = {
     const provider = await providerService.updateProvider(name, {
       enabled: validatedData.enabled,
       priority: validatedData.priority,
-      config: validatedData.config as Prisma.JsonValue | undefined,
+      config: validatedData.config as Prisma.InputJsonValue | undefined,
     });
 
     if (!provider) {

@@ -45,7 +45,7 @@ export class ProviderService {
     name: string,
     enabled: boolean,
     priority: number,
-    config: Prisma.JsonValue
+    config: Prisma.InputJsonValue
   ): Promise<MetadataProviderConfig> {
     return await this.prisma.metadataProvider.upsert({
       where: {
@@ -56,12 +56,12 @@ export class ProviderService {
         name,
         enabled,
         priority,
-        config,
+        config: config as Prisma.InputJsonValue,
       },
       update: {
         enabled,
         priority,
-        config,
+        config: config as Prisma.InputJsonValue,
       },
     });
   }
@@ -74,14 +74,14 @@ export class ProviderService {
     providerUpdates: {
       enabled?: boolean;
       priority?: number;
-      config?: Prisma.JsonValue;
+      config?: Prisma.InputJsonValue;
     }
   ): Promise<MetadataProviderConfig | null> {
     // Build update object, only including defined fields
     const updateData: {
       enabled?: boolean;
       priority?: number;
-      config?: Prisma.JsonValue;
+      config?: Prisma.InputJsonValue;
     } = {};
 
     if (providerUpdates.enabled !== undefined) {
@@ -91,7 +91,7 @@ export class ProviderService {
       updateData.priority = providerUpdates.priority;
     }
     if (providerUpdates.config !== undefined) {
-      updateData.config = providerUpdates.config;
+      updateData.config = providerUpdates.config as Prisma.InputJsonValue;
     }
 
     // If no updates, just return the existing provider
@@ -158,7 +158,7 @@ export class ProviderService {
       priority?: number;
       baseUrl?: string;
       rateLimitRps?: number;
-      [key: string]: Prisma.JsonValue | undefined; // Allow additional provider-specific config
+      [key: string]: Prisma.InputJsonValue | undefined; // Allow additional provider-specific config
     }
   ): Promise<void> {
     const {
@@ -170,8 +170,8 @@ export class ProviderService {
       ...additionalConfig
     } = config;
 
-    const providerConfig: Record<string, Prisma.JsonValue> = {};
-    
+    const providerConfig: Record<string, Prisma.InputJsonValue> = {};
+
     // Copy additional config, filtering out undefined values
     for (const [key, value] of Object.entries(additionalConfig)) {
       if (value !== undefined) {
