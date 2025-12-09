@@ -1,0 +1,280 @@
+name: Build Installers
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build (e.g., 0.3.0)"
+        required: true
+        default: "0.3.0"
+
+jobs:
+  build-windows:
+    name: Build Windows Installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0.0"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        working-directory: apps/api
+        run: |
+          pnpm build
+          pnpm db:generate
+          pnpm exec @yao-pkg/pkg dist/index.js --targets node20-win-x64 --output ../gui-installer/resources/api/api-win-x64.exe
+
+      - name: Build Go Service
+        working-directory: apps/go-service
+        run: |
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+          go build -ldflags="-s -w" -o ../gui-installer/resources/go-service/go-service-win-x64.exe .
+
+      - name: Download FFmpeg (Windows)
+        run: |
+          mkdir -p apps/gui-installer/resources/ffmpeg/win-x64
+          # Download from gyan.dev or use pre-downloaded version
+          # This is a placeholder - you'll need to implement actual download
+          echo "FFmpeg download needs to be implemented"
+
+      - name: Copy Prisma generated client
+        run: |
+          if (Test-Path "apps/api/generated") {
+            Copy-Item -Path "apps/api/generated" -Destination "apps/gui-installer/resources/api/generated" -Recurse -Force
+          }
+
+      - name: Build Tauri
+        working-directory: apps/gui-installer
+        run: |
+          pnpm build
+          # Copy resources
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources" | Out-Null
+          Copy-Item -Path "resources/*" -Destination "src-tauri/resources/" -Recurse -Force
+          pnpm tauri build --target x86_64-pc-windows-msi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: apps/gui-installer/src-tauri/target/release/bundle/msi/*.msi
+
+  build-macos:
+    name: Build macOS Installer
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [arm64, x64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0.0"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        working-directory: apps/api
+        run: |
+          pnpm build
+          pnpm db:generate
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            pnpm exec @yao-pkg/pkg dist/index.js --targets node20-macos-arm64 --output ../gui-installer/resources/api/api-macos-arm64
+          else
+            pnpm exec @yao-pkg/pkg dist/index.js --targets node20-macos-x64 --output ../gui-installer/resources/api/api-macos-x64
+          fi
+          chmod +x ../gui-installer/resources/api/api-macos-*
+
+      - name: Build Go Service
+        working-directory: apps/go-service
+        run: |
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o ../gui-installer/resources/go-service/go-service-macos-arm64 .
+          else
+            GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o ../gui-installer/resources/go-service/go-service-macos-x64 .
+          fi
+          chmod +x ../gui-installer/resources/go-service/go-service-macos-*
+
+      - name: Download FFmpeg (macOS)
+        run: |
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            mkdir -p apps/gui-installer/resources/ffmpeg/macos-arm64
+            # Download FFmpeg for ARM64
+          else
+            mkdir -p apps/gui-installer/resources/ffmpeg/macos-x64
+            # Download FFmpeg for x64
+          fi
+          echo "FFmpeg download needs to be implemented"
+
+      - name: Copy Prisma generated client
+        run: |
+          if [ -d "apps/api/generated" ]; then
+            cp -r apps/api/generated apps/gui-installer/resources/api/
+          fi
+
+      - name: Build Tauri
+        working-directory: apps/gui-installer
+        run: |
+          pnpm build
+          mkdir -p src-tauri/resources
+          cp -r resources/* src-tauri/resources/
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            pnpm tauri build --target aarch64-apple-darwin
+          else
+            pnpm tauri build --target x86_64-apple-darwin
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer-${{ matrix.arch }}
+          path: apps/gui-installer/src-tauri/target/release/bundle/dmg/*.dmg
+
+  build-linux:
+    name: Build Linux Installer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0.0"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        working-directory: apps/api
+        run: |
+          pnpm build
+          pnpm db:generate
+          pnpm exec @yao-pkg/pkg dist/index.js --targets node20-linux-x64 --output ../gui-installer/resources/api/api-linux-x64
+          chmod +x ../gui-installer/resources/api/api-linux-x64
+
+      - name: Build Go Service
+        working-directory: apps/go-service
+        run: |
+          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ../gui-installer/resources/go-service/go-service-linux-x64 .
+          chmod +x ../gui-installer/resources/go-service/go-service-linux-x64
+
+      - name: Download FFmpeg (Linux)
+        run: |
+          mkdir -p apps/gui-installer/resources/ffmpeg/linux-x64
+          # Download from johnvansickle.com or use pre-downloaded version
+          echo "FFmpeg download needs to be implemented"
+
+      - name: Copy Prisma generated client
+        run: |
+          if [ -d "apps/api/generated" ]; then
+            cp -r apps/api/generated apps/gui-installer/resources/api/
+          fi
+
+      - name: Build Tauri
+        working-directory: apps/gui-installer
+        run: |
+          pnpm build
+          mkdir -p src-tauri/resources
+          cp -r resources/* src-tauri/resources/
+          pnpm tauri build --target x86_64-unknown-linux-gnu
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer
+          path: |
+            apps/gui-installer/src-tauri/target/release/bundle/appimage/*.AppImage
+            apps/gui-installer/src-tauri/target/release/bundle/deb/*.deb
+
+  release:
+    name: Create Release
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            windows-installer/*.msi
+            macos-installer-arm64/*.dmg
+            macos-installer-x64/*.dmg
+            linux-installer/*.AppImage
+            linux-installer/*.deb
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
